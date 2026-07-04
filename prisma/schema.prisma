@@ -21,6 +21,11 @@ model User {
   bonusAdUsedToday    Int      @default(0) // 0-3 (max 3 ad bonuses / day)
   quotaDate           String?  // client-local YYYY-MM-DD these counters belong to
 
+  // Password reset (forgot-password flow). We store a hash of the token, not the raw
+  // value — the raw token only ever lives in the emailed link.
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
+
   createdAt DateTime @default(now())
   orders    Order[]
   journalEntries JournalEntry[]

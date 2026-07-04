@@ -10,6 +10,13 @@ const STACK = [
   { rot: -4, x: 6, y: -2 },
 ];
 
+const STAGGER_MS = 45;
+// The last card's shuffle animation doesn't start until its stagger delay has elapsed, so it
+// doesn't finish until this long after the first card does. Callers must wait at least this
+// long before flipping isShuffling off, or the trailing cards get cut off mid-animation and
+// snap into place instead of settling smoothly.
+export const SHUFFLE_SETTLE_MS = 1400 + (STACK.length - 1) * STAGGER_MS;
+
 interface DeckStackProps {
   isShuffling: boolean;
 }

@@ -257,7 +257,10 @@ button.bg-gold:hover {
 }
 
 .stack-card {
-  transition: transform var(--duration-medium) var(--ease-soft);
+  /* Smooths the hand-off when the shuffle animation ends and the card settles back into its
+     resting pose — without this, any residual timing drift between cards snaps instead of
+     easing, which read as a stutter right at the end of the shuffle. */
+  transition: all 0.5s ease-in-out;
 }
 
 .stack-card.shuffling {

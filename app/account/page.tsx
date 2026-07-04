@@ -6,12 +6,28 @@ import { useAuth } from "@/components/AuthProvider";
 
 export default function AccountPage() {
   const { user, quota, loading, refresh, logout } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
+  async function handleForgotSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setForgotSent(true);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +56,55 @@ export default function AccountPage() {
 
   if (loading) {
     return <div className="min-h-[60vh]" />;
+  }
+
+  if (!user && mode === "forgot") {
+    return (
+      <section className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-6 py-16">
+        <h1 className="font-display mb-3 text-center text-3xl text-moon">Reset your password</h1>
+        {forgotSent ? (
+          <p className="text-center text-sm text-moon-dim">
+            If an account exists for <span className="text-moon">{email}</span>, we&apos;ve sent a link to reset your
+            password. It expires in 1 hour.
+          </p>
+        ) : (
+          <>
+            <p className="mb-6 text-center text-sm text-moon-dim">
+              Enter your email and we&apos;ll send you a link to choose a new password.
+            </p>
+            <form onSubmit={handleForgotSubmit} className="flex flex-col gap-4">
+              <label className="flex flex-col gap-2">
+                <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Email</span>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-xl border border-ink-line bg-ink-raised/60 p-3 text-sm text-moon focus:border-gold-dim focus:outline-none"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="mt-2 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
+              >
+                {submitting ? "Sending…" : "Send Reset Link"}
+              </button>
+            </form>
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setMode("login");
+            setForgotSent(false);
+          }}
+          className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
+        >
+          Back to Sign In
+        </button>
+      </section>
+    );
   }
 
   if (!user) {
@@ -86,6 +151,15 @@ export default function AccountPage() {
               className="rounded-xl border border-ink-line bg-ink-raised/60 p-3 text-sm text-moon focus:border-gold-dim focus:outline-none"
             />
           </label>
+          {mode === "login" && (
+            <button
+              type="button"
+              onClick={() => setMode("forgot")}
+              className="-mt-2 self-end text-xs text-moon-dim underline underline-offset-4 hover:text-moon"
+            >
+              Forgot password?
+            </button>
+          )}
           {mode === "register" && (
             <label className="flex flex-col gap-2">
               <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Confirm Password</span>

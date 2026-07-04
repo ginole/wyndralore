@@ -6,7 +6,7 @@ import { DeckCard, Orientation, SpreadConfig, Theme } from "@/lib/types";
 import { canDraw, recordDraw } from "@/lib/dailyLimit";
 import { useAuth, todayLocal, QuotaStatus } from "./AuthProvider";
 import { track } from "@/lib/track";
-import DeckStack from "./DeckStack";
+import DeckStack, { SHUFFLE_SETTLE_MS } from "./DeckStack";
 import CardFan from "./CardFan";
 import CardFace from "./CardFace";
 import DrawnCardBlock from "./DrawnCardBlock";
@@ -106,7 +106,7 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
     setShuffledDeck(shuffleArray(deck));
     setIsShuffling(true);
     setPhase("shuffle");
-    setTimeout(() => setIsShuffling(false), 1400);
+    setTimeout(() => setIsShuffling(false), SHUFFLE_SETTLE_MS);
   }
 
   async function handleSaveToJournal() {
@@ -135,7 +135,7 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
   function handleShuffleAgain() {
     setIsShuffling(true);
     setShuffledDeck(shuffleArray(deck));
-    setTimeout(() => setIsShuffling(false), 1400);
+    setTimeout(() => setIsShuffling(false), SHUFFLE_SETTLE_MS);
   }
 
   function consumeQuotaOnFirstPick() {
