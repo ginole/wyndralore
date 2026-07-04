@@ -11,11 +11,12 @@ const STACK = [
 ];
 
 const STAGGER_MS = 45;
-// The last card's shuffle animation doesn't start until its stagger delay has elapsed, so it
-// doesn't finish until this long after the first card does. Callers must wait at least this
-// long before flipping isShuffling off, or the trailing cards get cut off mid-animation and
-// snap into place instead of settling smoothly.
-export const SHUFFLE_SETTLE_MS = 1400 + (STACK.length - 1) * STAGGER_MS;
+const BASE_DURATION_MS = 1400;
+// Cards start staggered (a natural cascade) but each one's duration is shortened by its own
+// delay, so every card still finishes its settle at exactly BASE_DURATION_MS — otherwise the
+// staggered starts also mean staggered finishes, and the deck visibly resolves card-by-card
+// instead of snapping into a neat, aligned stack all at once.
+export const SHUFFLE_SETTLE_MS = BASE_DURATION_MS + 50;
 
 interface DeckStackProps {
   isShuffling: boolean;
@@ -44,7 +45,8 @@ export default function DeckStack({ isShuffling }: DeckStackProps) {
                 "--sx": `${s.x * 6 + (i % 2 === 0 ? -30 : 30)}px`,
                 "--sy": `${-18 - i * 6}px`,
                 "--sr": `${s.rot * 3 + (i % 2 === 0 ? -14 : 14)}deg`,
-                animationDelay: `${i * 45}ms`,
+                animationDelay: `${i * STAGGER_MS}ms`,
+                animationDuration: `${BASE_DURATION_MS - i * STAGGER_MS}ms`,
                 zIndex: i,
               } as React.CSSProperties
             }
