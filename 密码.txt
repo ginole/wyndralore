@@ -1,2 +1,0 @@
-开发服务器运行在 localhost:3000。数据库里有几个测试账号（premium: uitest@example.com / testpassword123；free: phase3test@example.com），/admin 密码见 .env。至此 PRD 的 Phase 1–3 三个阶段已全部交付完毕。
-

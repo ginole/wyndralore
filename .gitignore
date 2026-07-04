@@ -46,3 +46,6 @@ next-env.d.ts
 
 # local tooling (machine-specific, not project config)
 .claude/
+
+# personal notes, not project files
+密码.txt
