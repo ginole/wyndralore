@@ -8,6 +8,15 @@
       <stop offset="50%" stop-color="#c9a96e" stop-opacity="0.14"/>
       <stop offset="65%" stop-color="#c9a96e" stop-opacity="0"/>
     </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e4c894" stop-opacity="0.13"/>
+      <stop offset="45%" stop-color="#e4c894" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#e4c894" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
     <symbol id="sym-wands" viewBox="-20 -20 40 40"><g>
     <line x1="0" y1="-18" x2="0" y2="18" stroke="#c9a96e" stroke-width="2" stroke-linecap="round" transform="rotate(18)"/>
     <line x1="-5" y1="-10" x2="5" y2="-6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
@@ -29,15 +38,24 @@
   </g></symbol>
   </defs>
     <rect x="0" y="0" width="400" height="640" fill="url(#bgGrad)"/>
+    <ellipse cx="200" cy="330" rx="185" ry="215" fill="url(#halo)"/>
     <rect x="0" y="0" width="400" height="640" fill="url(#sheen)"/>
     <rect x="14" y="14" width="372" height="612" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="0.9"/>
-    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.8" opacity="0.55"/>
-    <circle cx="14" cy="14" r="3" fill="#c9a96e"/><circle cx="386" cy="14" r="3" fill="#c9a96e"/><circle cx="14" cy="626" r="3" fill="#c9a96e"/><circle cx="386" cy="626" r="3" fill="#c9a96e"/>
-  
+    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5"/>
+    <rect x="27" y="27" width="346" height="586" fill="none" stroke="#c9a96e" stroke-width="0.4" opacity="0.25"/>
+    <polygon points="44,38 50,44 44,50 38,44" fill="#e4c894" opacity="1"/><polygon points="356,38 362,44 356,50 350,44" fill="#e4c894" opacity="1"/><polygon points="44,590 50,596 44,602 38,596" fill="#e4c894" opacity="1"/><polygon points="356,590 362,596 356,602 350,596" fill="#e4c894" opacity="1"/>
+    <g fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5">
+      <path d="M30 58 Q30 30 58 30"/>
+      <path d="M370 58 Q370 30 342 30"/>
+      <path d="M30 582 Q30 610 58 610"/>
+      <path d="M370 582 Q370 610 342 610"/>
+    </g>
+    <g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.54"><line x1="52.7" y1="407.2" x2="52.7" y2="414.1"/><line x1="49.3" y1="410.6" x2="56.2" y2="410.6"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.56"><line x1="344.7" y1="378.5" x2="344.7" y2="387.4"/><line x1="340.2" y1="382.9" x2="349.1" y2="382.9"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.51"><line x1="48.3" y1="425.2" x2="48.3" y2="431.8"/><line x1="45.0" y1="428.5" x2="51.6" y2="428.5"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.59"><line x1="341.9" y1="395.0" x2="341.9" y2="402.8"/><line x1="337.9" y1="398.9" x2="345.8" y2="398.9"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.54"><line x1="54.5" y1="201.8" x2="54.5" y2="208.0"/><line x1="51.4" y1="204.9" x2="57.6" y2="204.9"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.48"><line x1="345.8" y1="506.7" x2="345.8" y2="513.7"/><line x1="342.3" y1="510.2" x2="349.3" y2="510.2"/></g>
+  <g filter="url(#glow)">
     <circle cx="200" cy="340" r="150" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="0.8"/>
     <circle cx="200" cy="340" r="120" fill="none" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
     <line x1="200" y1="280" x2="200" y2="190" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="230" y1="288.0384757729337" x2="275" y2="210.0961894323342" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="251.96152422706632" y1="310" x2="329.9038105676658" y2="265" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="260" y1="340" x2="350" y2="340" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="251.96152422706632" y1="370" x2="329.9038105676658" y2="415" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="230" y1="391.9615242270663" x2="275" y2="469.9038105676658" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="200" y1="400" x2="200" y2="490" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="170" y1="391.9615242270663" x2="125.00000000000003" y2="469.9038105676658" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="148.03847577293368" y1="370" x2="70.0961894323342" y2="415" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="140" y1="340" x2="50" y2="340" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="148.03847577293368" y1="310" x2="70.0961894323342" y2="265" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/><line x1="169.99999999999997" y1="288.0384757729337" x2="124.99999999999993" y2="210.09618943233423" stroke="#c9a96e" stroke-width="1" opacity="0.5" stroke-linecap="round"/>
     <polygon points="200,280 209.95,315.98 242.43,297.57 224.02,330.05 260,340 224.02,349.95 242.43,382.43 209.95,364.02 200,400 190.05,364.02 157.57,382.43 175.98,349.95 140,340 175.98,330.05 157.57,297.57 190.05,315.98" fill="none" stroke="#c9a96e" stroke-width="1.8" opacity="1"/>
-    <text x="200" y="348" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#e4c894">W</text>
+    <text x="200" y="348" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="#f0dcae">W</text>
     <text x="200" y="594" text-anchor="middle" font-family="Georgia, serif" font-size="14" letter-spacing="5" fill="#c9a96e" opacity="0.8">WYNDRALORE</text>
-  </svg>
+  </g></svg>

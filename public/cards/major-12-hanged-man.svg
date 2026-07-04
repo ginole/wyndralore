@@ -8,6 +8,15 @@
       <stop offset="50%" stop-color="#c9a96e" stop-opacity="0.14"/>
       <stop offset="65%" stop-color="#c9a96e" stop-opacity="0"/>
     </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e4c894" stop-opacity="0.13"/>
+      <stop offset="45%" stop-color="#e4c894" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#e4c894" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
     <symbol id="sym-wands" viewBox="-20 -20 40 40"><g>
     <line x1="0" y1="-18" x2="0" y2="18" stroke="#c9a96e" stroke-width="2" stroke-linecap="round" transform="rotate(18)"/>
     <line x1="-5" y1="-10" x2="5" y2="-6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
@@ -29,12 +38,25 @@
   </g></symbol>
   </defs>
     <rect x="0" y="0" width="400" height="640" fill="url(#bgGrad)"/>
+    <ellipse cx="200" cy="330" rx="185" ry="215" fill="url(#halo)"/>
     <rect x="0" y="0" width="400" height="640" fill="url(#sheen)"/>
     <rect x="14" y="14" width="372" height="612" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="0.9"/>
-    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.8" opacity="0.55"/>
-    <circle cx="14" cy="14" r="3" fill="#c9a96e"/><circle cx="386" cy="14" r="3" fill="#c9a96e"/><circle cx="14" cy="626" r="3" fill="#c9a96e"/><circle cx="386" cy="626" r="3" fill="#c9a96e"/>
-  <line x1="140" y1="270" x2="260" y2="270" stroke="#c9a96e" stroke-width="1.6" opacity="1" stroke-linecap="round"/><line x1="200" y1="270" x2="200" y2="310" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><polygon points="158,310 242,310 200,400" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="1"/><circle cx="200" cy="330" r="20" fill="none" stroke="#c9a96e" stroke-width="1.2" opacity="0.7"/>
-    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#c9a96e" opacity="0.9">XII</text>
-    <line x1="140" y1="86" x2="260" y2="86" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
-    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#e4c894">THE HANGED MAN</text>
-  </svg>
+    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5"/>
+    <rect x="27" y="27" width="346" height="586" fill="none" stroke="#c9a96e" stroke-width="0.4" opacity="0.25"/>
+    <polygon points="44,38 50,44 44,50 38,44" fill="#e4c894" opacity="1"/><polygon points="356,38 362,44 356,50 350,44" fill="#e4c894" opacity="1"/><polygon points="44,590 50,596 44,602 38,596" fill="#e4c894" opacity="1"/><polygon points="356,590 362,596 356,602 350,596" fill="#e4c894" opacity="1"/>
+    <g fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5">
+      <path d="M30 58 Q30 30 58 30"/>
+      <path d="M370 58 Q370 30 342 30"/>
+      <path d="M30 582 Q30 610 58 610"/>
+      <path d="M370 582 Q370 610 342 610"/>
+    </g>
+    <g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.40"><line x1="42.3" y1="448.3" x2="42.3" y2="457.2"/><line x1="37.8" y1="452.8" x2="46.7" y2="452.8"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.55"><line x1="338.8" y1="295.4" x2="338.8" y2="303.7"/><line x1="334.7" y1="299.5" x2="343.0" y2="299.5"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.58"><line x1="44.6" y1="357.0" x2="44.6" y2="364.4"/><line x1="40.9" y1="360.7" x2="48.2" y2="360.7"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.42"><line x1="332.8" y1="192.8" x2="332.8" y2="199.0"/><line x1="329.7" y1="195.9" x2="335.9" y2="195.9"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.36"><line x1="65.6" y1="510.2" x2="65.6" y2="518.9"/><line x1="61.3" y1="514.5" x2="70.0" y2="514.5"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.46"><line x1="351.4" y1="419.8" x2="351.4" y2="427.6"/><line x1="347.5" y1="423.7" x2="355.3" y2="423.7"/></g>
+  <g filter="url(#glow)"><line x1="140" y1="270" x2="260" y2="270" stroke="#c9a96e" stroke-width="1.6" opacity="1" stroke-linecap="round"/><line x1="200" y1="270" x2="200" y2="310" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><polygon points="158,310 242,310 200,400" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="1"/><circle cx="200" cy="330" r="20" fill="none" stroke="#c9a96e" stroke-width="1.2" opacity="0.7"/>
+    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#f0dcae">XII</text>
+    <polygon points="153,60 157,64 153,68 149,64" fill="#c9a96e" opacity="0.8"/>
+    <polygon points="247,60 251,64 247,68 243,64" fill="#c9a96e" opacity="0.8"/>
+    <line x1="140" y1="88" x2="192" y2="88" stroke="#c9a96e" stroke-width="0.9" opacity="0.5"/>
+    <line x1="208" y1="88" x2="260" y2="88" stroke="#c9a96e" stroke-width="0.9" opacity="0.5"/>
+    <polygon points="200,83.5 204.5,88 200,92.5 195.5,88" fill="#c9a96e" opacity="0.7"/>
+    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#f0dcae">THE HANGED MAN</text>
+  </g></svg>

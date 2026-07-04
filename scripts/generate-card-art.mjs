@@ -12,8 +12,30 @@ const W = 400;
 const H = 640;
 const GOLD = "#c9a96e";
 const GOLD_BRIGHT = "#e4c894";
+const GOLD_LUMEN = "#f0dcae"; // brightest highlight — nameplate text, focal accents
 const INK = "#0b0e1a";
 const INK_RAISED = "#12162a";
+
+// Per-suit halo tints (subtle — linework stays gold everywhere, only the ambient
+// glow behind the icon shifts hue so suits read differently at a glance).
+const SUIT_ACCENTS = {
+  wands: "#d89a5e", // ember
+  cups: "#8fb3c9", // moonwater
+  swords: "#b9c2cf", // steel
+  pentacles: "#a9c49a", // verdant
+};
+
+// Tiny deterministic PRNG so star-speck placement is stable across regenerations.
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 const toRad = (deg) => (deg * Math.PI) / 180;
 
@@ -153,7 +175,7 @@ function suitSymbolId(suit) {
   return `sym-${suit}`;
 }
 
-function defs() {
+function defs(accent = GOLD_BRIGHT) {
   return `<defs>
     <radialGradient id="bgGrad" cx="50%" cy="38%" r="75%">
       <stop offset="0%" stop-color="${INK_RAISED}"/>
@@ -164,39 +186,92 @@ function defs() {
       <stop offset="50%" stop-color="${GOLD}" stop-opacity="0.14"/>
       <stop offset="65%" stop-color="${GOLD}" stop-opacity="0"/>
     </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${accent}" stop-opacity="0.13"/>
+      <stop offset="45%" stop-color="${accent}" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="${accent}" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
     ${Object.entries(SUIT_SYMBOLS)
       .map(([suit, inner]) => `<symbol id="${suitSymbolId(suit)}" viewBox="-20 -20 40 40">${inner}</symbol>`)
       .join("\n")}
   </defs>`;
 }
 
-function frame() {
+function diamond(cx, cy, r, fill = GOLD_BRIGHT, opacity = 1) {
+  return `<polygon points="${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}" fill="${fill}" opacity="${opacity}"/>`;
+}
+
+function frame(seed = 1) {
+  // Star specks in the side margins (outside the icon/pip zone) — a light dusting,
+  // deterministically placed per card so regeneration is stable.
+  const rand = mulberry32(seed * 7919 + 13);
+  let specks = "";
+  for (let i = 0; i < 6; i++) {
+    const left = i % 2 === 0;
+    const x = left ? 42 + rand() * 32 : 326 + rand() * 32;
+    const y = 120 + rand() * 400;
+    const s = 3 + rand() * 1.5;
+    specks += `<g stroke="${GOLD}" stroke-width="0.9" stroke-linecap="round" opacity="${(0.35 + rand() * 0.25).toFixed(2)}"><line x1="${x.toFixed(1)}" y1="${(y - s).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y + s).toFixed(1)}"/><line x1="${(x - s).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + s).toFixed(1)}" y2="${y.toFixed(1)}"/></g>`;
+  }
   return `
     <rect x="0" y="0" width="${W}" height="${H}" fill="url(#bgGrad)"/>
+    <ellipse cx="${W / 2}" cy="330" rx="185" ry="215" fill="url(#halo)"/>
     <rect x="0" y="0" width="${W}" height="${H}" fill="url(#sheen)"/>
     <rect x="14" y="14" width="${W - 28}" height="${H - 28}" fill="none" stroke="${GOLD}" stroke-width="1.6" opacity="0.9"/>
-    <rect x="21" y="21" width="${W - 42}" height="${H - 42}" fill="none" stroke="${GOLD}" stroke-width="0.8" opacity="0.55"/>
+    <rect x="21" y="21" width="${W - 42}" height="${H - 42}" fill="none" stroke="${GOLD}" stroke-width="0.7" opacity="0.5"/>
+    <rect x="27" y="27" width="${W - 54}" height="${H - 54}" fill="none" stroke="${GOLD}" stroke-width="0.4" opacity="0.25"/>
     ${[
-      [14, 14],
-      [W - 14, 14],
-      [14, H - 14],
-      [W - 14, H - 14],
+      [44, 44],
+      [W - 44, 44],
+      [44, H - 44],
+      [W - 44, H - 44],
     ]
-      .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3" fill="${GOLD}"/>`)
+      .map(([x, y]) => diamond(x, y, 6))
       .join("")}
+    <g fill="none" stroke="${GOLD}" stroke-width="0.7" opacity="0.5">
+      <path d="M30 58 Q30 30 58 30"/>
+      <path d="M${W - 30} 58 Q${W - 30} 30 ${W - 58} 30"/>
+      <path d="M30 ${H - 58} Q30 ${H - 30} 58 ${H - 30}"/>
+      <path d="M${W - 30} ${H - 58} Q${W - 30} ${H - 30} ${W - 58} ${H - 30}"/>
+    </g>
+    ${specks}
   `;
 }
 
 function nameplate(topLabel, mainLabel) {
   return `
-    <text x="${W / 2}" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="${GOLD}" opacity="0.9">${topLabel}</text>
-    <line x1="${W / 2 - 60}" y1="86" x2="${W / 2 + 60}" y2="86" stroke="${GOLD}" stroke-width="1" opacity="0.5"/>
-    <text x="${W / 2}" y="${H - 46}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="${GOLD_BRIGHT}">${mainLabel}</text>
+    <text x="${W / 2}" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="${GOLD_LUMEN}">${topLabel}</text>
+    ${diamond(W / 2 - 26 - topLabel.length * 7, 64, 4, GOLD, 0.8)}
+    ${diamond(W / 2 + 26 + topLabel.length * 7, 64, 4, GOLD, 0.8)}
+    <line x1="${W / 2 - 60}" y1="88" x2="${W / 2 - 8}" y2="88" stroke="${GOLD}" stroke-width="0.9" opacity="0.5"/>
+    <line x1="${W / 2 + 8}" y1="88" x2="${W / 2 + 60}" y2="88" stroke="${GOLD}" stroke-width="0.9" opacity="0.5"/>
+    ${diamond(W / 2, 88, 4.5, GOLD, 0.7)}
+    ${(() => {
+      // Long names shrink to stay clear of the bottom corner diamonds (inner edges ≈ x 50/350).
+      // Georgia caps advance ≈ 0.68em + 1.5px letter-spacing per char.
+      const fs = Math.min(25, Math.floor((300 / mainLabel.length - 1.5) / 0.68));
+      const half = (mainLabel.length * (0.68 * fs + 1.5)) / 2;
+      let out = `<text x="${W / 2}" y="${H - 46}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${fs}" letter-spacing="1.5" fill="${GOLD_LUMEN}">${mainLabel}</text>`;
+      const inner = W / 2 - half - 14;
+      if (inner >= 64) {
+        const start = Math.max(40, inner - 28);
+        out +=
+          `<line x1="${start}" y1="${H - 52}" x2="${inner}" y2="${H - 52}" stroke="${GOLD}" stroke-width="0.8" opacity="0.45"/>` +
+          `<line x1="${W - inner}" y1="${H - 52}" x2="${W - start}" y2="${H - 52}" stroke="${GOLD}" stroke-width="0.8" opacity="0.45"/>`;
+      }
+      return out;
+    })()}
   `;
 }
 
-function svgWrap(inner) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${defs()}${frame()}${inner}</svg>`;
+function svgWrap(inner, { accent = GOLD_BRIGHT, seed = 1 } = {}) {
+  // The icon + nameplate live in one glow-filtered group: feGaussianBlur underlays a soft
+  // bloom while feMerge keeps the source lines crisp on top. Frame/specks stay unfiltered.
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${defs(accent)}${frame(seed)}<g filter="url(#glow)">${inner}</g></svg>`;
 }
 
 // ---------- Major Arcana icon composers (id -> icon fragment, centered at 200,340) ----------
@@ -508,10 +583,10 @@ const files = [];
     ${ring(CX, CY, 120, 0.5, 1)}
     ${rayBurst(CX, CY, 60, 150, 12, { width: 1, opacity: 0.5 })}
     ${star(CX, CY, 8, 60, 26, { width: 1.8 })}
-    <text x="${CX}" y="${CY + 8}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="${GOLD_BRIGHT}">W</text>
+    <text x="${CX}" y="${CY + 8}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="${GOLD_LUMEN}">W</text>
     <text x="${CX}" y="${H - 46}" text-anchor="middle" font-family="Georgia, serif" font-size="14" letter-spacing="5" fill="${GOLD}" opacity="0.8">WYNDRALORE</text>
   `;
-  const svg = svgWrap(inner);
+  const svg = svgWrap(inner, { seed: 999 });
   writeFileSync(join(OUT_DIR, "back.svg"), svg, "utf8");
   files.push("back.svg");
 }
@@ -552,20 +627,20 @@ for (let id = 0; id < 22; id++) {
   const name = MAJOR_NAMES[id];
   const icon = MAJOR_ICONS[id]();
   const inner = icon + nameplate(ROMAN[id], name.toUpperCase());
-  const svg = svgWrap(inner);
+  const svg = svgWrap(inner, { seed: id + 1 });
   const fname = `major-${String(id).padStart(2, "0")}-${slugify(name.replace(/^The /, ""))}.svg`;
   writeFileSync(join(OUT_DIR, fname), svg, "utf8");
   files.push(fname);
 }
 
 const SUITS = ["wands", "cups", "swords", "pentacles"];
-for (const suit of SUITS) {
+for (const [suitIdx, suit] of SUITS.entries()) {
   for (let rank = 1; rank <= 14; rank++) {
     const rankName = RANK_NAMES[rank];
     const name = `${rankName} of ${suit[0].toUpperCase()}${suit.slice(1)}`;
     const icon = rank <= 10 ? pipCard(suit, rank) : courtCard(suit, rank);
     const inner = icon + nameplate(rank <= 10 ? String(rank).padStart(2, "0") : rankName.toUpperCase(), name.toUpperCase());
-    const svg = svgWrap(inner);
+    const svg = svgWrap(inner, { accent: SUIT_ACCENTS[suit], seed: 100 + suitIdx * 14 + rank });
     const fname = `minor-${suit}-${slugify(rankName)}.svg`;
     writeFileSync(join(OUT_DIR, fname), svg, "utf8");
     files.push(fname);

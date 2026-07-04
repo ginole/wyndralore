@@ -8,6 +8,15 @@
       <stop offset="50%" stop-color="#c9a96e" stop-opacity="0.14"/>
       <stop offset="65%" stop-color="#c9a96e" stop-opacity="0"/>
     </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d89a5e" stop-opacity="0.13"/>
+      <stop offset="45%" stop-color="#d89a5e" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#d89a5e" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
     <symbol id="sym-wands" viewBox="-20 -20 40 40"><g>
     <line x1="0" y1="-18" x2="0" y2="18" stroke="#c9a96e" stroke-width="2" stroke-linecap="round" transform="rotate(18)"/>
     <line x1="-5" y1="-10" x2="5" y2="-6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
@@ -29,12 +38,25 @@
   </g></symbol>
   </defs>
     <rect x="0" y="0" width="400" height="640" fill="url(#bgGrad)"/>
+    <ellipse cx="200" cy="330" rx="185" ry="215" fill="url(#halo)"/>
     <rect x="0" y="0" width="400" height="640" fill="url(#sheen)"/>
     <rect x="14" y="14" width="372" height="612" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="0.9"/>
-    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.8" opacity="0.55"/>
-    <circle cx="14" cy="14" r="3" fill="#c9a96e"/><circle cx="386" cy="14" r="3" fill="#c9a96e"/><circle cx="14" cy="626" r="3" fill="#c9a96e"/><circle cx="386" cy="626" r="3" fill="#c9a96e"/>
-  <use href="#sym-wands" x="128" y="144.6" width="34" height="34"/><use href="#sym-wands" x="238" y="144.6" width="34" height="34"/><use href="#sym-wands" x="128" y="220.2" width="34" height="34"/><use href="#sym-wands" x="238" y="220.2" width="34" height="34"/><use href="#sym-wands" x="128" y="295.79999999999995" width="34" height="34"/><use href="#sym-wands" x="238" y="295.79999999999995" width="34" height="34"/><use href="#sym-wands" x="128" y="371.4" width="34" height="34"/><use href="#sym-wands" x="238" y="371.4" width="34" height="34"/><use href="#sym-wands" x="128" y="447" width="34" height="34"/><use href="#sym-wands" x="238" y="447" width="34" height="34"/>
-    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#c9a96e" opacity="0.9">10</text>
-    <line x1="140" y1="86" x2="260" y2="86" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
-    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#e4c894">TEN OF WANDS</text>
-  </svg>
+    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5"/>
+    <rect x="27" y="27" width="346" height="586" fill="none" stroke="#c9a96e" stroke-width="0.4" opacity="0.25"/>
+    <polygon points="44,38 50,44 44,50 38,44" fill="#e4c894" opacity="1"/><polygon points="356,38 362,44 356,50 350,44" fill="#e4c894" opacity="1"/><polygon points="44,590 50,596 44,602 38,596" fill="#e4c894" opacity="1"/><polygon points="356,590 362,596 356,602 350,596" fill="#e4c894" opacity="1"/>
+    <g fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5">
+      <path d="M30 58 Q30 30 58 30"/>
+      <path d="M370 58 Q370 30 342 30"/>
+      <path d="M30 582 Q30 610 58 610"/>
+      <path d="M370 582 Q370 610 342 610"/>
+    </g>
+    <g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.57"><line x1="44.1" y1="234.4" x2="44.1" y2="242.0"/><line x1="40.3" y1="238.2" x2="47.9" y2="238.2"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.53"><line x1="343.3" y1="397.1" x2="343.3" y2="405.2"/><line x1="339.3" y1="401.2" x2="347.3" y2="401.2"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.44"><line x1="71.2" y1="419.8" x2="71.2" y2="427.5"/><line x1="67.4" y1="423.6" x2="75.0" y2="423.6"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.48"><line x1="327.4" y1="334.4" x2="327.4" y2="341.0"/><line x1="324.2" y1="337.7" x2="330.7" y2="337.7"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.56"><line x1="71.4" y1="251.2" x2="71.4" y2="257.5"/><line x1="68.2" y1="254.4" x2="74.6" y2="254.4"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.44"><line x1="356.8" y1="460.4" x2="356.8" y2="466.5"/><line x1="353.7" y1="463.4" x2="359.8" y2="463.4"/></g>
+  <g filter="url(#glow)"><use href="#sym-wands" x="128" y="144.6" width="34" height="34"/><use href="#sym-wands" x="238" y="144.6" width="34" height="34"/><use href="#sym-wands" x="128" y="220.2" width="34" height="34"/><use href="#sym-wands" x="238" y="220.2" width="34" height="34"/><use href="#sym-wands" x="128" y="295.79999999999995" width="34" height="34"/><use href="#sym-wands" x="238" y="295.79999999999995" width="34" height="34"/><use href="#sym-wands" x="128" y="371.4" width="34" height="34"/><use href="#sym-wands" x="238" y="371.4" width="34" height="34"/><use href="#sym-wands" x="128" y="447" width="34" height="34"/><use href="#sym-wands" x="238" y="447" width="34" height="34"/>
+    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#f0dcae">10</text>
+    <polygon points="160,60 164,64 160,68 156,64" fill="#c9a96e" opacity="0.8"/>
+    <polygon points="240,60 244,64 240,68 236,64" fill="#c9a96e" opacity="0.8"/>
+    <line x1="140" y1="88" x2="192" y2="88" stroke="#c9a96e" stroke-width="0.9" opacity="0.5"/>
+    <line x1="208" y1="88" x2="260" y2="88" stroke="#c9a96e" stroke-width="0.9" opacity="0.5"/>
+    <polygon points="200,83.5 204.5,88 200,92.5 195.5,88" fill="#c9a96e" opacity="0.7"/>
+    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#f0dcae">TEN OF WANDS</text><line x1="47" y1="588" x2="75" y2="588" stroke="#c9a96e" stroke-width="0.8" opacity="0.45"/><line x1="325" y1="588" x2="353" y2="588" stroke="#c9a96e" stroke-width="0.8" opacity="0.45"/>
+  </g></svg>

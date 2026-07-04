@@ -8,6 +8,15 @@
       <stop offset="50%" stop-color="#c9a96e" stop-opacity="0.14"/>
       <stop offset="65%" stop-color="#c9a96e" stop-opacity="0"/>
     </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e4c894" stop-opacity="0.13"/>
+      <stop offset="45%" stop-color="#e4c894" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#e4c894" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
     <symbol id="sym-wands" viewBox="-20 -20 40 40"><g>
     <line x1="0" y1="-18" x2="0" y2="18" stroke="#c9a96e" stroke-width="2" stroke-linecap="round" transform="rotate(18)"/>
     <line x1="-5" y1="-10" x2="5" y2="-6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
@@ -29,12 +38,25 @@
   </g></symbol>
   </defs>
     <rect x="0" y="0" width="400" height="640" fill="url(#bgGrad)"/>
+    <ellipse cx="200" cy="330" rx="185" ry="215" fill="url(#halo)"/>
     <rect x="0" y="0" width="400" height="640" fill="url(#sheen)"/>
     <rect x="14" y="14" width="372" height="612" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="0.9"/>
-    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.8" opacity="0.55"/>
-    <circle cx="14" cy="14" r="3" fill="#c9a96e"/><circle cx="386" cy="14" r="3" fill="#c9a96e"/><circle cx="14" cy="626" r="3" fill="#c9a96e"/><circle cx="386" cy="626" r="3" fill="#c9a96e"/>
-  <circle cx="200" cy="340" r="78" fill="none" stroke="#c9a96e" stroke-width="1.8" opacity="1"/><circle cx="200" cy="340" r="46" fill="none" stroke="#c9a96e" stroke-width="1.2" opacity="0.7"/><line x1="200" y1="294" x2="200" y2="262" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="232.5269119345812" y1="307.47308806541884" x2="255.1543289325507" y2="284.8456710674493" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="246" y1="340" x2="278" y2="340" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="232.5269119345812" y1="372.52691193458116" x2="255.1543289325507" y2="395.1543289325507" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="200" y1="386" x2="200" y2="418" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="167.4730880654188" y1="372.52691193458116" x2="144.8456710674493" y2="395.1543289325507" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="154" y1="340" x2="122" y2="340" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="167.4730880654188" y1="307.47308806541884" x2="144.84567106744927" y2="284.8456710674493" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><circle cx="200" cy="340" r="4" fill="#c9a96e"/>
-    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#c9a96e" opacity="0.9">X</text>
-    <line x1="140" y1="86" x2="260" y2="86" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
-    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#e4c894">WHEEL OF FORTUNE</text>
-  </svg>
+    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5"/>
+    <rect x="27" y="27" width="346" height="586" fill="none" stroke="#c9a96e" stroke-width="0.4" opacity="0.25"/>
+    <polygon points="44,38 50,44 44,50 38,44" fill="#e4c894" opacity="1"/><polygon points="356,38 362,44 356,50 350,44" fill="#e4c894" opacity="1"/><polygon points="44,590 50,596 44,602 38,596" fill="#e4c894" opacity="1"/><polygon points="356,590 362,596 356,602 350,596" fill="#e4c894" opacity="1"/>
+    <g fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5">
+      <path d="M30 58 Q30 30 58 30"/>
+      <path d="M370 58 Q370 30 342 30"/>
+      <path d="M30 582 Q30 610 58 610"/>
+      <path d="M370 582 Q370 610 342 610"/>
+    </g>
+    <g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.42"><line x1="71.2" y1="422.1" x2="71.2" y2="429.8"/><line x1="67.4" y1="426.0" x2="75.1" y2="426.0"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.40"><line x1="326.4" y1="294.8" x2="326.4" y2="302.3"/><line x1="322.6" y1="298.6" x2="330.1" y2="298.6"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.59"><line x1="65.5" y1="391.6" x2="65.5" y2="400.2"/><line x1="61.2" y1="395.9" x2="69.8" y2="395.9"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.54"><line x1="333.5" y1="362.7" x2="333.5" y2="369.0"/><line x1="330.3" y1="365.9" x2="336.6" y2="365.9"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.46"><line x1="43.3" y1="392.1" x2="43.3" y2="400.0"/><line x1="39.4" y1="396.1" x2="47.2" y2="396.1"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.42"><line x1="328.7" y1="147.3" x2="328.7" y2="154.7"/><line x1="325.0" y1="151.0" x2="332.4" y2="151.0"/></g>
+  <g filter="url(#glow)"><circle cx="200" cy="340" r="78" fill="none" stroke="#c9a96e" stroke-width="1.8" opacity="1"/><circle cx="200" cy="340" r="46" fill="none" stroke="#c9a96e" stroke-width="1.2" opacity="0.7"/><line x1="200" y1="294" x2="200" y2="262" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="232.5269119345812" y1="307.47308806541884" x2="255.1543289325507" y2="284.8456710674493" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="246" y1="340" x2="278" y2="340" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="232.5269119345812" y1="372.52691193458116" x2="255.1543289325507" y2="395.1543289325507" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="200" y1="386" x2="200" y2="418" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="167.4730880654188" y1="372.52691193458116" x2="144.8456710674493" y2="395.1543289325507" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="154" y1="340" x2="122" y2="340" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="167.4730880654188" y1="307.47308806541884" x2="144.84567106744927" y2="284.8456710674493" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><circle cx="200" cy="340" r="4" fill="#c9a96e"/>
+    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#f0dcae">X</text>
+    <polygon points="167,60 171,64 167,68 163,64" fill="#c9a96e" opacity="0.8"/>
+    <polygon points="233,60 237,64 233,68 229,64" fill="#c9a96e" opacity="0.8"/>
+    <line x1="140" y1="88" x2="192" y2="88" stroke="#c9a96e" stroke-width="0.9" opacity="0.5"/>
+    <line x1="208" y1="88" x2="260" y2="88" stroke="#c9a96e" stroke-width="0.9" opacity="0.5"/>
+    <polygon points="200,83.5 204.5,88 200,92.5 195.5,88" fill="#c9a96e" opacity="0.7"/>
+    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#f0dcae">WHEEL OF FORTUNE</text>
+  </g></svg>

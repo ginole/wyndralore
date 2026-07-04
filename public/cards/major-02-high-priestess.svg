@@ -8,6 +8,15 @@
       <stop offset="50%" stop-color="#c9a96e" stop-opacity="0.14"/>
       <stop offset="65%" stop-color="#c9a96e" stop-opacity="0"/>
     </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e4c894" stop-opacity="0.13"/>
+      <stop offset="45%" stop-color="#e4c894" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#e4c894" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
     <symbol id="sym-wands" viewBox="-20 -20 40 40"><g>
     <line x1="0" y1="-18" x2="0" y2="18" stroke="#c9a96e" stroke-width="2" stroke-linecap="round" transform="rotate(18)"/>
     <line x1="-5" y1="-10" x2="5" y2="-6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
@@ -29,12 +38,25 @@
   </g></symbol>
   </defs>
     <rect x="0" y="0" width="400" height="640" fill="url(#bgGrad)"/>
+    <ellipse cx="200" cy="330" rx="185" ry="215" fill="url(#halo)"/>
     <rect x="0" y="0" width="400" height="640" fill="url(#sheen)"/>
     <rect x="14" y="14" width="372" height="612" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="0.9"/>
-    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.8" opacity="0.55"/>
-    <circle cx="14" cy="14" r="3" fill="#c9a96e"/><circle cx="386" cy="14" r="3" fill="#c9a96e"/><circle cx="14" cy="626" r="3" fill="#c9a96e"/><circle cx="386" cy="626" r="3" fill="#c9a96e"/>
-  <line x1="140" y1="270" x2="140" y2="410" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="133" y1="270" x2="147" y2="270" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="133" y1="410" x2="147" y2="410" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="260" y1="270" x2="260" y2="410" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="253" y1="270" x2="267" y2="270" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="253" y1="410" x2="267" y2="410" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><path d="M 218.7 306 A 34 34 0 1 0 218.7 374 A 24.48 24.48 0 1 1 218.7 306 Z" fill="#c9a96e" stroke="none" stroke-width="1.4" opacity="1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="200" cy="340" r="50" fill="none" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
-    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#c9a96e" opacity="0.9">II</text>
-    <line x1="140" y1="86" x2="260" y2="86" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
-    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#e4c894">THE HIGH PRIESTESS</text>
-  </svg>
+    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5"/>
+    <rect x="27" y="27" width="346" height="586" fill="none" stroke="#c9a96e" stroke-width="0.4" opacity="0.25"/>
+    <polygon points="44,38 50,44 44,50 38,44" fill="#e4c894" opacity="1"/><polygon points="356,38 362,44 356,50 350,44" fill="#e4c894" opacity="1"/><polygon points="44,590 50,596 44,602 38,596" fill="#e4c894" opacity="1"/><polygon points="356,590 362,596 356,602 350,596" fill="#e4c894" opacity="1"/>
+    <g fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.5">
+      <path d="M30 58 Q30 30 58 30"/>
+      <path d="M370 58 Q370 30 342 30"/>
+      <path d="M30 582 Q30 610 58 610"/>
+      <path d="M370 582 Q370 610 342 610"/>
+    </g>
+    <g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.39"><line x1="67.1" y1="277.8" x2="67.1" y2="285.7"/><line x1="63.2" y1="281.7" x2="71.0" y2="281.7"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.42"><line x1="341.0" y1="321.5" x2="341.0" y2="330.5"/><line x1="336.5" y1="326.0" x2="345.5" y2="326.0"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.60"><line x1="48.3" y1="288.7" x2="48.3" y2="297.1"/><line x1="44.1" y1="292.9" x2="52.6" y2="292.9"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.44"><line x1="339.6" y1="404.5" x2="339.6" y2="411.4"/><line x1="336.1" y1="407.9" x2="343.0" y2="407.9"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.60"><line x1="47.2" y1="418.7" x2="47.2" y2="425.6"/><line x1="43.7" y1="422.2" x2="50.6" y2="422.2"/></g><g stroke="#c9a96e" stroke-width="0.9" stroke-linecap="round" opacity="0.50"><line x1="358.0" y1="232.8" x2="358.0" y2="239.1"/><line x1="354.8" y1="236.0" x2="361.1" y2="236.0"/></g>
+  <g filter="url(#glow)"><line x1="140" y1="270" x2="140" y2="410" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="133" y1="270" x2="147" y2="270" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="133" y1="410" x2="147" y2="410" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="260" y1="270" x2="260" y2="410" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="253" y1="270" x2="267" y2="270" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><line x1="253" y1="410" x2="267" y2="410" stroke="#c9a96e" stroke-width="1.4" opacity="1" stroke-linecap="round"/><path d="M 218.7 306 A 34 34 0 1 0 218.7 374 A 24.48 24.48 0 1 1 218.7 306 Z" fill="#c9a96e" stroke="none" stroke-width="1.4" opacity="1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="200" cy="340" r="50" fill="none" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
+    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#f0dcae">II</text>
+    <polygon points="160,60 164,64 160,68 156,64" fill="#c9a96e" opacity="0.8"/>
+    <polygon points="240,60 244,64 240,68 236,64" fill="#c9a96e" opacity="0.8"/>
+    <line x1="140" y1="88" x2="192" y2="88" stroke="#c9a96e" stroke-width="0.9" opacity="0.5"/>
+    <line x1="208" y1="88" x2="260" y2="88" stroke="#c9a96e" stroke-width="0.9" opacity="0.5"/>
+    <polygon points="200,83.5 204.5,88 200,92.5 195.5,88" fill="#c9a96e" opacity="0.7"/>
+    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" letter-spacing="1.5" fill="#f0dcae">THE HIGH PRIESTESS</text>
+  </g></svg>
