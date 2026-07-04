@@ -16,6 +16,9 @@ export default function SiteFooter() {
         <Link href="/privacy" className="transition-colors hover:text-gold">
           Privacy
         </Link>
+        <a href="mailto:hello@wyndralore.com" className="transition-colors hover:text-gold">
+          Contact Us
+        </a>
       </nav>
       <p className="mx-auto max-w-xl text-xs leading-relaxed text-moon-dim">
         For entertainment and self-reflection purposes only. Not a substitute for professional advice.

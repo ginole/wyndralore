@@ -16,6 +16,9 @@ export async function markOrderPaid(order: Order, amountUsd: number) {
   ]);
 
   const { subject, html } = paymentConfirmationEmail(order.plan, order.code);
-  await sendEmail({ to: user.email, subject, html });
+  const result = await sendEmail({ to: user.email, subject, html });
+  if (!result.ok) {
+    console.error(`[payment-confirmation] email failed to send for order ${order.code}:`, result.error);
+  }
   await trackEvent("payment_completed", { userId: order.userId, props: { plan: order.plan, amountUsd } });
 }

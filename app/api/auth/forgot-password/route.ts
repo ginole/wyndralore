@@ -22,7 +22,10 @@ export async function POST(req: NextRequest) {
       const origin = req.nextUrl.origin;
       const resetLink = `${origin}/reset-password?token=${token}`;
       const { subject, html } = passwordResetEmail(resetLink);
-      await sendEmail({ to: user.email, subject, html });
+      const result = await sendEmail({ to: user.email, subject, html });
+      if (!result.ok) {
+        console.error(`[forgot-password] reset email failed to send for user ${user.id}:`, result.error);
+      }
     }
   }
 
