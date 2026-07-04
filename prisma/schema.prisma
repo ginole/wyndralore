@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  passwordHash String
+  plan      String   @default("free") // free | monthly | yearly | lifetime
+  planExpiresAt DateTime?
+
+  // Server-side free-tier quota (PRD §4.1), mirrors the localStorage logic used pre-auth.
+  dailyDrawsUsed      Int      @default(0)
+  bonusShareUsedToday Int      @default(0) // 0 or 1 (max 1 share bonus / day)
+  bonusAdUsedToday    Int      @default(0) // 0-3 (max 3 ad bonuses / day)
+  quotaDate           String?  // client-local YYYY-MM-DD these counters belong to
+
+  createdAt DateTime @default(now())
+  orders    Order[]
+  journalEntries JournalEntry[]
+}
+
+// Saved readings for Premium members (PRD §4.2). Kept even after a plan lapses so a
+// re-subscribe reveals past readings again (召回钩子, PRD §4.4).
+model JournalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  spread    String   // spread slug
+  theme     String   // general | love | career | wellness
+  question  String?
+  note      String?  // user's own written note
+  cards     String   // JSON: [{ position, cardId, orientation }]
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  code          String    @unique // WL-XXXX
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  plan          String    // monthly | yearly | lifetime
+  amountUsd     Float
+  status        String    @default("pending") // pending | awaiting_confirmation | paid | underpaid | expired
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  paidAt        DateTime?
+  paidAmountUsd Float?
+
+  webhookEvents WiseWebhookEvent[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Minimal draw log for the admin dashboard (PRD §5.4). Only logged-in draws are captured
+// here — anonymous/localStorage draws aren't sent to the server.
+model DrawEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  createdAt DateTime @default(now())
+}
+
+// Lightweight self-hosted analytics (PRD §9). One row per tracked event; `props` holds
+// event-specific JSON (e.g. { plan } for pricing funnel steps). Privacy-friendly: no PII,
+// visitors identified only by an anonymous client id stored in a first-party cookie.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String   // e.g. visit, signup, reading_completed, share_click, ad_completed, pricing_view, order_created, payment_completed
+  anonId    String?  // anonymous visitor id (cookie), for funnel stitching
+  userId    String?
+  props     String?  // JSON blob of extra properties
+  createdAt DateTime @default(now())
+
+  @@index([name])
+  @@index([createdAt])
+}
+
+model WiseWebhookEvent {
+  id            String   @id @default(cuid())
+  eventKey      String   @unique // dedupe key derived from the Wise payload
+  rawPayload    String   // full JSON payload, kept for dispute resolution (PRD §5.2)
+  receivedAt    DateTime @default(now())
+  status        String   // matched | unmatched | duplicate | underpaid | overpaid
+  orderId       String?
+  order         Order?   @relation(fields: [orderId], references: [id])
+  amountUsd     Float?
+  referenceText String?
+  note          String?
+
+  @@index([status])
+}

@@ -1,0 +1,34 @@
+"use client";
+
+import Link from "next/link";
+import { useAuth } from "./AuthProvider";
+
+export default function SiteHeader() {
+  const { user, loading } = useAuth();
+
+  return (
+    <header className="relative z-20 flex items-center justify-between px-6 py-6 sm:px-10">
+      <Link href="/" className="font-display text-lg tracking-[0.15em] text-moon sm:text-xl">
+        WYNDRALORE
+      </Link>
+      <nav className="flex items-center gap-5 text-xs uppercase tracking-[0.2em] text-moon-dim">
+        <Link href="/cards" className="hidden transition-colors hover:text-gold sm:inline">
+          Cards
+        </Link>
+        {!loading && user?.isPremium && (
+          <Link href="/journal" className="hidden transition-colors hover:text-gold sm:inline">
+            Journal
+          </Link>
+        )}
+        <Link href="/pricing" className="transition-colors hover:text-gold">
+          Pricing
+        </Link>
+        {!loading && (
+          <Link href="/account" className="transition-colors hover:text-gold">
+            {user ? "Account" : "Sign In"}
+          </Link>
+        )}
+      </nav>
+    </header>
+  );
+}

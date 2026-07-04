@@ -1,0 +1,316 @@
+@import "tailwindcss";
+
+:root {
+  /* Wyndralore design tokens — see PRD §6.1 */
+  --color-ink: #0b0e1a;
+  --color-ink-raised: #12162a;
+  --color-ink-line: #232a45;
+  --color-gold: #c9a96e;
+  --color-gold-bright: #e4c894;
+  --color-gold-dim: rgba(201, 169, 110, 0.35);
+  --color-moon: #f4f1ea;
+  --color-moon-dim: rgba(244, 241, 234, 0.62);
+
+  --font-display: var(--font-cormorant);
+  --font-body: var(--font-inter);
+
+  /* motion tokens — keep the whole site on one rhythm (PRD §6.3) */
+  --ease-ritual: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 200ms;
+  --duration-medium: 400ms;
+  --duration-flip: 600ms;
+  --duration-shuffle: 1400ms;
+  --duration-float: 26s;
+}
+
+@theme inline {
+  --color-ink: var(--color-ink);
+  --color-ink-raised: var(--color-ink-raised);
+  --color-ink-line: var(--color-ink-line);
+  --color-gold: var(--color-gold);
+  --color-gold-bright: var(--color-gold-bright);
+  --color-gold-dim: var(--color-gold-dim);
+  --color-moon: var(--color-moon);
+  --color-moon-dim: var(--color-moon-dim);
+  --color-background: var(--color-ink);
+  --color-foreground: var(--color-moon);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-moon);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+::selection {
+  background: var(--color-gold-dim);
+  color: var(--color-moon);
+}
+
+/* --- 3D flip (PRD §6.3.4) --- */
+.flip-perspective {
+  perspective: 1400px;
+  width: 100%;
+  height: 100%;
+}
+
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--duration-flip) var(--ease-ritual);
+}
+
+.flip-inner-flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-face-front {
+  transform: rotateY(180deg);
+}
+
+@keyframes sheenSweep {
+  0% {
+    transform: translateX(-130%) skewX(-12deg);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(130%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+.sheen-sweep {
+  position: absolute;
+  inset: -10% -60%;
+  background: linear-gradient(
+    78deg,
+    transparent 38%,
+    rgba(228, 200, 148, 0.7) 48%,
+    rgba(244, 241, 234, 0.45) 52%,
+    rgba(228, 200, 148, 0.4) 56%,
+    transparent 64%
+  );
+  animation: sheenSweep 900ms var(--ease-ritual) 150ms both;
+  pointer-events: none;
+  border-radius: inherit;
+  mix-blend-mode: screen;
+}
+
+/* --- metallic gloss on card backs/faces (拟真烫金光泽) --- */
+@keyframes cardShineSweep {
+  0% {
+    transform: translateX(-170%) skewX(-14deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    transform: translateX(340%) skewX(-14deg);
+    opacity: 0;
+  }
+}
+
+.card-shine {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.card-shine::after {
+  content: "";
+  position: absolute;
+  top: -25%;
+  bottom: -25%;
+  left: -5%;
+  width: 55%;
+  background: linear-gradient(
+    80deg,
+    transparent 12%,
+    rgba(228, 200, 148, 0.32) 42%,
+    rgba(244, 241, 234, 0.22) 52%,
+    rgba(228, 200, 148, 0.18) 62%,
+    transparent 88%
+  );
+  transform: translateX(-170%) skewX(-14deg);
+  mix-blend-mode: screen;
+}
+
+.card-shine-loop::after {
+  animation: cardShineSweep 5.5s var(--ease-soft) infinite;
+}
+
+.group:hover .card-shine-hover::after,
+.group:focus-visible .card-shine-hover::after {
+  animation: cardShineSweep 850ms var(--ease-soft) both;
+}
+
+/* --- gold glow on primary CTAs --- */
+a.bg-gold,
+button.bg-gold {
+  box-shadow: 0 0 0 rgba(228, 200, 148, 0);
+  transition:
+    box-shadow var(--duration-medium) var(--ease-soft),
+    transform var(--duration-fast) var(--ease-soft),
+    background-color var(--duration-fast) var(--ease-soft);
+}
+
+a.bg-gold:hover,
+button.bg-gold:hover {
+  box-shadow: 0 0 32px -6px rgba(228, 200, 148, 0.55);
+}
+
+.glow-text {
+  text-shadow: 0 0 30px rgba(228, 200, 148, 0.45);
+}
+
+/* --- staggered reveal text (PRD §6.3.5) --- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-fade {
+  animation: fadeInUp var(--duration-medium) var(--ease-soft) both;
+}
+
+/* --- deck idle breathing after shuffle settles --- */
+@keyframes deckBreathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+.deck-idle {
+  animation: deckBreathe 4.2s var(--ease-soft) infinite;
+}
+
+/* --- breathing glow to guide the next action --- */
+@keyframes btnBreathe {
+  0%,
+  100% {
+    box-shadow: 0 0 12px -4px rgba(228, 200, 148, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 36px -4px rgba(228, 200, 148, 0.75);
+  }
+}
+
+.btn-breathe {
+  animation: btnBreathe 2.6s var(--ease-soft) infinite;
+}
+
+/* --- shuffle animation (PRD §6.3.1) --- */
+@keyframes shuffleJitter {
+  0% {
+    transform: rotate(var(--stack-rot, 0deg)) translate(0, 0);
+  }
+  28% {
+    transform: rotate(var(--sr, 10deg)) translate(var(--sx, 20px), var(--sy, -20px));
+  }
+  60% {
+    transform: rotate(calc(var(--sr, 10deg) * -0.5)) translate(calc(var(--sx, 20px) * -0.5), calc(var(--sy, -20px) * -0.3));
+  }
+  100% {
+    transform: rotate(var(--stack-rot, 0deg)) translate(0, 0);
+  }
+}
+
+.stack-card {
+  transition: transform var(--duration-medium) var(--ease-soft);
+}
+
+.stack-card.shuffling {
+  animation: shuffleJitter var(--duration-shuffle) var(--ease-ritual);
+}
+
+/* --- homepage floating background cards (PRD §6.2) --- */
+@keyframes floatDrift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--float-rot-a, -6deg));
+  }
+  50% {
+    transform: translate3d(var(--float-x, 14px), var(--float-y, -22px), 0) rotate(var(--float-rot-b, 5deg));
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--float-rot-a, -6deg));
+  }
+}
+
+@keyframes glossSweep {
+  0% {
+    background-position: -160% -160%;
+  }
+  100% {
+    background-position: 160% 160%;
+  }
+}
+
+.float-card {
+  animation: floatDrift var(--duration-float) var(--ease-soft) infinite;
+  will-change: transform;
+}
+
+.float-card-gloss {
+  background: linear-gradient(115deg, transparent 30%, rgba(228, 200, 148, 0.35) 46%, transparent 62%);
+  background-size: 300% 300%;
+  animation: glossSweep var(--duration-float) linear infinite;
+  mix-blend-mode: screen;
+}
+
+@media (max-width: 767px) {
+  .float-card {
+    animation-duration: calc(var(--duration-float) * 1.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

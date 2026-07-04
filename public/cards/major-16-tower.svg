@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 640" width="400" height="640"><defs>
+    <radialGradient id="bgGrad" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#12162a"/>
+      <stop offset="100%" stop-color="#0b0e1a"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="35%" stop-color="#c9a96e" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#c9a96e" stop-opacity="0.14"/>
+      <stop offset="65%" stop-color="#c9a96e" stop-opacity="0"/>
+    </linearGradient>
+    <symbol id="sym-wands" viewBox="-20 -20 40 40"><g>
+    <line x1="0" y1="-18" x2="0" y2="18" stroke="#c9a96e" stroke-width="2" stroke-linecap="round" transform="rotate(18)"/>
+    <line x1="-5" y1="-10" x2="5" y2="-6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
+    <line x1="-5" y1="2" x2="5" y2="6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
+  </g></symbol>
+<symbol id="sym-cups" viewBox="-20 -20 40 40"><g>
+    <path d="M -9 -12 L 9 -12 L 5 6 A 5 5 0 0 1 -5 6 Z" fill="none" stroke="#c9a96e" stroke-width="1.6"/>
+    <line x1="0" y1="6" x2="0" y2="14" stroke="#c9a96e" stroke-width="1.6"/>
+    <line x1="-6" y1="16" x2="6" y2="16" stroke="#c9a96e" stroke-width="1.6"/>
+  </g></symbol>
+<symbol id="sym-swords" viewBox="-20 -20 40 40"><g>
+    <line x1="0" y1="-18" x2="0" y2="14" stroke="#c9a96e" stroke-width="2"/>
+    <line x1="-7" y1="-6" x2="7" y2="-6" stroke="#c9a96e" stroke-width="1.6"/>
+    <circle cx="0" cy="17" r="2.2" fill="#c9a96e"/>
+  </g></symbol>
+<symbol id="sym-pentacles" viewBox="-20 -20 40 40"><g>
+    <circle cx="0" cy="0" r="13" fill="none" stroke="#c9a96e" stroke-width="1.5" opacity="1"/>
+    <polygon points="0,-8.4 2,-2.75 7.99,-2.6 3.23,1.05 4.94,6.8 0,3.4 -4.94,6.8 -3.23,1.05 -7.99,-2.6 -2,-2.75" fill="none" stroke="#c9a96e" stroke-width="1.2" opacity="1"/>
+  </g></symbol>
+  </defs>
+    <rect x="0" y="0" width="400" height="640" fill="url(#bgGrad)"/>
+    <rect x="0" y="0" width="400" height="640" fill="url(#sheen)"/>
+    <rect x="14" y="14" width="372" height="612" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="0.9"/>
+    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.8" opacity="0.55"/>
+    <circle cx="14" cy="14" r="3" fill="#c9a96e"/><circle cx="386" cy="14" r="3" fill="#c9a96e"/><circle cx="14" cy="626" r="3" fill="#c9a96e"/><circle cx="386" cy="626" r="3" fill="#c9a96e"/>
+  <rect x="170" y="250" width="60" height="160" fill="none" stroke="#c9a96e" stroke-width="1.6"/><path d="M 215.6 255 L 179.2 320 L 202.6 320 L 184.4 385 L 223.4 313.5 L 202.6 307 Z" fill="#c9a96e" stroke="none" stroke-width="1.4" opacity="0.9" stroke-linecap="round" stroke-linejoin="round"/><line x1="200" y1="242" x2="200" y2="208" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><line x1="203.85672565811925" y1="243.40373334128614" x2="225.71150438746156" y2="217.35822227524088" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><line x1="205.90884651807326" y1="246.95811093399843" x2="239.39231012048833" y2="241.0540728933228" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><line x1="205.19615242270663" y1="251" x2="234.64101615137756" y2="268" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><line x1="202.05212085995402" y1="253.63815572471546" x2="213.68080573302674" y2="285.5877048314363" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><line x1="197.94787914004598" y1="253.63815572471546" x2="186.31919426697326" y2="285.5877048314363" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><line x1="194.80384757729337" y1="251" x2="165.35898384862244" y2="268" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><line x1="194.09115348192674" y1="246.95811093399843" x2="160.60768987951167" y2="241.05407289332277" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><line x1="196.14327434188075" y1="243.40373334128614" x2="174.2884956125384" y2="217.35822227524088" stroke="#c9a96e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/>
+    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#c9a96e" opacity="0.9">XVI</text>
+    <line x1="140" y1="86" x2="260" y2="86" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
+    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#e4c894">THE TOWER</text>
+  </svg>

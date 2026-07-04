@@ -1,0 +1,173 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
+
+export default function AccountPage() {
+  const { user, quota, loading, refresh, logout } = useAuth();
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (mode === "register" && password !== confirmPassword) {
+      setError("Passwords don't match. Please retype them.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong.");
+        return;
+      }
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return <div className="min-h-[60vh]" />;
+  }
+
+  if (!user) {
+    return (
+      <section className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-6 py-16">
+        <div className="mb-8 flex justify-center gap-6 text-sm uppercase tracking-[0.2em]">
+          <button
+            type="button"
+            onClick={() => setMode("login")}
+            className={mode === "login" ? "text-gold" : "text-moon-dim"}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("register")}
+            className={mode === "register" ? "text-gold" : "text-moon-dim"}
+          >
+            Register
+          </button>
+        </div>
+        <h1 className="font-display mb-6 text-center text-3xl text-moon">
+          {mode === "login" ? "Welcome back" : "Create your account"}
+        </h1>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <label className="flex flex-col gap-2">
+            <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Email</span>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="rounded-xl border border-ink-line bg-ink-raised/60 p-3 text-sm text-moon focus:border-gold-dim focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col gap-2">
+            <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Password</span>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="rounded-xl border border-ink-line bg-ink-raised/60 p-3 text-sm text-moon focus:border-gold-dim focus:outline-none"
+            />
+          </label>
+          {mode === "register" && (
+            <label className="flex flex-col gap-2">
+              <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Confirm Password</span>
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`rounded-xl border bg-ink-raised/60 p-3 text-sm text-moon focus:outline-none ${
+                  confirmPassword && confirmPassword !== password
+                    ? "border-red-400/70 focus:border-red-400"
+                    : "border-ink-line focus:border-gold-dim"
+                }`}
+              />
+              {confirmPassword && confirmPassword !== password && (
+                <span className="text-xs text-red-400">Passwords don&apos;t match yet.</span>
+              )}
+            </label>
+          )}
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="mt-2 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
+          >
+            {submitting ? "Please wait…" : mode === "login" ? "Sign In" : "Create Account"}
+          </button>
+        </form>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-6 py-16 text-center">
+      <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Your Account</p>
+      <h1 className="font-display mt-3 text-3xl text-moon">{user.email}</h1>
+
+      <div className="mt-8 rounded-2xl border border-ink-line bg-ink-raised/60 p-6 text-left">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">Plan</span>
+          <span className="text-sm text-gold-bright">{user.isPremium ? user.plan.toUpperCase() : "Free"}</span>
+        </div>
+        {user.isPremium && user.planExpiresAt && (
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">Renews / Expires</span>
+            <span className="text-sm text-moon">{new Date(user.planExpiresAt).toLocaleDateString()}</span>
+          </div>
+        )}
+        {!user.isPremium && quota && (
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">Readings left today</span>
+            <span className="text-sm text-moon">
+              {quota.remaining} / {quota.limit}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {user.isPremium ? (
+        <Link
+          href="/journal"
+          className="mt-6 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright"
+        >
+          Open Your Journal
+        </Link>
+      ) : (
+        <Link
+          href="/pricing"
+          className="mt-6 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright"
+        >
+          Go Premium
+        </Link>
+      )}
+
+      <button
+        type="button"
+        onClick={logout}
+        className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
+      >
+        Sign Out
+      </button>
+    </section>
+  );
+}

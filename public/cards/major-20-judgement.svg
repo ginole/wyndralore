@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 640" width="400" height="640"><defs>
+    <radialGradient id="bgGrad" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#12162a"/>
+      <stop offset="100%" stop-color="#0b0e1a"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="35%" stop-color="#c9a96e" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#c9a96e" stop-opacity="0.14"/>
+      <stop offset="65%" stop-color="#c9a96e" stop-opacity="0"/>
+    </linearGradient>
+    <symbol id="sym-wands" viewBox="-20 -20 40 40"><g>
+    <line x1="0" y1="-18" x2="0" y2="18" stroke="#c9a96e" stroke-width="2" stroke-linecap="round" transform="rotate(18)"/>
+    <line x1="-5" y1="-10" x2="5" y2="-6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
+    <line x1="-5" y1="2" x2="5" y2="6" stroke="#c9a96e" stroke-width="1.3" transform="rotate(18)"/>
+  </g></symbol>
+<symbol id="sym-cups" viewBox="-20 -20 40 40"><g>
+    <path d="M -9 -12 L 9 -12 L 5 6 A 5 5 0 0 1 -5 6 Z" fill="none" stroke="#c9a96e" stroke-width="1.6"/>
+    <line x1="0" y1="6" x2="0" y2="14" stroke="#c9a96e" stroke-width="1.6"/>
+    <line x1="-6" y1="16" x2="6" y2="16" stroke="#c9a96e" stroke-width="1.6"/>
+  </g></symbol>
+<symbol id="sym-swords" viewBox="-20 -20 40 40"><g>
+    <line x1="0" y1="-18" x2="0" y2="14" stroke="#c9a96e" stroke-width="2"/>
+    <line x1="-7" y1="-6" x2="7" y2="-6" stroke="#c9a96e" stroke-width="1.6"/>
+    <circle cx="0" cy="17" r="2.2" fill="#c9a96e"/>
+  </g></symbol>
+<symbol id="sym-pentacles" viewBox="-20 -20 40 40"><g>
+    <circle cx="0" cy="0" r="13" fill="none" stroke="#c9a96e" stroke-width="1.5" opacity="1"/>
+    <polygon points="0,-8.4 2,-2.75 7.99,-2.6 3.23,1.05 4.94,6.8 0,3.4 -4.94,6.8 -3.23,1.05 -7.99,-2.6 -2,-2.75" fill="none" stroke="#c9a96e" stroke-width="1.2" opacity="1"/>
+  </g></symbol>
+  </defs>
+    <rect x="0" y="0" width="400" height="640" fill="url(#bgGrad)"/>
+    <rect x="0" y="0" width="400" height="640" fill="url(#sheen)"/>
+    <rect x="14" y="14" width="372" height="612" fill="none" stroke="#c9a96e" stroke-width="1.6" opacity="0.9"/>
+    <rect x="21" y="21" width="358" height="598" fill="none" stroke="#c9a96e" stroke-width="0.8" opacity="0.55"/>
+    <circle cx="14" cy="14" r="3" fill="#c9a96e"/><circle cx="386" cy="14" r="3" fill="#c9a96e"/><circle cx="14" cy="626" r="3" fill="#c9a96e"/><circle cx="386" cy="626" r="3" fill="#c9a96e"/>
+  <line x1="200" y1="280" x2="200" y2="230" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="210.81281634911196" y1="283.1749293433764" x2="237.84485722189183" y2="241.11225270181734" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="218.19263990709038" y1="291.69169973996225" x2="263.6742396748163" y2="270.920949089868" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="219.79642883761866" y1="302.8462967654657" x2="269.2875009316653" y2="309.96203867913" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="215.11499148708518" y1="313.0972146789057" x2="252.90247020479808" y2="345.84025137616993" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="205.6346511368286" y1="319.1898594722899" x2="219.72127897890007" y2="367.1645081530148" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="194.36534886317142" y1="319.1898594722899" x2="180.27872102109993" y2="367.1645081530148" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="184.88500851291485" y1="313.0972146789057" x2="147.09752979520192" y2="345.84025137617" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="180.20357116238134" y1="302.8462967654657" x2="130.7124990683347" y2="309.96203867913" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="181.80736009290962" y1="291.69169973996225" x2="136.32576032518372" y2="270.9209490898679" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><line x1="189.18718365088804" y1="283.1749293433764" x2="162.15514277810811" y2="241.11225270181734" stroke="#c9a96e" stroke-width="1.2" opacity="1" stroke-linecap="round"/><rect x="184" y="370" width="32" height="60" rx="16" fill="none" stroke="#c9a96e" stroke-width="1.6"/><circle cx="200" cy="360" r="12" fill="none" stroke="#c9a96e" stroke-width="1.3" opacity="1"/>
+    <text x="200" y="70" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="4" fill="#c9a96e" opacity="0.9">XX</text>
+    <line x1="140" y1="86" x2="260" y2="86" stroke="#c9a96e" stroke-width="1" opacity="0.5"/>
+    <text x="200" y="594" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="25" letter-spacing="1.5" fill="#e4c894">JUDGEMENT</text>
+  </svg>
