@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getOwnedOrder } from "@/lib/orders";
 import { PLANS, PlanId } from "@/lib/pricing";
+import { getWiseWireDetails } from "@/lib/wiseAccount";
 import OrderStatusPanel from "@/components/OrderStatusPanel";
 
 export default async function OrderPage({ params }: { params: Promise<{ code: string }> }) {
@@ -29,8 +30,7 @@ export default async function OrderPage({ params }: { params: Promise<{ code: st
         initialStatus={order.status as "pending" | "awaiting_confirmation" | "paid" | "underpaid" | "expired"}
         amountUsd={order.amountUsd}
         planLabel={plan.label}
-        wiseAccountName={process.env.WISE_ACCOUNT_NAME ?? "(not configured)"}
-        wiseAccountNumber={process.env.WISE_ACCOUNT_NUMBER ?? "(not configured)"}
+        wireDetails={getWiseWireDetails()}
       />
     </section>
   );

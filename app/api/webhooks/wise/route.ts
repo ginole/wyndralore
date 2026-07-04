@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { verifyWiseSignature, normalizeWisePayload } from "@/lib/wise";
 import { extractOrderCode } from "@/lib/orderCode";
 import { markOrderPaid } from "@/lib/paymentProcessing";
+import { PAYMENT_TOLERANCE_USD } from "@/lib/pricing";
 
 // PRD §5.2: HTTPS, always 200, verify Wise signature, idempotent, raw payload archived.
 export async function POST(req: NextRequest) {
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, note: "amount unparseable" });
   }
 
-  if (amountUsd < order.amountUsd) {
+  if (amountUsd < order.amountUsd - PAYMENT_TOLERANCE_USD) {
     await prisma.order.update({ where: { id: order.id }, data: { status: "underpaid", paidAmountUsd: amountUsd } });
     await prisma.wiseWebhookEvent.create({
       data: { eventKey, rawPayload: rawBody, status: "underpaid", amountUsd, referenceText, orderId: order.id },
@@ -83,7 +84,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, note: "underpaid" });
   }
 
-  // amountUsd >= order.amountUsd: overpayment is accepted, difference isn't refunded (PRD §4.3/§5.3).
+  // Within tolerance of the sticker price (e.g. a wire-transfer fee ate a few dollars before
+  // crediting) or a genuine overpayment — either way this counts as paid in full; any shortfall
+  // within tolerance or surplus isn't refunded (PRD §4.3/§5.3).
   await markOrderPaid(order, amountUsd);
   await prisma.wiseWebhookEvent.create({
     data: { eventKey, rawPayload: rawBody, status: "matched", amountUsd, referenceText, orderId: order.id },

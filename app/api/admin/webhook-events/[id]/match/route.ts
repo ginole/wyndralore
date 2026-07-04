@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { prisma } from "@/lib/db";
 import { markOrderPaid } from "@/lib/paymentProcessing";
+import { PAYMENT_TOLERANCE_USD } from "@/lib/pricing";
 
 // Admin manually links an unmatched/underpaid Wise payment to an order (PRD §5.4).
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!order) return NextResponse.json({ error: "Order not found for that code." }, { status: 404 });
 
   const amount = event.amountUsd ?? order.amountUsd;
-  const nowStatus = amount >= order.amountUsd ? "paid" : "underpaid";
+  const nowStatus = amount >= order.amountUsd - PAYMENT_TOLERANCE_USD ? "paid" : "underpaid";
 
   if (nowStatus === "paid") {
     await markOrderPaid(order, amount);

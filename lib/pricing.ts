@@ -38,6 +38,12 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   },
 };
 
+// Incoming international wire transfers can have Wise's receiving fee (a few USD) deducted
+// before the balance is credited, so a customer who paid correctly can still land a hair under
+// the sticker price. Treat anything within this tolerance as "paid in full" rather than
+// "underpaid" — set PAYMENT_TOLERANCE_USD to override (e.g. if wire fees change).
+export const PAYMENT_TOLERANCE_USD = Number(process.env.PAYMENT_TOLERANCE_USD ?? 8);
+
 export function isPlanId(value: string): value is PlanId {
   return value === "monthly" || value === "yearly" || value === "lifetime";
 }

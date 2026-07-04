@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { WireDetailRow } from "@/lib/wiseAccount";
 
 type OrderStatus = "pending" | "awaiting_confirmation" | "paid" | "underpaid" | "expired";
 
@@ -10,13 +11,12 @@ interface OrderStatusPanelProps {
   initialStatus: OrderStatus;
   amountUsd: number;
   planLabel: string;
-  wiseAccountName: string;
-  wiseAccountNumber: string;
+  wireDetails: WireDetailRow[];
 }
 
 const ACTIVE_STATUSES: OrderStatus[] = ["pending", "awaiting_confirmation"];
 
-export default function OrderStatusPanel({ code, initialStatus, amountUsd, planLabel, wiseAccountName, wiseAccountNumber }: OrderStatusPanelProps) {
+export default function OrderStatusPanel({ code, initialStatus, amountUsd, planLabel, wireDetails }: OrderStatusPanelProps) {
   const [status, setStatus] = useState<OrderStatus>(initialStatus);
   const [marking, setMarking] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -128,14 +128,15 @@ export default function OrderStatusPanel({ code, initialStatus, amountUsd, planL
           <dt className="text-moon-dim">Amount due</dt>
           <dd className="text-moon">${amountUsd.toFixed(2)} USD</dd>
         </div>
-        <div className="flex justify-between border-b border-ink-line/60 pb-3">
-          <dt className="text-moon-dim">Pay to</dt>
-          <dd className="text-moon">{wiseAccountName}</dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-moon-dim">Account number</dt>
-          <dd className="text-moon">{wiseAccountNumber}</dd>
-        </div>
+        {wireDetails.map((row, i) => (
+          <div
+            key={row.label}
+            className={`flex justify-between gap-4 ${i < wireDetails.length - 1 ? "border-b border-ink-line/60 pb-3" : ""}`}
+          >
+            <dt className="shrink-0 text-moon-dim">{row.label}</dt>
+            <dd className="text-right text-moon">{row.value}</dd>
+          </div>
+        ))}
       </dl>
 
       {status === "pending" && (
