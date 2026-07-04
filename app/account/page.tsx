@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import { pixelTrack } from "@/lib/pixel";
 
 export default function AccountPage() {
   const { user, quota, loading, refresh, logout } = useAuth();
@@ -48,6 +49,8 @@ export default function AccountPage() {
         setError(data.error ?? "Something went wrong.");
         return;
       }
+      // FB ad conversion signal — only new registrations, not logins.
+      if (mode === "register") pixelTrack("CompleteRegistration");
       await refresh();
     } finally {
       setSubmitting(false);

@@ -6,6 +6,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { AuthProvider } from "@/components/AuthProvider";
 import VisitTracker from "@/components/VisitTracker";
+import MetaPixel from "@/components/MetaPixel";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -49,6 +50,7 @@ export default function RootLayout({
         <AuthProvider>
           <Suspense fallback={null}>
             <VisitTracker />
+            <MetaPixel />
           </Suspense>
           <SiteHeader />
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>

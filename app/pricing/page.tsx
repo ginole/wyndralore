@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { PLANS, PlanId } from "@/lib/pricing";
+import { pixelTrack } from "@/lib/pixel";
 
 const PLAN_ORDER: PlanId[] = ["monthly", "yearly", "lifetime"];
 
@@ -32,6 +33,8 @@ export default function PricingPage() {
         setError(data.error ?? "Could not start your order.");
         return;
       }
+      // FB ad conversion signal — user committed to a plan and reached payment instructions.
+      pixelTrack("InitiateCheckout", { value: PLANS[plan].amountUsd, currency: "USD", content_name: plan });
       router.push(`/order/${data.order.code}`);
     } finally {
       setPending(null);
