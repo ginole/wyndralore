@@ -245,11 +245,20 @@ button.bg-gold:hover {
   0% {
     transform: rotate(var(--stack-rot, 0deg)) translate(0, 0);
   }
-  28% {
+  16% {
     transform: rotate(var(--sr, 10deg)) translate(var(--sx, 20px), var(--sy, -20px));
   }
-  60% {
-    transform: rotate(calc(var(--sr, 10deg) * -0.5)) translate(calc(var(--sx, 20px) * -0.5), calc(var(--sy, -20px) * -0.3));
+  34% {
+    transform: rotate(calc(var(--sr, 10deg) * -0.55)) translate(calc(var(--sx, 20px) * -0.55), calc(var(--sy, -20px) * -0.4));
+  }
+  52% {
+    transform: rotate(calc(var(--sr, 10deg) * 0.3)) translate(calc(var(--sx, 20px) * 0.3), calc(var(--sy, -20px) * 0.22));
+  }
+  70% {
+    transform: rotate(calc(var(--sr, 10deg) * -0.15)) translate(calc(var(--sx, 20px) * -0.15), calc(var(--sy, -20px) * -0.1));
+  }
+  86% {
+    transform: rotate(calc(var(--sr, 10deg) * 0.06)) translate(calc(var(--sx, 20px) * 0.06), calc(var(--sy, -20px) * 0.04));
   }
   100% {
     transform: rotate(var(--stack-rot, 0deg)) translate(0, 0);
@@ -264,7 +273,12 @@ button.bg-gold:hover {
 }
 
 .stack-card.shuffling {
-  animation: shuffleJitter var(--duration-shuffle) var(--ease-ritual);
+  /* Only 3 keyframe stops with an easing curve reads as 3 discrete jumps: velocity drops to
+     ~0 at every stop (that's what "ease" means at a keyframe boundary), so the card visibly
+     snaps-holds-snaps-holds-snaps instead of moving continuously. Fix is two-part: more,
+     smaller stops with decaying amplitude (a natural settling wobble instead of 3 big beats),
+     and `linear` timing so those stops don't each add their own deceleration-to-zero. */
+  animation: shuffleJitter var(--duration-shuffle) linear;
 }
 
 /* --- homepage floating background cards (PRD §6.2) --- */
