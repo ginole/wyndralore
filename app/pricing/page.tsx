@@ -33,9 +33,9 @@ export default function PricingPage() {
         setError(data.error ?? "Could not start your order.");
         return;
       }
-      // FB ad conversion signal — user committed to a plan and reached payment instructions.
+      // FB ad conversion signal — user committed to a plan and reached checkout.
       pixelTrack("InitiateCheckout", { value: PLANS[plan].amountUsd, currency: "USD", content_name: plan });
-      router.push(`/order/${data.order.code}`);
+      window.location.href = data.checkoutUrl;
     } finally {
       setPending(null);
     }

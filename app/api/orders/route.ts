@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUserId } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isPlanId, PLANS } from "@/lib/pricing";
 import { generateOrderCode } from "@/lib/orderCode";
 import { trackEvent, getAnonId } from "@/lib/analytics";
+import { createLemonSqueezyCheckout, isFirstTimeBuyer } from "@/lib/lemonsqueezy";
 
 const ORDER_TTL_MS = 48 * 60 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
-  const userId = await getSessionUserId();
-  if (!userId) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const plan = body?.plan;
@@ -25,10 +26,19 @@ export async function POST(req: NextRequest) {
     const code = generateOrderCode();
     try {
       const order = await prisma.order.create({
-        data: { code, userId, plan, amountUsd: definition.amountUsd, expiresAt },
+        data: { code, userId: user.id, plan, amountUsd: definition.amountUsd, expiresAt },
       });
-      await trackEvent("order_created", { anonId: await getAnonId(), userId, props: { plan } });
-      return NextResponse.json({ order }, { status: 201 });
+      await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { plan } });
+
+      const firstTimeBuyer = plan !== "lifetime" && (await isFirstTimeBuyer(user.id));
+      const checkoutUrl = await createLemonSqueezyCheckout({
+        plan,
+        orderCode: order.code,
+        email: user.email,
+        firstTimeBuyer,
+      });
+
+      return NextResponse.json({ order, checkoutUrl }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";
       if (!isUniqueViolation) throw err;
