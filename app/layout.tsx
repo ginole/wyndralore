@@ -8,6 +8,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import VisitTracker from "@/components/VisitTracker";
 import MetaPixel from "@/components/MetaPixel";
 import AdSenseScript from "@/components/AdSenseScript";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -61,6 +62,7 @@ export default function RootLayout({
             <VisitTracker />
             <MetaPixel />
             <AdSenseScript />
+            <GoogleAnalytics />
           </Suspense>
           <SiteHeader />
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
