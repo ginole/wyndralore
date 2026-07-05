@@ -7,6 +7,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { AuthProvider } from "@/components/AuthProvider";
 import VisitTracker from "@/components/VisitTracker";
 import MetaPixel from "@/components/MetaPixel";
+import AdSenseScript from "@/components/AdSenseScript";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -34,6 +35,14 @@ export const metadata: Metadata = {
     siteName: "Wyndralore",
     type: "website",
   },
+  verification: {
+    // Google Search Console site-ownership check (property: wyndralore.com).
+    google: "HSZIVxMVQzpiI7nZnJDi1uri9FLh7Wz8CFY6xk",
+    other: {
+      // AdSense's "meta tag" site-verification option.
+      "google-adsense-account": "ca-pub-8054274022999562",
+    },
+  },
 };
 
 export default function RootLayout({
@@ -51,6 +60,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <VisitTracker />
             <MetaPixel />
+            <AdSenseScript />
           </Suspense>
           <SiteHeader />
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
