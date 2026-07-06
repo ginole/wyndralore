@@ -121,15 +121,6 @@ export async function consumeAiDeepRead(userId: string): Promise<ConsumeAiReadRe
   return { ok: false, status };
 }
 
-/** Refunds a consumed read if generation failed after the quota/credit was already spent. */
-export async function refundAiDeepRead(userId: string, source: "quota" | "extra") {
-  if (source === "quota") {
-    await prisma.user.update({ where: { id: userId }, data: { aiDeepReadsUsed: { decrement: 1 } } });
-  } else {
-    await prisma.user.update({ where: { id: userId }, data: { aiExtraReadsAvailable: { increment: 1 } } });
-  }
-}
-
 /** Grants purchased extra-read credits (single non-member read or member overage). Called from the LS webhook. */
 export async function grantExtraAiReads(userId: string, count = 1) {
   return prisma.user.update({

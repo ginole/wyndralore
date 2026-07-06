@@ -11,6 +11,10 @@ export function getCardById(id: number): TarotCard | undefined {
   return CARDS.find((c) => c.id === id);
 }
 
+export function getCardByName(name: string): TarotCard | undefined {
+  return CARDS.find((c) => c.name === name);
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()

@@ -61,9 +61,10 @@ async function readSse(res: Response, onChunk: (text: string) => void): Promise<
     const events = buffer.split("\n\n");
     buffer = events.pop() ?? "";
     for (const evt of events) {
+      if (evt.startsWith("event: error")) throw new Error("Generation failed mid-stream.");
+      if (evt.startsWith("event: done")) continue;
       const dataLine = evt.split("\n").find((l) => l.startsWith("data:"));
       if (!dataLine) continue;
-      if (evt.startsWith("event: done") || evt.startsWith("event: error")) continue;
       try {
         onChunk(JSON.parse(dataLine.slice(5).trim()));
       } catch {
@@ -136,8 +137,14 @@ export default function AiReadingPanel({ cards, theme, question, isAuthenticated
         return;
       }
       setDeepState("streaming");
-      await readSse(res, (chunk) => setDeepText((prev) => prev + chunk));
-      setDeepState("done");
+      let received = "";
+      await readSse(res, (chunk) => {
+        received += chunk;
+        setDeepText((prev) => prev + chunk);
+      });
+      // A killed serverless function (e.g. hitting Vercel's execution time limit) can close
+      // the connection cleanly with zero bytes sent — no thrown error, just an empty result.
+      setDeepState(received ? "done" : "error");
     } catch {
       setDeepState("error");
     }

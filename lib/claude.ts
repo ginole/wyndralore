@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getAllCards } from "./cards";
+import { getCardByName } from "./cards";
 import { Theme, Orientation } from "./types";
 
 // The AI-reading PRD named "Claude 3.5 Sonnet" (its cost/quality target was tuned against it),
@@ -24,9 +24,9 @@ const PERSONA = `You are the voice behind Wyndralore's "AI-Powered Personal Insi
 
 Your single defining trait, and the reason this reading is worth more than a human reader's guess: you carry zero personal bias
 and pass zero moral judgment. A human reader brings their own mood, projections, and opinions about the querent's situation into
-the room. You bring none of that — you are a clear, objective mirror, reflecting only the symbolic logic of the 78-card tarot
-library below (centuries of esoteric tradition, not modern pop psychology) back at the querent's own question. Lead with that
-objectivity; it is the credibility of this feature, not a disclaimer to soften.
+the room. You bring none of that — you are a clear, objective mirror, reflecting only the symbolic logic of the tarot cards drawn
+below (centuries of esoteric tradition, not modern pop psychology) back at the querent's own question. Lead with that objectivity;
+it is the credibility of this feature, not a disclaimer to soften.
 
 Wyndralore's whole identity is "a ritual, not a gimmick" — the querent already shuffled and chose these cards by hand before you
 ever saw them. Honor that: write like a grounded, precise, quietly confident reader speaking in person, never like a chatbot or a
@@ -36,41 +36,40 @@ could apply to any reading — every sentence must be earned by the specific car
 Be economical. Never pad toward a length target with filler, throat-clearing, or restated setup — say only what the cards and the
 question actually support, then stop.`;
 
-// Serialized once per server process and reused as a cached prompt prefix (PRD §1 — prompt
-// caching keeps the 78-card library nearly free to include on every call after the first).
-let cardLibraryBlock: string | null = null;
-
-function buildCardLibraryBlock(): string {
-  const lines = getAllCards().map((c) =>
-    [
-      `### ${c.name} (${c.arcana}${c.suit ? `, ${c.suit}` : ""})`,
-      `Upright keywords: ${c.keywords_upright.join(", ")}`,
-      `Reversed keywords: ${c.keywords_reversed.join(", ")}`,
-      `Upright meaning: ${c.meaning_upright}`,
-      `Reversed meaning: ${c.meaning_reversed}`,
-      `Love — upright: ${c.love_upright} | reversed: ${c.love_reversed}`,
-      `Career — upright: ${c.career_upright} | reversed: ${c.career_reversed}`,
-      `Wellness — upright: ${c.wellness_upright} | reversed: ${c.wellness_reversed}`,
-    ].join("\n")
-  );
-  return `Full 78-card tarot meaning library:\n\n${lines.join("\n\n")}`;
-}
-
-function getCardLibraryBlock(): string {
-  if (!cardLibraryBlock) cardLibraryBlock = buildCardLibraryBlock();
-  return cardLibraryBlock;
+// Only the meanings for the cards actually drawn go in the prompt — not the full 78-card
+// library. Sending all 78 cards every time (the original design) made every call slow to
+// process and expensive; a reading only ever needs 1-10 cards' worth of meaning text, so this
+// cuts input size by roughly an order of magnitude. That's also why there's no prompt caching
+// here anymore: the content is small and varies per request (different cards each time), so
+// caching had nothing stable to reuse — it was adding write-cost overhead for no benefit.
+function buildDrawnCardsBlock({ cards, theme }: ReadingPromptArgs): string {
+  const lines = cards.map((c) => {
+    const card = getCardByName(c.name);
+    if (!card) return `### ${c.position}: ${c.name} (${c.orientation})\n(meaning unavailable)`;
+    const meaning = c.orientation === "upright" ? card.meaning_upright : card.meaning_reversed;
+    const themeMeaning =
+      theme === "love"
+        ? c.orientation === "upright" ? card.love_upright : card.love_reversed
+        : theme === "career"
+          ? c.orientation === "upright" ? card.career_upright : card.career_reversed
+          : theme === "wellness"
+            ? c.orientation === "upright" ? card.wellness_upright : card.wellness_reversed
+            : null;
+    const keywords = c.orientation === "upright" ? card.keywords_upright : card.keywords_reversed;
+    return [
+      `### ${c.position}: ${card.name} (${c.orientation})`,
+      `Keywords: ${keywords.join(", ")}`,
+      `Meaning: ${meaning}`,
+      themeMeaning ? `${theme} focus: ${themeMeaning}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  });
+  return lines.join("\n\n");
 }
 
 function systemBlocks(): Anthropic.Messages.TextBlockParam[] {
-  return [
-    { type: "text", text: PERSONA },
-    // Only this block is marked cacheable — it's the large, fixed-across-calls part.
-    // A brand-new low-traffic site can easily see >5min gaps between readings, which would
-    // make every call pay the full cache-write price on this (large) card library block. A
-    // 1-hour TTL costs more to write (2x vs 1.25x) but survives much bigger gaps between
-    // readings, so it actually lowers average cost for sparse traffic instead of raising it.
-    { type: "text", text: getCardLibraryBlock(), cache_control: { type: "ephemeral", ttl: "1h" } },
-  ];
+  return [{ type: "text", text: PERSONA }];
 }
 
 export interface ReadingCardInput {
@@ -85,16 +84,20 @@ interface ReadingPromptArgs {
   question?: string;
 }
 
-function drawSummary({ cards, theme, question }: ReadingPromptArgs): string {
-  const cardLines = cards.map((c) => `- ${c.position}: ${c.name} (${c.orientation})`).join("\n");
+function drawSummary(args: ReadingPromptArgs): string {
+  const { theme, question } = args;
   const questionLine = question?.trim() ? `The querent's question: "${question.trim()}"` : "The querent gave no specific question — read generally.";
-  return `Theme focus: ${theme}\n${questionLine}\n\nCards drawn:\n${cardLines}`;
+  return `Theme focus: ${theme}\n${questionLine}\n\nCards drawn:\n${buildDrawnCardsBlock(args)}`;
 }
 
 async function* streamText(systemMessage: Anthropic.Messages.TextBlockParam[], userMessage: string, maxTokens: number): AsyncGenerator<string> {
   const stream = getClient().messages.stream({
     model: MODEL,
     max_tokens: maxTokens,
+    // claude-sonnet-5 runs adaptive (extended) thinking by default when this is omitted —
+    // billed as extra output tokens we never see. A tarot summary/reading doesn't need
+    // multi-step reasoning, so disable it explicitly; this was likely the main cost driver.
+    thinking: { type: "disabled" },
     system: systemMessage,
     messages: [{ role: "user", content: userMessage }],
   });
