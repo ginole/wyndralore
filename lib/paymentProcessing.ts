@@ -4,6 +4,7 @@ import { planExpiryFrom, PlanId } from "./pricing";
 import { sendEmail, paymentConfirmationEmail, aiReadPurchaseEmail } from "./email";
 import { trackEvent } from "./analytics";
 import { grantExtraAiReads } from "./aiQuota";
+import { sendMetaPurchaseEvent } from "./metaCapi";
 
 /** Shared by the Wise webhook handler and the admin manual-match action. */
 export async function markOrderPaid(order: Order, amountUsd: number) {
@@ -31,6 +32,7 @@ export async function markOrderPaid(order: Order, amountUsd: number) {
       console.error(`[payment-confirmation] AI-read email failed to send for order ${order.code}:`, result.error);
     }
     await trackEvent("ai_read_purchased", { userId: order.userId, props: { kind: order.kind, amountUsd } });
+    await sendMetaPurchaseEvent({ email: user.email, value: amountUsd, eventId: order.code, contentName: order.plan });
     return;
   }
 
@@ -53,4 +55,5 @@ export async function markOrderPaid(order: Order, amountUsd: number) {
     console.error(`[payment-confirmation] email failed to send for order ${order.code}:`, result.error);
   }
   await trackEvent("payment_completed", { userId: order.userId, props: { plan: order.plan, amountUsd } });
+  await sendMetaPurchaseEvent({ email: user.email, value: amountUsd, eventId: order.code, contentName: order.plan });
 }
