@@ -62,6 +62,7 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
   const [bonusMessage, setBonusMessage] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [journalState, setJournalState] = useState<"idle" | "saving" | "saved">("idle");
+  const [aiReadingText, setAiReadingText] = useState<string | null>(null);
   const didInit = useRef(false);
   const trackedReveal = useRef(false);
   const quotaConsumedRef = useRef(false);
@@ -102,6 +103,7 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
     setSelected([]);
     setNote("");
     setJournalState("idle");
+    setAiReadingText(null);
     trackedReveal.current = false;
     quotaConsumedRef.current = false;
     setShuffledDeck(shuffleArray(deck));
@@ -121,6 +123,7 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
         question: question.trim() || undefined,
         note: note.trim() || undefined,
         cards: selected.map((s) => ({ position: s.position, cardId: s.card.id, orientation: s.orientation })),
+        aiReading: aiReadingText || undefined,
       }),
     });
     setJournalState(res.ok ? "saved" : "idle");
@@ -446,6 +449,8 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
         theme={theme}
         question={question.trim() || undefined}
         isAuthenticated={Boolean(user)}
+        isPremium={Boolean(user?.isPremium)}
+        onDeepReadingComplete={setAiReadingText}
       />
 
       {user?.isPremium && (

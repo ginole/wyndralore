@@ -35,6 +35,7 @@ export async function GET() {
       question: entry.question,
       note: entry.note,
       cards,
+      aiReading: entry.aiReading,
       createdAt: entry.createdAt,
     };
   });
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
   const theme = typeof body?.theme === "string" ? body.theme : "general";
   const question = typeof body?.question === "string" ? body.question.slice(0, 500) : null;
   const note = typeof body?.note === "string" ? body.note.slice(0, 2000) : null;
+  const aiReading = typeof body?.aiReading === "string" ? body.aiReading.slice(0, 5000) : null;
   const rawCards = Array.isArray(body?.cards) ? body.cards : null;
 
   if (!getSpread(spread) || !rawCards || rawCards.length === 0) {
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
   }
 
   const entry = await prisma.journalEntry.create({
-    data: { userId: user.id, spread, theme, question, note, cards: JSON.stringify(cards) },
+    data: { userId: user.id, spread, theme, question, note, aiReading, cards: JSON.stringify(cards) },
   });
 
   return NextResponse.json({ id: entry.id }, { status: 201 });

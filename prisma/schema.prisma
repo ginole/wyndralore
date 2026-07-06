@@ -51,6 +51,7 @@ model JournalEntry {
   question  String?
   note      String?  // user's own written note
   cards     String   // JSON: [{ position, cardId, orientation }]
+  aiReading String?  // the generated AI deep-reading text, if one was revealed for this reading
   createdAt DateTime @default(now())
 
   @@index([userId])

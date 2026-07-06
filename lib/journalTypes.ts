@@ -12,4 +12,5 @@ export interface JournalEntryPayload {
   question?: string;
   note?: string;
   cards: JournalCardRef[];
+  aiReading?: string;
 }

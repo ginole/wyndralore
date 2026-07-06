@@ -20,6 +20,7 @@ interface JournalEntry {
   theme: string;
   question: string | null;
   note: string | null;
+  aiReading: string | null;
   cards: JournalCard[];
   createdAt: string;
 }
@@ -77,7 +78,10 @@ export default function JournalView() {
     );
   }
 
-  if (!user.isPremium) {
+  // Never-subscribed users with nothing saved get the upsell pitch. Lapsed former members
+  // (has entries, but plan expired) can still view what they already saved — only *new*
+  // saves require active Premium (gated separately, on the reading page's Save button).
+  if (!user.isPremium && entries.length === 0) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-6 text-center">
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Premium Feature</p>
@@ -86,11 +90,6 @@ export default function JournalView() {
           The journal automatically saves every reading — cards, meanings, your question, and your own notes — so you can
           look back any time. It unlocks with Premium.
         </p>
-        {entries.length > 0 && (
-          <p className="mt-4 text-sm text-gold">
-            You have {entries.length} saved reading{entries.length > 1 ? "s" : ""} waiting — re-subscribe to see them again.
-          </p>
-        )}
         <Link href="/pricing" className="mt-8 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
           Go Premium
         </Link>
@@ -104,6 +103,17 @@ export default function JournalView() {
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Your Journal</p>
         <h1 className="font-display mt-3 text-4xl text-moon">Readings you&apos;ve kept</h1>
       </div>
+
+      {!user.isPremium && (
+        <p className="mx-auto mt-6 max-w-md text-center text-sm text-gold-dim">
+          Your membership has ended, so new readings won&apos;t be saved — but everything you saved while a member is still
+          here.{" "}
+          <Link href="/pricing" className="underline underline-offset-4 hover:text-gold">
+            Renew Premium
+          </Link>{" "}
+          to start saving again.
+        </p>
+      )}
 
       {entries.length === 0 ? (
         <div className="mt-12 text-center">
@@ -135,6 +145,13 @@ export default function JournalView() {
                   </div>
                 ))}
               </div>
+
+              {entry.aiReading && (
+                <div className="mt-5 border-t border-ink-line/60 pt-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">AI Deep Reading</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-moon-dim">{entry.aiReading}</p>
+                </div>
+              )}
 
               <div className="mt-5 border-t border-ink-line/60 pt-4">
                 {editing === entry.id ? (

@@ -23,6 +23,8 @@ interface AiReadingPanelProps {
   theme: Theme;
   question?: string;
   isAuthenticated: boolean;
+  isPremium: boolean;
+  onDeepReadingComplete?: (text: string) => void;
 }
 
 type DeepState = "idle" | "loading" | "streaming" | "done" | "paywall" | "error" | "not_configured";
@@ -34,6 +36,8 @@ const COPY = {
       "Centuries of tarot symbolism, read without a stranger's bias or judgment. Your AI reading traces the energy between these cards and surfaces what your own thinking has been circling around.",
     reveal: "Reveal My Deep Reading",
     generating: "Reading the energy between your cards…",
+    notSavedHint:
+      "Members can save every reading to their Journal — this one won't be saved anywhere. Copy or screenshot it now to keep it.",
     quotaLine: (remaining: number, limit: number) => `${remaining} of ${limit} free deep readings left this cycle`,
     priceHintMember: "$1.99 once your free readings run out this cycle",
     priceHintGuest: "$2.99 to reveal this reading",
@@ -74,7 +78,7 @@ async function readSse(res: Response, onChunk: (text: string) => void): Promise<
   }
 }
 
-export default function AiReadingPanel({ cards, theme, question, isAuthenticated }: AiReadingPanelProps) {
+export default function AiReadingPanel({ cards, theme, question, isAuthenticated, isPremium, onDeepReadingComplete }: AiReadingPanelProps) {
   const [summary, setSummary] = useState<string | null>(null);
   const [deepState, setDeepState] = useState<DeepState>("idle");
   const [deepText, setDeepText] = useState("");
@@ -144,7 +148,12 @@ export default function AiReadingPanel({ cards, theme, question, isAuthenticated
       });
       // A killed serverless function (e.g. hitting Vercel's execution time limit) can close
       // the connection cleanly with zero bytes sent — no thrown error, just an empty result.
-      setDeepState(received ? "done" : "error");
+      if (received) {
+        setDeepState("done");
+        onDeepReadingComplete?.(received);
+      } else {
+        setDeepState("error");
+      }
     } catch {
       setDeepState("error");
     }
@@ -202,7 +211,12 @@ export default function AiReadingPanel({ cards, theme, question, isAuthenticated
         {deepState === "loading" && <p className="mt-4 text-sm text-moon-dim">{COPY.en.generating}</p>}
 
         {(deepState === "streaming" || deepState === "done") && (
-          <p className="mx-auto mt-4 max-w-xl whitespace-pre-wrap text-left text-sm leading-relaxed text-moon">{deepText}</p>
+          <>
+            <p className="mx-auto mt-4 max-w-xl whitespace-pre-wrap text-left text-sm leading-relaxed text-moon">{deepText}</p>
+            {deepState === "done" && !isPremium && (
+              <p className="mt-4 text-xs text-gold-dim">{COPY.en.notSavedHint}</p>
+            )}
+          </>
         )}
 
         {deepState === "not_configured" && <p className="mt-4 text-sm text-moon-dim">AI deep readings are coming soon.</p>}
