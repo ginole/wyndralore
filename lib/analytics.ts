@@ -12,7 +12,9 @@ export type AnalyticsEventName =
   | "ad_completed"
   | "pricing_view"
   | "order_created"
-  | "payment_completed";
+  | "payment_completed"
+  | "ai_read_purchased"
+  | "ai_deep_reading_generated";
 
 /** Server-side event recording. Never throws into the caller — analytics must not break UX. */
 export async function trackEvent(

@@ -21,6 +21,15 @@ model User {
   bonusAdUsedToday    Int      @default(0) // 0-3 (max 3 ad bonuses / day)
   quotaDate           String?  // client-local YYYY-MM-DD these counters belong to
 
+  // AI deep-reading quota (AI-reading PRD §2). Lemon Squeezy plans are one-time payments, not
+  // real subscriptions, so there's no billing-cycle object to anchor resets to — instead we
+  // roll a 30-day window forward from aiQuotaCycleStart, which is (re)set to `paidAt` whenever
+  // a plan purchase activates/renews premium. Extra reads bought via the $1.99 overage
+  // one-time purchase just increment aiExtraReadsAvailable and don't touch the cycle.
+  aiDeepReadsUsed       Int       @default(0)
+  aiQuotaCycleStart     DateTime?
+  aiExtraReadsAvailable Int       @default(0)
+
   // Password reset (forgot-password flow). We store a hash of the token, not the raw
   // value — the raw token only ever lives in the emailed link.
   resetTokenHash      String?
@@ -52,13 +61,15 @@ model Order {
   code          String    @unique // WL-XXXX
   userId        String
   user          User      @relation(fields: [userId], references: [id])
-  plan          String    // monthly | yearly | lifetime
+  plan          String    // monthly | yearly | lifetime | ai_overage
+  kind          String    @default("plan") // plan | ai_overage — ai_overage never touches user.plan/planExpiresAt
   amountUsd     Float
   status        String    @default("pending") // pending | awaiting_confirmation | paid | underpaid | expired
   createdAt     DateTime  @default(now())
   expiresAt     DateTime
   paidAt        DateTime?
   paidAmountUsd Float?
+  affiliateId   String?   // Lemon Squeezy affiliate/influencer id, passed through custom_data (AI-reading PRD §3)
 
   webhookEvents WiseWebhookEvent[]
 

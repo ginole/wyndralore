@@ -66,6 +66,16 @@ export default function Home() {
         ))}
       </section>
 
+      <section className="mx-auto max-w-3xl px-6 py-20 text-center sm:px-10">
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">AI-Powered Personal Insight Engine</p>
+        <h2 className="font-display mt-4 text-3xl text-moon sm:text-4xl">The ritual, then a mirror</h2>
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moon-dim">
+          You still shuffle, choose, and reveal by hand — nothing about that changes. Once your cards are turned,
+          an AI reading traces the energy between them and ties it back to your question, free of judgment or
+          personal bias. Every reading includes one free distilled insight; go deeper any time.
+        </p>
+      </section>
+
       <section id="spreads" className="mx-auto max-w-5xl scroll-mt-24 px-6 py-20 sm:px-10">
         <div className="mb-12 text-center">
           <h2 className="font-display text-3xl text-moon sm:text-4xl">Choose your spread</h2>

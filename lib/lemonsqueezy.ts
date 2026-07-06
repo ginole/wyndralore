@@ -75,6 +75,53 @@ export async function createLemonSqueezyCheckout({ plan, orderCode, email, first
   return url;
 }
 
+export type AiReadCheckoutKind = "ai_single" | "ai_overage";
+
+const AI_READ_VARIANT_ENV: Record<AiReadCheckoutKind, string> = {
+  ai_single: "LEMONSQUEEZY_VARIANT_AI_SINGLE",
+  ai_overage: "LEMONSQUEEZY_VARIANT_AI_OVERAGE",
+};
+
+interface CreateAiReadCheckoutArgs {
+  kind: AiReadCheckoutKind;
+  orderCode: string;
+  email: string;
+}
+
+/** Creates a Lemon Squeezy checkout for a one-off AI deep-reading credit (not a plan purchase). */
+export async function createAiReadCheckout({ kind, orderCode, email }: CreateAiReadCheckoutArgs): Promise<string> {
+  const res = await fetch(`${API_BASE}/checkouts`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${requireEnv("LEMONSQUEEZY_API_KEY")}`,
+      Accept: "application/vnd.api+json",
+      "Content-Type": "application/vnd.api+json",
+    },
+    body: JSON.stringify({
+      data: {
+        type: "checkouts",
+        attributes: {
+          checkout_data: { email, custom: { order_code: orderCode } },
+        },
+        relationships: {
+          store: { data: { type: "stores", id: requireEnv("LEMONSQUEEZY_STORE_ID") } },
+          variant: { data: { type: "variants", id: requireEnv(AI_READ_VARIANT_ENV[kind]) } },
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Lemon Squeezy AI-read checkout creation failed (${res.status}): ${body}`);
+  }
+
+  const json = await res.json();
+  const url = json?.data?.attributes?.url;
+  if (typeof url !== "string") throw new Error("Lemon Squeezy response missing checkout URL");
+  return url;
+}
+
 /** Verifies the `X-Signature` header (HMAC-SHA256 hex digest of the raw body). */
 export function verifyLemonSqueezySignature(rawBody: string, signatureHeader: string | null): boolean {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;

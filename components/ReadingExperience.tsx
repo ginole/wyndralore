@@ -12,6 +12,7 @@ import CardFace from "./CardFace";
 import DrawnCardBlock from "./DrawnCardBlock";
 import AdBonusModal from "./AdBonusModal";
 import ShareCardModal from "./ShareCardModal";
+import AiReadingPanel from "./AiReadingPanel";
 
 type Phase = "checking" | "limited" | "intro" | "shuffle" | "select" | "reveal";
 
@@ -439,6 +440,13 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
           <DrawnCardBlock key={s.card.id} position={s.position} deckCard={s.card} orientation={s.orientation} theme={theme} index={i} />
         ))}
       </div>
+
+      <AiReadingPanel
+        cards={selected.map((s) => ({ position: s.position, name: s.card.name, orientation: s.orientation }))}
+        theme={theme}
+        question={question.trim() || undefined}
+        isAuthenticated={Boolean(user)}
+      />
 
       {user?.isPremium && (
         <div className="mt-12 border-t border-ink-line/60 pt-8">

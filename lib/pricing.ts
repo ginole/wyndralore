@@ -17,7 +17,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     amountUsd: 9.9,
     priceLabel: "$9.90",
     cadence: "/ month",
-    perks: ["Unlimited readings", "All premium spreads", "Reading journal", "Full card library"],
+    perks: ["Unlimited readings", "All premium spreads", "Reading journal", "Full card library", "2 free AI deep readings / month"],
   },
   yearly: {
     id: "yearly",
@@ -26,7 +26,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     priceLabel: "$49",
     cadence: "/ year",
     highlight: true,
-    perks: ["Everything in Monthly", "Just $4.08 / month", "Best value"],
+    perks: ["Everything in Monthly", "Just $4.08 / month", "Best value", "3 free AI deep readings / month"],
   },
   lifetime: {
     id: "lifetime",
@@ -34,7 +34,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     amountUsd: 79,
     priceLabel: "$79",
     cadence: "one-time",
-    perks: ["Pay once, own it forever", "Everything in Yearly", "No renewals, ever"],
+    perks: ["Pay once, own it forever", "Everything in Yearly", "No renewals, ever", "4 free AI deep readings / month"],
   },
 };
 

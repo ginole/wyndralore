@@ -4,7 +4,7 @@ import { verifyLemonSqueezySignature } from "@/lib/lemonsqueezy";
 import { markOrderPaid } from "@/lib/paymentProcessing";
 
 interface LemonSqueezyOrderPayload {
-  meta?: { event_name?: string; custom_data?: { order_code?: string } };
+  meta?: { event_name?: string; custom_data?: { order_code?: string; affiliate_id?: string } };
   data?: { attributes?: { status?: string; total_usd?: number; total?: number } };
 }
 
@@ -52,6 +52,14 @@ export async function POST(req: NextRequest) {
   // total_usd is in cents; fall back to total (also cents, store's own currency — our store is USD).
   const totalCents = payload.data?.attributes?.total_usd ?? payload.data?.attributes?.total ?? 0;
   const amountUsd = totalCents / 100;
+
+  // Passed through from our own checkout's custom_data (AI-reading PRD §3) — NOT Lemon
+  // Squeezy's built-in affiliate marketplace, which we haven't verified exposes a webhook
+  // field for this. Only captured if the checkout that created this order set it.
+  const affiliateId = payload.meta?.custom_data?.affiliate_id;
+  if (affiliateId && !order.affiliateId) {
+    await prisma.order.update({ where: { id: order.id }, data: { affiliateId } });
+  }
 
   await markOrderPaid(order, amountUsd);
 

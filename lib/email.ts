@@ -42,6 +42,19 @@ export function paymentConfirmationEmail(planLabel: string, orderCode: string): 
   };
 }
 
+export function aiReadPurchaseEmail(): { subject: string; html: string } {
+  return {
+    subject: "Your AI deep reading is unlocked",
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Payment confirmed</h1>
+        <p>Your AI deep reading credit is ready — head back to your reading to reveal it.</p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
 export function passwordResetEmail(resetLink: string): { subject: string; html: string } {
   return {
     subject: "Reset your Wyndralore password",

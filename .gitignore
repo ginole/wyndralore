@@ -50,3 +50,6 @@ next-env.d.ts
 
 # personal notes, not project files
 密码.txt
+
+.vercel
+.env*
