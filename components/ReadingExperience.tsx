@@ -44,6 +44,20 @@ async function fetchQuotaStatus(): Promise<QuotaStatus | undefined> {
   return data.quota;
 }
 
+// Stashed here right before sending the buyer to Lemon Squeezy for an AI-read purchase, so
+// they land back on the exact reading they paid for instead of having to redraw from scratch —
+// see the `?resume=1` handling below and AiReadingPanel's `onBeforePurchase`.
+const RESUME_STORAGE_KEY = "wl_resume_reading";
+const RESUME_MAX_AGE_MS = 30 * 60 * 1000;
+
+interface ResumePayload {
+  spreadSlug: string;
+  selected: Selection[];
+  theme: Theme;
+  question: string;
+  savedAt: number;
+}
+
 interface ReadingExperienceProps {
   spread: SpreadConfig;
   deck: DeckCard[];
@@ -72,9 +86,38 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
     // quota refresh (e.g. after claiming a bonus) can't yank the user back to "intro".
     if (authLoading || didInit.current) return;
     didInit.current = true;
+
+    // Returning from an AI-read purchase checkout — restore the exact reading instead of
+    // making the buyer redraw (the draw's quota was already spent before they left for
+    // checkout, so re-gating by quota here would be wrong).
+    if (new URLSearchParams(window.location.search).get("resume") === "1") {
+      const raw = sessionStorage.getItem(RESUME_STORAGE_KEY);
+      if (raw) {
+        try {
+          const saved = JSON.parse(raw) as ResumePayload;
+          if (saved.spreadSlug === spread.slug && Date.now() - saved.savedAt < RESUME_MAX_AGE_MS) {
+            sessionStorage.removeItem(RESUME_STORAGE_KEY);
+            window.history.replaceState({}, "", window.location.pathname);
+            setSelected(saved.selected);
+            setTheme(saved.theme);
+            setQuestion(saved.question);
+            setPhase("reveal");
+            return;
+          }
+        } catch {
+          // malformed/stale payload — fall through to the normal quota-gated phase below
+        }
+      }
+    }
+
     const allowed = user ? Boolean(quota?.isPremium) || (quota?.remaining ?? 0) > 0 : canDraw();
     setPhase(allowed ? "intro" : "limited");
-  }, [authLoading, user, quota]);
+  }, [authLoading, user, quota, spread.slug]);
+
+  function handleBeforePurchase() {
+    const payload: ResumePayload = { spreadSlug: spread.slug, selected, theme, question, savedAt: Date.now() };
+    sessionStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(payload));
+  }
 
   useEffect(() => {
     if (phase === "select" && selected.length === spread.count) {
@@ -450,7 +493,9 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
         question={question.trim() || undefined}
         isAuthenticated={Boolean(user)}
         isPremium={Boolean(user?.isPremium)}
+        spreadSlug={spread.slug}
         onDeepReadingComplete={setAiReadingText}
+        onBeforePurchase={handleBeforePurchase}
       />
 
       {user?.isPremium && (

@@ -28,6 +28,8 @@ export async function isFirstTimeBuyer(userId: string): Promise<boolean> {
   return !priorPaid;
 }
 
+const SITE_URL = "https://wyndralore.com";
+
 interface CreateCheckoutArgs {
   plan: PlanId;
   orderCode: string;
@@ -55,6 +57,9 @@ export async function createLemonSqueezyCheckout({ plan, orderCode, email, first
             custom: { order_code: orderCode },
             ...(discountCode ? { discount_code: discountCode } : {}),
           },
+          // Without this, Lemon Squeezy's own "Thank you" screen is the end of the flow —
+          // the buyer has to manually navigate back. Send them straight to their account page.
+          product_options: { redirect_url: `${SITE_URL}/account` },
         },
         relationships: {
           store: { data: { type: "stores", id: requireEnv("LEMONSQUEEZY_STORE_ID") } },
@@ -99,10 +104,13 @@ interface CreateAiReadCheckoutArgs {
   kind: AiReadCheckoutKind;
   orderCode: string;
   email: string;
+  /** Where to send the buyer after paying — the exact reading page they came from, so the
+   * "ritual" of the specific cards they already drew isn't broken by a redraw. */
+  redirectUrl: string;
 }
 
 /** Creates a Lemon Squeezy checkout for a one-off AI deep-reading credit (not a plan purchase). */
-export async function createAiReadCheckout({ kind, orderCode, email }: CreateAiReadCheckoutArgs): Promise<string> {
+export async function createAiReadCheckout({ kind, orderCode, email, redirectUrl }: CreateAiReadCheckoutArgs): Promise<string> {
   const res = await fetch(`${API_BASE}/checkouts`, {
     method: "POST",
     headers: {
@@ -115,6 +123,7 @@ export async function createAiReadCheckout({ kind, orderCode, email }: CreateAiR
         type: "checkouts",
         attributes: {
           checkout_data: { email, custom: { order_code: orderCode } },
+          product_options: { redirect_url: redirectUrl },
         },
         relationships: {
           store: { data: { type: "stores", id: requireEnv("LEMONSQUEEZY_STORE_ID") } },

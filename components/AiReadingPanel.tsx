@@ -24,7 +24,12 @@ interface AiReadingPanelProps {
   question?: string;
   isAuthenticated: boolean;
   isPremium: boolean;
+  spreadSlug: string;
   onDeepReadingComplete?: (text: string) => void;
+  /** Called right before checkout so the caller can stash the current reading for restoration
+   * on return (see the `?resume=1` handling in ReadingExperience) — otherwise the buyer would
+   * land back on a blank page and have to redraw from scratch after paying. */
+  onBeforePurchase?: () => void;
 }
 
 type DeepState = "idle" | "loading" | "streaming" | "done" | "paywall" | "error" | "not_configured";
@@ -78,7 +83,16 @@ async function readSse(res: Response, onChunk: (text: string) => void): Promise<
   }
 }
 
-export default function AiReadingPanel({ cards, theme, question, isAuthenticated, isPremium, onDeepReadingComplete }: AiReadingPanelProps) {
+export default function AiReadingPanel({
+  cards,
+  theme,
+  question,
+  isAuthenticated,
+  isPremium,
+  spreadSlug,
+  onDeepReadingComplete,
+  onBeforePurchase,
+}: AiReadingPanelProps) {
   const [summary, setSummary] = useState<string | null>(null);
   const [deepState, setDeepState] = useState<DeepState>("idle");
   const [deepText, setDeepText] = useState("");
@@ -161,11 +175,12 @@ export default function AiReadingPanel({ cards, theme, question, isAuthenticated
 
   async function handlePurchase(kind: "ai_single" | "ai_overage") {
     setPurchasing(true);
+    onBeforePurchase?.();
     try {
       const res = await fetch("/api/ai-reading/purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind }),
+        body: JSON.stringify({ kind, spreadSlug }),
       });
       const data = await res.json().catch(() => null);
       if (data?.checkoutUrl) window.location.href = data.checkoutUrl;
