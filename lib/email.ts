@@ -56,32 +56,58 @@ export function aiReadPurchaseEmail(): { subject: string; html: string } {
 }
 
 export function creatorInviteEmail(email: string, affiliateLink: string, actionLink: string): { subject: string; html: string } {
+  // A soft, rounded, centered layout — rounded card, circular number badges, pill button — so
+  // it reads as a polished brand email rather than a hard-edged template.
+  const sans = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const serif = "'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif";
+
+  const benefit = (n: string, title: string, bodyHtml: string) => `
+    <div style="background: rgba(201,169,110,0.07); border: 1px solid rgba(201,169,110,0.16); border-radius: 18px; padding: 20px 22px; margin: 0 0 16px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin: 0 0 10px;">
+        <tr>
+          <td style="width: 30px; height: 30px; background: #e4c894; border-radius: 50%; text-align: center; vertical-align: middle; font-family: ${sans}; font-size: 15px; font-weight: 700; color: #0b0e1a;">${n}</td>
+          <td style="padding-left: 12px; font-family: ${sans}; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e4c894;">${title}</td>
+        </tr>
+      </table>
+      <p style="margin: 0; font-family: ${sans}; font-size: 14px; line-height: 1.65; color: #d8d2c6;">${bodyHtml}</p>
+    </div>`;
+
   return {
     subject: "You're invited: Wyndralore Creator Partnership",
     html: `
-      <div style="font-family: Georgia, serif; background: #0b0e1a; color: #f4f1ea; max-width: 480px; margin: 0 auto; padding: 40px 32px; border: 1px solid #232a45;">
-        <p style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #c9a96e; margin: 0 0 24px;">Wyndralore &middot; Creator Partnership</p>
-        <h1 style="font-size: 24px; color: #e4c894; margin: 0 0 20px;">Hello from Wyndralore!</h1>
-        <p style="margin: 0 0 20px; line-height: 1.6;">We love your content and have customized an elite partnership for you.</p>
+      <div style="background: #0b0e1a; padding: 32px 16px; font-family: ${sans};">
+        <div style="max-width: 480px; margin: 0 auto; background: #12162a; border: 1px solid #232a45; border-radius: 26px; overflow: hidden;">
 
-        <div style="border-left: 2px solid #c9a96e; padding-left: 16px; margin: 0 0 24px;">
-          <p style="margin: 0 0 8px; color: #e4c894; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">1. Free Premium, on us</p>
-          <p style="margin: 0; line-height: 1.6;">Your Wyndralore account (<span style="color: #e4c894;">${email}</span>) has been automatically upgraded to a
-          1-Month Premium Membership for free! Log in now to experience our AI-Powered Personal Insight Engine.</p>
+          <div style="padding: 40px 32px 4px; text-align: center;">
+            <p style="margin: 0 0 18px; font-family: ${sans}; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: #c9a96e;">&#10022;&nbsp; Wyndralore &nbsp;&#10022;</p>
+            <h1 style="margin: 0 0 14px; font-family: ${serif}; font-size: 27px; font-weight: 500; color: #e4c894;">Hello from Wyndralore!</h1>
+            <p style="margin: 0 auto; max-width: 380px; font-size: 15px; line-height: 1.6; color: #cfc9bf;">We love your content and have customized an elite partnership just for you.</p>
+          </div>
+
+          <div style="padding: 26px 28px 4px;">
+            ${benefit(
+              "1",
+              "Free Premium, on us",
+              `Your Wyndralore account (<span style="color: #e4c894;">${email}</span>) has been automatically upgraded to a <strong style="color: #f4f1ea;">1-Month Premium Membership</strong> — free. Log in to experience our AI-Powered Personal Insight Engine.`,
+            )}
+            ${benefit(
+              "2",
+              "Earn 50% cash commission",
+              `Here is your exclusive invitation to our 50% cash commission affiliate program:<br/>
+              <a href="${affiliateLink}" style="display: inline-block; margin: 8px 0 6px; color: #e4c894; word-break: break-all;">${affiliateLink}</a><br/>
+              Share your unique referral link however your audience finds you best, and start earning instantly.`,
+            )}
+          </div>
+
+          <div style="text-align: center; padding: 12px 28px 4px;">
+            <a href="${actionLink}" style="display: inline-block; background: #e4c894; color: #0b0e1a; padding: 15px 40px; border-radius: 999px; text-decoration: none; font-family: ${sans}; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Log In Now</a>
+          </div>
+
+          <div style="text-align: center; padding: 26px 28px 34px;">
+            <p style="margin: 0; font-family: ${serif}; font-size: 14px; line-height: 1.7; color: #8f897c;">Blessed be.<br/>Wyndralore</p>
+          </div>
+
         </div>
-
-        <div style="border-left: 2px solid #c9a96e; padding-left: 16px; margin: 0 0 28px;">
-          <p style="margin: 0 0 8px; color: #e4c894; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">2. Earn 50% cash commission</p>
-          <p style="margin: 0; line-height: 1.6;">Here is your exclusive invitation to join our 50% cash commission affiliate program:<br/>
-          <a href="${affiliateLink}" style="color: #c9a96e;">${affiliateLink}</a><br/>
-          Share your unique referral link however your audience finds you best, and start earning instantly!</p>
-        </div>
-
-        <p style="margin: 0 0 28px;">
-          <a href="${actionLink}" style="display: inline-block; background: #c9a96e; color: #0b0e1a; padding: 12px 24px; text-decoration: none; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">Log In Now</a>
-        </p>
-
-        <p style="margin: 0; color: #a9a49a; font-size: 13px;">Blessed be.<br/>Wyndralore</p>
       </div>
     `,
   };
