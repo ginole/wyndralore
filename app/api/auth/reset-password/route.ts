@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
   const passwordHash = await hashPassword(password);
   const updated = await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash, resetTokenHash: null, resetTokenExpiresAt: null },
+    // Setting a password also claims a creator-outreach placeholder account (isPlaceholder→false).
+    data: { passwordHash, resetTokenHash: null, resetTokenExpiresAt: null, isPlaceholder: false },
   });
 
   await setSessionCookie(updated.id);

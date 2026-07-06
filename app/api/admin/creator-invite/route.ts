@@ -29,48 +29,87 @@ export async function POST(req: NextRequest) {
   }
 
   const now = new Date();
-  const planExpiresAt = new Date(now.getTime() + CREATOR_PLAN_DAYS * 24 * 60 * 60 * 1000);
+  const grantedExpiry = new Date(now.getTime() + CREATOR_PLAN_DAYS * 24 * 60 * 60 * 1000);
   const origin = req.nextUrl.origin;
 
-  let user = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findUnique({ where: { email } });
+
+  let userId: string;
+  let planGranted: string;
+  let wasNewAccount = false;
   let actionLink = `${origin}/account`;
 
-  if (user) {
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        plan: "monthly",
-        planExpiresAt,
-        aiQuotaCycleStart: now,
-        aiDeepReadsUsed: 0,
-      },
-    });
+  if (existing) {
+    // Never downgrade a paying customer. Lifetime stays lifetime; a plan that already runs
+    // longer than our 30-day grant keeps its later expiry. Only extend when it actually helps.
+    const keepExisting =
+      existing.plan === "lifetime" ||
+      (existing.planExpiresAt !== null && existing.planExpiresAt.getTime() >= grantedExpiry.getTime());
+
+    // If the account is an unclaimed placeholder, re-issue a fresh claim link so a repeat
+    // invite still lets them set a password (a plain /account login would be a dead end).
+    if (existing.isPlaceholder) {
+      const { token, tokenHash, expiresAt } = generateResetToken(CLAIM_TOKEN_TTL_MS);
+      const updated = await prisma.user.update({
+        where: { id: existing.id },
+        data: keepExisting
+          ? { resetTokenHash: tokenHash, resetTokenExpiresAt: expiresAt }
+          : {
+              plan: "monthly",
+              planExpiresAt: grantedExpiry,
+              aiQuotaCycleStart: now,
+              aiDeepReadsUsed: 0,
+              resetTokenHash: tokenHash,
+              resetTokenExpiresAt: expiresAt,
+            },
+      });
+      userId = updated.id;
+      planGranted = updated.plan;
+      actionLink = `${origin}/reset-password?token=${token}`;
+    } else if (keepExisting) {
+      userId = existing.id;
+      planGranted = existing.plan;
+    } else {
+      const updated = await prisma.user.update({
+        where: { id: existing.id },
+        data: { plan: "monthly", planExpiresAt: grantedExpiry, aiQuotaCycleStart: now, aiDeepReadsUsed: 0 },
+      });
+      userId = updated.id;
+      planGranted = updated.plan;
+    }
   } else {
     // No account yet — create a placeholder with an unusable random password. The creator
     // claims it via the reset-password link in the invite email (same flow as forgot-password).
     const placeholderPasswordHash = await hashPassword(crypto.randomBytes(32).toString("hex"));
     const { token, tokenHash, expiresAt } = generateResetToken(CLAIM_TOKEN_TTL_MS);
-    user = await prisma.user.create({
+    const created = await prisma.user.create({
       data: {
         email,
         passwordHash: placeholderPasswordHash,
         plan: "monthly",
-        planExpiresAt,
+        planExpiresAt: grantedExpiry,
         aiQuotaCycleStart: now,
+        isPlaceholder: true,
         resetTokenHash: tokenHash,
         resetTokenExpiresAt: expiresAt,
       },
     });
+    userId = created.id;
+    planGranted = created.plan;
+    wasNewAccount = true;
     actionLink = `${origin}/reset-password?token=${token}`;
   }
 
   const { subject, html } = creatorInviteEmail(email, affiliateLink, actionLink);
   const result = await sendEmail({ to: email, subject, html });
   if (!result.ok) {
-    console.error(`[creator-invite] invite email failed to send for user ${user.id}:`, result.error);
+    console.error(`[creator-invite] invite email failed to send for user ${userId}:`, result.error);
   }
 
-  await trackEvent("creator_invite_sent", { userId: user.id, props: { affiliateLink, emailSent: result.ok } });
+  await prisma.creatorInvite.create({
+    data: { email, affiliateLink, userId, wasNewAccount, planGranted, emailSent: result.ok },
+  });
+  await trackEvent("creator_invite_sent", { userId, props: { affiliateLink, emailSent: result.ok, wasNewAccount } });
 
-  return NextResponse.json({ ok: true, emailSent: result.ok, userId: user.id });
+  return NextResponse.json({ ok: true, emailSent: result.ok, userId, wasNewAccount, planGranted });
 }

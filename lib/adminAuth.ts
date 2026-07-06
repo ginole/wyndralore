@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
@@ -12,7 +13,13 @@ function getSecret(): Uint8Array {
 
 export function checkAdminPassword(password: string): boolean {
   const expected = process.env.ADMIN_PASSWORD;
-  return Boolean(expected) && password === expected;
+  if (!expected) return false;
+  // Constant-time comparison so an attacker can't infer the password length or a matching
+  // prefix from response-timing differences. Hash both sides to equal-length buffers first,
+  // since timingSafeEqual throws on length mismatch.
+  const a = crypto.createHash("sha256").update(password).digest();
+  const b = crypto.createHash("sha256").update(expected).digest();
+  return crypto.timingSafeEqual(a, b);
 }
 
 export async function setAdminSessionCookie() {

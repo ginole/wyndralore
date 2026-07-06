@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function CreatorInviteForm() {
+export default function CreatorInviteForm({ onSuccess }: { onSuccess?: () => void } = {}) {
   const [email, setEmail] = useState("");
   const [affiliateLink, setAffiliateLink] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -29,8 +29,10 @@ export default function CreatorInviteForm() {
           ? `Upgraded and invited ${email}.`
           : `Upgraded ${email}, but the invite email failed to send — check logs.`,
       });
+      // Keep the affiliate link filled — usually the same across a batch of creators — and
+      // just clear the email so the admin can invite the next one.
       setEmail("");
-      setAffiliateLink("");
+      onSuccess?.();
     } catch {
       setMessage({ type: "error", text: "Network error — please try again." });
     } finally {

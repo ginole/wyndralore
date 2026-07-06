@@ -48,8 +48,10 @@ next-env.d.ts
 # local tooling (machine-specific, not project config)
 .claude/
 
-# personal notes, not project files
+# personal notes, not project files — kept locally for reference, never uploaded
 密码.txt
+wyndralore-avatar.png
+wyndralore-logo-full.png
 
 .vercel
 .env*

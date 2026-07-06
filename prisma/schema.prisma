@@ -35,9 +35,15 @@ model User {
   resetTokenHash      String?
   resetTokenExpiresAt DateTime?
 
+  // True for accounts auto-created by the admin creator-outreach flow that the creator
+  // hasn't claimed yet (they were given premium but have no password of their own). Lets
+  // a re-invite re-issue a fresh claim link, and is cleared once they set a password.
+  isPlaceholder Boolean @default(false)
+
   createdAt DateTime @default(now())
   orders    Order[]
   journalEntries JournalEntry[]
+  creatorInvites CreatorInvite[]
 }
 
 // Saved readings for Premium members (PRD §4.2). Kept even after a plan lapses so a
@@ -99,6 +105,38 @@ model AnalyticsEvent {
 
   @@index([name])
   @@index([createdAt])
+}
+
+// Audit trail for the admin "Creator Outreach" flow: one row per invite sent, so the admin
+// panel can show who was granted free premium, with which affiliate link, and whether the
+// (placeholder) account was later claimed.
+model CreatorInvite {
+  id            String   @id @default(cuid())
+  email         String
+  affiliateLink String
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  wasNewAccount Boolean  @default(false) // true if a placeholder account was created for this invite
+  planGranted   String   // the plan the account ended up with after the invite (may be unchanged if already better)
+  emailSent     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+// Brute-force protection for the admin login. One row per client IP (hashed). Tracks failed
+// attempts in the current window and escalating lockouts (3 fails -> 1h, next 3 -> 24h).
+model AdminLoginThrottle {
+  id            String    @id @default(cuid())
+  ipHash        String    @unique // sha256(ip + SESSION_SECRET), never the raw IP
+  failedCount   Int       @default(0) // consecutive failures since the last lockout/success
+  lockoutCount  Int       @default(0) // how many times this IP has been locked out (escalation tier)
+  lockedUntil   DateTime? // if set and in the future, all attempts are rejected
+  lastAttemptAt DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([lockedUntil])
 }
 
 model WiseWebhookEvent {
