@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import CreatorInviteForm from "./CreatorInviteForm";
 
 interface Stats {
   signupsToday: number;
@@ -106,6 +107,10 @@ export default function AdminDashboard() {
         <button type="button" onClick={handleLogout} className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4">
           Sign Out
         </button>
+      </div>
+
+      <div className="mt-8">
+        <CreatorInviteForm />
       </div>
 
       {stats && (

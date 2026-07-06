@@ -1,0 +1,83 @@
+"use client";
+
+import { useState } from "react";
+
+export default function CreatorInviteForm() {
+  const [email, setEmail] = useState("");
+  const [affiliateLink, setAffiliateLink] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/creator-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, affiliateLink }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error ?? "Something went wrong." });
+        return;
+      }
+      setMessage({
+        type: "ok",
+        text: data.emailSent
+          ? `Upgraded and invited ${email}.`
+          : `Upgraded ${email}, but the invite email failed to send — check logs.`,
+      });
+      setEmail("");
+      setAffiliateLink("");
+    } catch {
+      setMessage({ type: "error", text: "Network error — please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gold-dim bg-ink-raised/60 p-6">
+      <h3 className="font-display text-lg text-gold-bright">Creator Outreach</h3>
+      <p className="mt-1 text-xs text-moon-dim">
+        Grants a free 1-month Premium membership and emails the creator their affiliate invite.
+      </p>
+      <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end">
+        <label className="flex flex-1 flex-col gap-2">
+          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Creator email</span>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="creator@example.com"
+            className="rounded-xl border border-ink-line bg-ink-raised/60 p-3 text-sm text-moon focus:border-gold-dim focus:outline-none"
+          />
+        </label>
+        <label className="flex flex-1 flex-col gap-2">
+          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Lemon Squeezy affiliate link</span>
+          <input
+            type="url"
+            required
+            value={affiliateLink}
+            onChange={(e) => setAffiliateLink(e.target.value)}
+            placeholder="https://wyndralore.lemonsqueezy.com/affiliates/..."
+            className="rounded-xl border border-ink-line bg-ink-raised/60 p-3 text-sm text-moon focus:border-gold-dim focus:outline-none"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
+        >
+          {submitting ? "Sending…" : "Upgrade & Invite"}
+        </button>
+      </form>
+      {message && (
+        <p className={`mt-4 text-sm ${message.type === "error" ? "text-red-400" : "text-gold"}`}>{message.text}</p>
+      )}
+    </div>
+  );
+}

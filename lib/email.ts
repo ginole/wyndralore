@@ -55,6 +55,38 @@ export function aiReadPurchaseEmail(): { subject: string; html: string } {
   };
 }
 
+export function creatorInviteEmail(email: string, affiliateLink: string, actionLink: string): { subject: string; html: string } {
+  return {
+    subject: "You're invited: Wyndralore Creator Partnership",
+    html: `
+      <div style="font-family: Georgia, serif; background: #0b0e1a; color: #f4f1ea; max-width: 480px; margin: 0 auto; padding: 40px 32px; border: 1px solid #232a45;">
+        <p style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #c9a96e; margin: 0 0 24px;">Wyndralore &middot; Creator Partnership</p>
+        <h1 style="font-size: 24px; color: #e4c894; margin: 0 0 20px;">Hello from Wyndralore!</h1>
+        <p style="margin: 0 0 20px; line-height: 1.6;">We love your content and have customized an elite partnership for you.</p>
+
+        <div style="border-left: 2px solid #c9a96e; padding-left: 16px; margin: 0 0 24px;">
+          <p style="margin: 0 0 8px; color: #e4c894; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">1. Free Premium, on us</p>
+          <p style="margin: 0; line-height: 1.6;">Your Wyndralore account (<span style="color: #e4c894;">${email}</span>) has been automatically upgraded to a
+          1-Month Premium Membership for free! Log in now to experience our AI-Powered Personal Insight Engine.</p>
+        </div>
+
+        <div style="border-left: 2px solid #c9a96e; padding-left: 16px; margin: 0 0 28px;">
+          <p style="margin: 0 0 8px; color: #e4c894; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">2. Earn 50% cash commission</p>
+          <p style="margin: 0; line-height: 1.6;">Here is your exclusive invitation to join our 50% cash commission affiliate program:<br/>
+          <a href="${affiliateLink}" style="color: #c9a96e;">${affiliateLink}</a><br/>
+          Share your unique referral link however your audience finds you best, and start earning instantly!</p>
+        </div>
+
+        <p style="margin: 0 0 28px;">
+          <a href="${actionLink}" style="display: inline-block; background: #c9a96e; color: #0b0e1a; padding: 12px 24px; text-decoration: none; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">Log In Now</a>
+        </p>
+
+        <p style="margin: 0; color: #a9a49a; font-size: 13px;">Blessed be.<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
 export function passwordResetEmail(resetLink: string): { subject: string; html: string } {
   return {
     subject: "Reset your Wyndralore password",
