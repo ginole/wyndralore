@@ -82,6 +82,19 @@ const AI_READ_VARIANT_ENV: Record<AiReadCheckoutKind, string> = {
   ai_overage: "LEMONSQUEEZY_VARIANT_AI_OVERAGE",
 };
 
+/**
+ * The variant id we expect a paid order to actually be for, based on what we created the
+ * checkout with. The webhook handler compares this against the variant Lemon Squeezy says was
+ * purchased — otherwise a $1.99 add-on checkout could be pointed (via custom_data.order_code)
+ * at a $79 lifetime order and get credited for the wrong thing entirely.
+ */
+export function expectedVariantIdForOrder(order: { kind: string; plan: string }): string {
+  if (order.kind === "ai_single" || order.kind === "ai_overage") {
+    return requireEnv(AI_READ_VARIANT_ENV[order.kind]);
+  }
+  return variantIdFor(order.plan as PlanId);
+}
+
 interface CreateAiReadCheckoutArgs {
   kind: AiReadCheckoutKind;
   orderCode: string;
@@ -126,6 +139,9 @@ export async function createAiReadCheckout({ kind, orderCode, email }: CreateAiR
 export function verifyLemonSqueezySignature(rawBody: string, signatureHeader: string | null): boolean {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
   if (!secret) {
+    // Fail closed in production — an unset secret must never mean "accept anything". The
+    // permissive skip is for local dev only, where a misconfigured/missing secret is expected.
+    if (process.env.NODE_ENV === "production") return false;
     console.warn("[lemonsqueezy] LEMONSQUEEZY_WEBHOOK_SECRET not set — skipping signature verification (dev mode only).");
     return true;
   }

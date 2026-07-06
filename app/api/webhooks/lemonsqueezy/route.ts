@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { verifyLemonSqueezySignature } from "@/lib/lemonsqueezy";
+import { verifyLemonSqueezySignature, expectedVariantIdForOrder } from "@/lib/lemonsqueezy";
 import { markOrderPaid } from "@/lib/paymentProcessing";
 
 interface LemonSqueezyOrderPayload {
   meta?: { event_name?: string; custom_data?: { order_code?: string; affiliate_id?: string } };
-  data?: { attributes?: { status?: string; total_usd?: number; total?: number } };
+  data?: { attributes?: { status?: string; total_usd?: number; total?: number; first_order_item?: { variant_id?: number | string } } };
 }
 
 export async function POST(req: NextRequest) {
@@ -47,6 +47,19 @@ export async function POST(req: NextRequest) {
   const status = payload.data?.attributes?.status;
   if (status !== "paid") {
     return NextResponse.json({ ok: true, note: `order status "${status}", not paid` });
+  }
+
+  // A checkout for one product (e.g. the $1.99 AI-read add-on) can have its custom_data
+  // order_code pointed at a completely different order (e.g. a $79 lifetime plan) since we
+  // don't control what the buyer puts in the checkout URL. Refuse to credit an order unless
+  // what was actually purchased matches what we expect for that order's plan/kind.
+  const purchasedVariantId = payload.data?.attributes?.first_order_item?.variant_id;
+  const expectedVariantId = expectedVariantIdForOrder(order);
+  if (purchasedVariantId === undefined || String(purchasedVariantId) !== expectedVariantId) {
+    console.error(
+      `[lemonsqueezy] variant mismatch for order ${orderCode}: expected ${expectedVariantId}, got ${purchasedVariantId}`
+    );
+    return NextResponse.json({ ok: true, note: "variant mismatch, ignored" });
   }
 
   // total_usd is in cents; fall back to total (also cents, store's own currency — our store is USD).

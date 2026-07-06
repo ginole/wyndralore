@@ -1,7 +1,11 @@
 import { Theme } from "./types";
 import { ReadingCardInput } from "./claude";
+import { getCardByName } from "./cards";
 
 const THEMES: Theme[] = ["general", "love", "career", "wellness"];
+// Longest real spread position label is "Hopes & Fears" (Celtic Cross) — generous cap well
+// above that, just to bound the string rather than pin it to spread data.
+const MAX_POSITION_LENGTH = 40;
 
 export interface ParsedReadingRequest {
   cards: ReadingCardInput[];
@@ -19,7 +23,11 @@ export function parseReadingRequestBody(body: unknown): ParsedReadingRequest | n
   for (const c of cards) {
     if (typeof c !== "object" || c === null) return null;
     const { position, name, orientation } = c as Record<string, unknown>;
-    if (typeof position !== "string" || typeof name !== "string") return null;
+    if (typeof position !== "string" || position.length === 0 || position.length > MAX_POSITION_LENGTH) return null;
+    // name must be a real card from the deck — this also bounds its length implicitly and
+    // closes off using this endpoint as an unauthenticated way to inject arbitrary long text
+    // into a Claude prompt (name/position previously had no length cap at all).
+    if (typeof name !== "string" || !getCardByName(name)) return null;
     if (orientation !== "upright" && orientation !== "reversed") return null;
     parsedCards.push({ position, name, orientation });
   }

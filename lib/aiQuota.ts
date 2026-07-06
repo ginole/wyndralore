@@ -102,20 +102,31 @@ export async function consumeAiDeepRead(userId: string): Promise<ConsumeAiReadRe
   const fresh = await ensureFreshAiCycle(user, now);
   const status = getAiQuotaStatus(fresh, now);
 
+  // Conditional updateMany, not read-then-write: two concurrent requests can both read
+  // "remaining > 0" before either writes, and both would otherwise be granted a read off a
+  // single unit of quota. Guarding the WHERE clause on the still-current value makes only one
+  // concurrent update actually match (count === 1) — the loser falls through to the next
+  // source instead of getting a free extra generation.
   if (status.deepReadsRemaining > 0) {
-    const updated = await prisma.user.update({
-      where: { id: userId },
+    const claimed = await prisma.user.updateMany({
+      where: { id: userId, aiQuotaCycleStart: fresh.aiQuotaCycleStart, aiDeepReadsUsed: { lt: status.deepReadsLimit } },
       data: { aiDeepReadsUsed: { increment: 1 } },
     });
-    return { ok: true, source: "quota", status: getAiQuotaStatus(updated, now) };
+    if (claimed.count === 1) {
+      const updated = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+      return { ok: true, source: "quota", status: getAiQuotaStatus(updated, now) };
+    }
   }
 
   if (status.extraReadsAvailable > 0) {
-    const updated = await prisma.user.update({
-      where: { id: userId },
+    const claimed = await prisma.user.updateMany({
+      where: { id: userId, aiExtraReadsAvailable: { gt: 0 } },
       data: { aiExtraReadsAvailable: { decrement: 1 } },
     });
-    return { ok: true, source: "extra", status: getAiQuotaStatus(updated, now) };
+    if (claimed.count === 1) {
+      const updated = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+      return { ok: true, source: "extra", status: getAiQuotaStatus(updated, now) };
+    }
   }
 
   return { ok: false, status };

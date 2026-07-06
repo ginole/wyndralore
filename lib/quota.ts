@@ -12,6 +12,22 @@ export function isPremiumActive(user: Pick<User, "plan" | "planExpiresAt">): boo
   return user.planExpiresAt.getTime() > Date.now();
 }
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The daily free-draw quota trusted `clientDate` outright — a free user could send any
+ * never-before-seen date string to force a "new day" reset and draw unlimited times. Clamp to
+ * within a day of the server's own date (generous enough to cover real timezone differences)
+ * so an out-of-range date falls back to the server's date instead of being accepted verbatim.
+ */
+function clampClientDate(clientDate: string): string {
+  const serverDate = new Date().toISOString().slice(0, 10);
+  const clientMs = Date.parse(`${clientDate}T00:00:00Z`);
+  if (!Number.isFinite(clientMs)) return serverDate;
+  const serverMs = Date.parse(`${serverDate}T00:00:00Z`);
+  return Math.abs(clientMs - serverMs) <= ONE_DAY_MS ? clientDate : serverDate;
+}
+
 /** Applies same-day vs. new-day reset math without writing to the DB. */
 function resolveCounters(user: User, clientDate: string) {
   if (user.quotaDate === clientDate) {
@@ -36,7 +52,7 @@ export function getQuotaStatus(user: User, clientDate: string): QuotaStatus {
   if (isPremiumActive(user)) {
     return { isPremium: true, remaining: null, limit: null, shareBonusAvailable: false, adBonusAvailable: false };
   }
-  const counters = resolveCounters(user, clientDate);
+  const counters = resolveCounters(user, clampClientDate(clientDate));
   const limit = BASE_FREE_DRAWS + counters.bonusShareUsedToday + counters.bonusAdUsedToday;
   const remaining = Math.max(0, limit - counters.dailyDrawsUsed);
   return {
@@ -50,10 +66,11 @@ export function getQuotaStatus(user: User, clientDate: string): QuotaStatus {
 
 /** Resets day-rollover counters in the DB if needed; returns the fresh user row. */
 async function ensureFreshDay(user: User, clientDate: string): Promise<User> {
-  if (user.quotaDate === clientDate) return user;
+  const date = clampClientDate(clientDate);
+  if (user.quotaDate === date) return user;
   return prisma.user.update({
     where: { id: user.id },
-    data: { dailyDrawsUsed: 0, bonusShareUsedToday: 0, bonusAdUsedToday: 0, quotaDate: clientDate },
+    data: { dailyDrawsUsed: 0, bonusShareUsedToday: 0, bonusAdUsedToday: 0, quotaDate: date },
   });
 }
 
