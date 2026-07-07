@@ -37,25 +37,34 @@ export default function TermsPage() {
         </div>
 
         <div>
-          <h2 className="font-display text-xl text-moon">3. Premium plans and payment</h2>
+          <h2 className="font-display text-xl text-moon">3. Premium plans, add-ons, and payment</h2>
           <p className="mt-2">
-            Premium plans are one-time payments made via bank transfer through Wise. There is no automatic renewal — your
-            plan simply ends when its term is up, and your account returns to the free tier. We&apos;ll email you before a
-            plan expires so you can choose to renew.
+            Premium plans and one-off purchases (such as a single AI deep reading) are one-time payments — there is no
+            automatic renewal. A Premium plan simply ends when its term is up, and your account returns to the free tier.
+            We&apos;ll email you before a plan expires so you can choose to renew.
           </p>
           <p className="mt-2">
-            To pay, include your order reference exactly as shown in your transfer. Payments that overpay the plan amount
-            are accepted, and the difference is not refundable. Payments below the plan amount will not activate Premium
-            until the balance is settled. If a payment cannot be automatically matched to your order, we will match it
-            manually — this may take longer.
+            Card payments are processed by our payment provider, Lemon Squeezy, which acts as the Merchant of Record for
+            those transactions. We also accept manual bank transfer through Wise: to pay this way, include your order
+            reference exactly as shown in your transfer. Overpayments are accepted and the difference is not refundable;
+            payments below the plan amount will not activate Premium until the balance is settled. If a payment cannot be
+            matched to your order automatically, we will match it manually — this may take longer.
           </p>
         </div>
 
         <div>
-          <h2 className="font-display text-xl text-moon">4. Refunds</h2>
+          <h2 className="font-display text-xl text-moon">4. Refunds and immediate delivery</h2>
           <p className="mt-2">
-            Because Premium unlocks digital content immediately, payments are generally non-refundable. If something has
-            gone wrong with your order, contact us and we&apos;ll make it right.
+            Premium access and AI readings are digital content that is unlocked or delivered to you immediately. Because
+            of this, all sales are final and payments are non-refundable. By completing a purchase, you expressly request
+            that delivery and access begin right away, and you acknowledge that you thereby lose any statutory right of
+            withdrawal or cooling-off period — including, where applicable, the 14-day right of withdrawal under EU/UK
+            consumer law — once delivery has begun.
+          </p>
+          <p className="mt-2">
+            Where a card payment is handled by Lemon Squeezy as Merchant of Record, Lemon Squeezy&apos;s own refund and
+            dispute policies also apply. If something has genuinely gone wrong with your order, contact us at
+            hello@wyndralore.com and we&apos;ll make it right.
           </p>
         </div>
 

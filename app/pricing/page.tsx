@@ -94,6 +94,15 @@ export default function PricingPage() {
           );
         })}
       </div>
+
+      <p className="mx-auto mt-8 max-w-lg text-[11px] leading-relaxed text-moon-dim/60">
+        Digital goods, delivered instantly — all sales final. By purchasing you agree to immediate delivery and waive
+        any right of withdrawal. See our{" "}
+        <a href="/terms" className="underline decoration-gold-dim underline-offset-2 hover:text-moon-dim">
+          Terms
+        </a>
+        .
+      </p>
     </section>
   );
 }
