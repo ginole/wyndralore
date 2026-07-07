@@ -71,8 +71,10 @@ export default function BackgroundFloatingCards() {
 
       {/* Layer 3 — parallax floating cards. Deeper cards are smaller, dimmer and blurrier. */}
       {CARDS.map((c, i) => {
-        const opacity = c.depth === 3 ? 0.3 : c.depth === 2 ? 0.22 : 0.14;
-        const blur = c.depth === 3 ? "0.5px" : c.depth === 2 ? "1px" : "1.8px";
+        // Opacity floor raised (was 0.3/0.22/0.14) so the cards survive a dimmed screen instead
+        // of sinking into the near-black ink; blur eased a touch so the gloss/texture still reads.
+        const opacity = c.depth === 3 ? 0.5 : c.depth === 2 ? 0.38 : 0.26;
+        const blur = c.depth === 3 ? "0.3px" : c.depth === 2 ? "0.7px" : "1.4px";
         return (
           <div
             key={`${c.src}-${i}`}
