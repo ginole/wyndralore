@@ -170,7 +170,9 @@ export async function renderFortuneCard(canvas: HTMLCanvasElement, opts: Fortune
   ctx.strokeStyle = GOLD;
   ctx.lineWidth = 3;
   ctx.globalAlpha = 0.8;
-  ctx.strokeRect(48, 48, W - 96, H - 96);
+  // Rounded frame — softer/more premium than sharp 90° corners.
+  roundRect(ctx, 48, 48, W - 96, H - 96, 56);
+  ctx.stroke();
   ctx.globalAlpha = 1;
 
   ctx.textAlign = "center";

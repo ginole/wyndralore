@@ -103,7 +103,7 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
   return (
     <div className="mt-12 rounded-2xl border border-gold-dim bg-ink-raised/40 p-6 text-center sm:p-8">
       <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Share your fortune</p>
-      <h3 className="font-display mt-2 text-2xl text-moon">A card worth showing off</h3>
+      <h3 className="font-display mt-2 text-2xl text-moon">A keepsake worth sharing</h3>
       <p className="mx-auto mt-2 max-w-sm text-sm text-moon-dim">
         Save this and share it to your story — the QR brings friends straight to their own free reading.
       </p>
