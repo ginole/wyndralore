@@ -15,7 +15,8 @@ export type AnalyticsEventName =
   | "payment_completed"
   | "ai_read_purchased"
   | "ai_deep_reading_generated"
-  | "creator_invite_sent";
+  | "creator_invite_sent"
+  | "admin_manual_grant";
 
 /** Server-side event recording. Never throws into the caller — analytics must not break UX. */
 export async function trackEvent(

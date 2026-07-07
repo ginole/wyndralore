@@ -7,9 +7,10 @@ import UsersPanel from "./admin/UsersPanel";
 import CreatorsPanel from "./admin/CreatorsPanel";
 import OrdersPanel from "./admin/OrdersPanel";
 import UnmatchedPanel from "./admin/UnmatchedPanel";
+import ManualGrantPanel from "./admin/ManualGrantPanel";
 import FunnelPanel from "./admin/FunnelPanel";
 
-type ViewKey = "overview" | "users" | "creators" | "orders" | "unmatched" | "funnel";
+type ViewKey = "overview" | "users" | "creators" | "orders" | "unmatched" | "manual" | "funnel";
 
 interface NavItem {
   key: ViewKey;
@@ -35,6 +36,7 @@ const NAV: NavSection[] = [
     items: [
       { key: "orders", label: "全部订单" },
       { key: "unmatched", label: "未匹配收款" },
+      { key: "manual", label: "手动补单" },
     ],
   },
   {
@@ -114,6 +116,7 @@ export default function AdminDashboard() {
         {view === "creators" && <CreatorsPanel />}
         {view === "orders" && <OrdersPanel />}
         {view === "unmatched" && <UnmatchedPanel />}
+        {view === "manual" && <ManualGrantPanel />}
         {view === "funnel" && <FunnelPanel />}
       </main>
     </section>
