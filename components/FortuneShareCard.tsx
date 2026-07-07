@@ -40,8 +40,7 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
           fetch(`/api/cards/${firstCardId}`).then((r) => r.json() as Promise<TarotCard>),
         ]);
         const orientation: Orientation = cards[0]?.orientation ?? "upright";
-        const words = orientation === "upright" ? card.keywords_upright : card.keywords_reversed;
-        const keyword = words.slice(0, 3).join(" · ") || card.name;
+        const keywords = (orientation === "upright" ? card.keywords_upright : card.keywords_reversed).slice(0, 4);
 
         const qrDataUrl = await QRCode.toDataURL(shareUrl, {
           margin: 2,
@@ -51,7 +50,15 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
 
         const canvas = canvasRef.current;
         if (!canvas || cancelled) return;
-        await renderFortuneCard(canvas, { spreadTitle, keyword, cards, qrDataUrl, urlLabel: "wyndralore.com" });
+        await renderFortuneCard(canvas, {
+          spreadTitle,
+          cardName: card.name,
+          orientation,
+          keywords: keywords.length ? keywords : [card.name],
+          cards,
+          qrDataUrl,
+          urlLabel: "wyndralore.com",
+        });
         if (cancelled) return;
         const blob = await canvasToBlob(canvas);
         objectUrl = URL.createObjectURL(blob);

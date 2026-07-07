@@ -129,13 +129,72 @@ export interface FortuneCardCard {
 
 export interface FortuneCardOptions {
   spreadTitle: string;
-  /** The distilled fortune keyword(s) shown large near the top. */
-  keyword: string;
+  /** Hero card's name + orientation, printed under the card thumbnail. */
+  cardName: string;
+  orientation: "upright" | "reversed";
+  /** The distilled fortune keywords — rendered as small pill chips under the name. */
+  keywords: string[];
   cards: FortuneCardCard[];
   /** Pre-rendered QR image (data URL) encoding the share/referral link. */
   qrDataUrl: string;
   /** Human-readable link printed under the QR. */
   urlLabel: string;
+}
+
+interface PillChip {
+  word: string;
+  w: number;
+}
+
+/** Packs words into centered pill rows that fit within maxWidth, using the given font. */
+function layoutPillRows(ctx: CanvasRenderingContext2D, words: string[], maxWidth: number, font: string, padX: number, gapX: number): PillChip[][] {
+  ctx.font = font;
+  ctx.textAlign = "left";
+  const rows: PillChip[][] = [[]];
+  let rowWidth = 0;
+  for (const word of words) {
+    const chipW = ctx.measureText(word).width + padX * 2;
+    const row = rows[rows.length - 1]!;
+    if (rowWidth + chipW + (row.length ? gapX : 0) > maxWidth && row.length) {
+      rows.push([{ word, w: chipW }]);
+      rowWidth = chipW;
+    } else {
+      row.push({ word, w: chipW });
+      rowWidth += chipW + (row.length > 1 ? gapX : 0);
+    }
+  }
+  return rows;
+}
+
+/** Draws centered, bordered keyword pill chips (mirrors the site's keyword-chip UI). Returns the y just below the block. */
+function drawKeywordPills(ctx: CanvasRenderingContext2D, words: string[], centerX: number, startY: number, maxWidth: number): number {
+  const font = "400 28px Georgia, serif";
+  const padX = 26;
+  const gapX = 16;
+  const gapY = 18;
+  const chipH = 62;
+  const rows = layoutPillRows(ctx, words, maxWidth, font, padX, gapX);
+
+  let y = startY;
+  for (const row of rows) {
+    const rowW = row.reduce((s, c) => s + c.w, 0) + gapX * (row.length - 1);
+    let x = centerX - rowW / 2;
+    for (const chip of row) {
+      ctx.strokeStyle = GOLD;
+      ctx.globalAlpha = 0.55;
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, x, y, chip.w, chipH, chipH / 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = MOON;
+      ctx.font = font;
+      ctx.textAlign = "center";
+      ctx.fillText(chip.word, x + chip.w / 2, y + chipH / 2 + 10);
+      x += chip.w + gapX;
+    }
+    y += chipH + gapY;
+  }
+  return y - gapY;
 }
 
 /** Rounded-rect path helper (older canvas targets lack ctx.roundRect). */
@@ -150,10 +209,10 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 /**
- * Renders the 1080×1920 "flaunt" fortune card: brand mark, spread name, the distilled fortune
- * keyword, a thumbnail grid of the actual cards drawn, and a QR (encoding the sharer's referral
- * link) so a screenshot posted to TikTok/Instagram doubles as an invite. Same black-gold palette
- * as the site.
+ * Renders the 1080×1920 "flaunt" fortune card: brand mark, a (now larger) thumbnail grid of the
+ * actual cards drawn, the hero card's name/orientation and its distilled keyword pills right
+ * beneath it, and — further down, smaller — a QR encoding the sharer's referral link, so a
+ * screenshot posted to TikTok/Instagram doubles as an invite. Same black-gold palette as the site.
  */
 export async function renderFortuneCard(canvas: HTMLCanvasElement, opts: FortuneCardOptions): Promise<void> {
   canvas.width = W;
@@ -186,27 +245,18 @@ export async function renderFortuneCard(canvas: HTMLCanvasElement, opts: Fortune
   ctx.fillText(opts.spreadTitle.toUpperCase(), W / 2, 214);
   ctx.globalAlpha = 1;
 
-  // Distilled fortune keyword — the hero line.
-  ctx.fillStyle = GOLD_BRIGHT;
-  ctx.font = "600 76px Georgia, serif";
-  const kwLines = wrapText(ctx, opts.keyword, W - 260);
-  let kwY = 360;
-  for (const line of kwLines.slice(0, 3)) {
-    ctx.fillText(line, W / 2, kwY);
-    kwY += 92;
-  }
-
-  // Thumbnail grid of the drawn cards.
+  // Thumbnail grid of the drawn cards — bigger now that the hero keyword line moved below it.
+  // A single-card spread (the common case) gets the most room; larger spreads shrink per-card.
   const n = opts.cards.length;
-  const perRow = Math.min(n, 5);
-  const rows = Math.ceil(n / perRow);
-  const gap = 26;
-  const maxThumbW = 220;
-  const usable = W - 260;
+  const perRow = Math.min(n, n <= 4 ? n : 5);
+  const gridRows = Math.ceil(n / perRow);
+  const gap = 24;
+  const maxThumbW = n === 1 ? 380 : n <= 3 ? 280 : n <= 6 ? 210 : 160;
+  const usable = W - 200;
   const thumbW = Math.min(maxThumbW, (usable - (perRow - 1) * gap) / perRow);
   const thumbH = thumbW * (8 / 5);
-  const gridTop = Math.max(kwY + 40, 640);
-  const gridH = rows * thumbH + (rows - 1) * gap;
+  const gridTop = 300;
+  const gridH = gridRows * thumbH + (gridRows - 1) * gap;
 
   for (let i = 0; i < n; i++) {
     const row = Math.floor(i / perRow);
@@ -233,12 +283,30 @@ export async function renderFortuneCard(canvas: HTMLCanvasElement, opts: Fortune
     }
   }
 
-  // QR tile (light background so it stays scannable on the dark card) + caption.
-  const qrSize = 240;
+  // Card name + orientation, then keyword pills — moved here, right under the thumbnail (where
+  // the QR used to sit), so the card's own "meaning" reads before the invite/QR does.
+  let cursorY = gridTop + gridH + 92;
+  ctx.fillStyle = GOLD_BRIGHT;
+  ctx.font = "600 58px Georgia, serif";
+  ctx.fillText(opts.cardName, W / 2, cursorY);
+
+  cursorY += 46;
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.85;
+  ctx.font = "400 26px Georgia, serif";
+  ctx.fillText(opts.orientation === "upright" ? "UPRIGHT" : "REVERSED", W / 2, cursorY);
+  ctx.globalAlpha = 1;
+
+  cursorY += 56;
+  cursorY = drawKeywordPills(ctx, opts.keywords, W / 2, cursorY, W - 180);
+
+  // QR tile (light background so it stays scannable on the dark card) — pushed further down and
+  // smaller than the hero content above it, since it's the invite, not the point of the card.
+  const qrSize = 180;
   const qrX = (W - qrSize) / 2;
-  const qrY = Math.min(gridTop + gridH + 120, H - 400);
+  const qrY = Math.min(cursorY + 90, H - 300);
   ctx.fillStyle = MOON;
-  roundRect(ctx, qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 24);
+  roundRect(ctx, qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 20);
   ctx.fill();
   try {
     const qr = await loadImage(opts.qrDataUrl);
@@ -248,11 +316,11 @@ export async function renderFortuneCard(canvas: HTMLCanvasElement, opts: Fortune
   }
 
   ctx.fillStyle = MOON;
-  ctx.font = "italic 400 34px Georgia, serif";
-  ctx.fillText("Scan for your own reading", W / 2, qrY + qrSize + 76);
+  ctx.font = "italic 400 30px Georgia, serif";
+  ctx.fillText("Scan for your own reading", W / 2, qrY + qrSize + 64);
   ctx.fillStyle = GOLD;
-  ctx.font = "400 34px Georgia, serif";
-  ctx.fillText(opts.urlLabel, W / 2, qrY + qrSize + 128);
+  ctx.font = "400 30px Georgia, serif";
+  ctx.fillText(opts.urlLabel, W / 2, qrY + qrSize + 110);
 }
 
 export function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
