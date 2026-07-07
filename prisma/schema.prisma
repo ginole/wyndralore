@@ -139,6 +139,20 @@ model AdminLoginThrottle {
   @@index([lockedUntil])
 }
 
+// Generic fixed-window rate limiter (lib/rateLimit.ts). One row per (bucket + hashed identity)
+// — e.g. an IP hitting the free AI-summary endpoint, or an IP attempting login. Backed by the
+// DB rather than in-memory counters because the app runs on Vercel serverless: many short-lived
+// instances handle requests and don't share memory, so an in-memory limiter would leak through.
+// The identity (IP/email) is hashed with SESSION_SECRET before storage — never persisted raw.
+model RateLimit {
+  key         String   @id // sha256(bucket + identity + SESSION_SECRET)
+  count       Int      @default(0)
+  windowStart DateTime
+  updatedAt   DateTime @updatedAt
+
+  @@index([windowStart])
+}
+
 model WiseWebhookEvent {
   id            String   @id @default(cuid())
   eventKey      String   @unique // dedupe key derived from the Wise payload

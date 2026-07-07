@@ -4,8 +4,18 @@ import { hashPassword, isValidEmail } from "@/lib/password";
 import { setSessionCookie } from "@/lib/auth";
 import { serializeUser } from "@/lib/serializeUser";
 import { trackEvent, getAnonId } from "@/lib/analytics";
+import { clientIpFrom } from "@/lib/adminThrottle";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
+
+// Cap account creation per-IP so the users table (and each bcrypt hash's CPU cost) can't be
+// flooded by a script. 10 signups per hour is generous for shared/NAT IPs but stops abuse.
+const REGISTER_LIMIT = 10;
+const REGISTER_WINDOW_MS = 60 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
+  const rl = await checkRateLimit("register", clientIpFrom(req), REGISTER_LIMIT, REGISTER_WINDOW_MS);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfterSeconds);
+
   const body = await req.json().catch(() => null);
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body?.password === "string" ? body.password : "";

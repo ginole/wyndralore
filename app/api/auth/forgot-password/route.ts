@@ -3,10 +3,20 @@ import { prisma } from "@/lib/db";
 import { isValidEmail } from "@/lib/password";
 import { generateResetToken } from "@/lib/passwordReset";
 import { sendEmail, passwordResetEmail } from "@/lib/email";
+import { clientIpFrom } from "@/lib/adminThrottle";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
+
+// Per-IP cap so this can't be used to email-bomb a victim or burn the Resend sending quota.
+// 5 per hour is plenty for a real user who mistyped or lost the first email.
+const RESET_LIMIT = 5;
+const RESET_WINDOW_MS = 60 * 60 * 1000;
 
 // Always responds the same way regardless of whether the email exists, so this endpoint
 // can't be used to enumerate registered accounts.
 export async function POST(req: NextRequest) {
+  const rl = await checkRateLimit("forgot_password", clientIpFrom(req), RESET_LIMIT, RESET_WINDOW_MS);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfterSeconds);
+
   const body = await req.json().catch(() => null);
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
 

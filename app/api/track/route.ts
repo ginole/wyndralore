@@ -20,8 +20,15 @@ export async function POST(req: NextRequest) {
   }
 
   const [anonId, userId] = await Promise.all([getAnonId(), getSessionUserId()]);
-  const props = body?.props && typeof body.props === "object" ? body.props : undefined;
-  await trackEvent(name as AnalyticsEventName, { anonId, userId, props });
+  // This endpoint is unauthenticated, so `props` is attacker-controlled. Cap its serialized
+  // size before persisting it so it can't be used to stuff arbitrarily large blobs into the
+  // analytics table (storage-exhaustion abuse). 1 KB is well beyond any legitimate funnel prop.
+  let props: unknown;
+  if (body?.props && typeof body.props === "object") {
+    const serialized = JSON.stringify(body.props);
+    props = serialized.length <= 1024 ? body.props : undefined;
+  }
+  await trackEvent(name as AnalyticsEventName, { anonId, userId, props: props as Record<string, unknown> | undefined });
 
   return NextResponse.json({ ok: true });
 }
