@@ -9,6 +9,8 @@ export interface SessionUser {
   planExpiresAt: string | null;
   isPremium: boolean;
   createdAt: string;
+  referralCode: string | null;
+  premiumSpreadCredits: number;
 }
 
 export interface QuotaStatus {

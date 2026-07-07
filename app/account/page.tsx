@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { pixelTrack } from "@/lib/pixel";
+import { REF_STORAGE_KEY } from "@/lib/referral";
 
 export default function AccountPage() {
   const { user, quota, loading, refresh, logout } = useAuth();
@@ -14,6 +15,21 @@ export default function AccountPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const inviteLink =
+    user?.referralCode && typeof window !== "undefined" ? `${window.location.origin}/?ref=${user.referralCode}` : "";
+
+  async function handleCopyInvite() {
+    if (!inviteLink) return;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked — user can select the link text manually */
+    }
+  }
 
   async function handleForgotSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,10 +55,16 @@ export default function AccountPage() {
     }
     setSubmitting(true);
     try {
+      // On registration, forward any referral code this visitor arrived with (stashed by
+      // ReferralCapture) so their inviter can be credited once they complete a reading.
+      const referralCode =
+        mode === "register" && typeof window !== "undefined"
+          ? window.localStorage.getItem(REF_STORAGE_KEY) || undefined
+          : undefined;
       const res = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, referralCode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -50,7 +72,14 @@ export default function AccountPage() {
         return;
       }
       // FB ad conversion signal — only new registrations, not logins.
-      if (mode === "register") pixelTrack("CompleteRegistration");
+      if (mode === "register") {
+        pixelTrack("CompleteRegistration");
+        try {
+          window.localStorage.removeItem(REF_STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
+      }
       await refresh();
     } finally {
       setSubmitting(false);
@@ -219,6 +248,38 @@ export default function AccountPage() {
               {quota.remaining} / {quota.limit}
             </span>
           </div>
+        )}
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-gold-dim bg-ink-raised/60 p-6 text-left">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Invite friends</span>
+          <span className="text-sm text-gold-bright">
+            {user.premiumSpreadCredits} free {user.premiumSpreadCredits === 1 ? "unlock" : "unlocks"}
+          </span>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-moon-dim">
+          When a friend signs up with your link and does a reading, you get{" "}
+          <span className="text-moon">3 free unlocks</span> for any premium spread — Love, Career, or Celtic Cross.
+        </p>
+        {user.referralCode ? (
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <input
+              readOnly
+              value={inviteLink}
+              onFocus={(e) => e.currentTarget.select()}
+              className="flex-1 truncate rounded-xl border border-ink-line bg-ink/60 p-3 text-xs text-moon focus:border-gold-dim focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleCopyInvite}
+              className="rounded-full bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright"
+            >
+              {copied ? "Copied ✓" : "Copy Link"}
+            </button>
+          </div>
+        ) : (
+          <p className="mt-4 text-xs text-moon-dim/70">Preparing your invite link…</p>
         )}
       </div>
 

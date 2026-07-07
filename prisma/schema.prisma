@@ -40,6 +40,16 @@ model User {
   // a re-invite re-issue a fresh claim link, and is cleared once they set a password.
   isPlaceholder Boolean @default(false)
 
+  // Referral / invite-a-friend loop. `referralCode` is this user's own shareable code
+  // (lazily assigned). `premiumSpreadCredits` are earned rewards — each one unlocks a single
+  // otherwise-paid PREMIUM spread (Love/Career/Celtic Cross). `referredByCode` records who
+  // invited this account (set once, at registration), and `referralRewarded` guards that a
+  // given referred account only ever pays out its inviter's +3 reward one time.
+  referralCode         String?  @unique
+  premiumSpreadCredits Int      @default(0)
+  referredByCode       String?
+  referralRewarded     Boolean  @default(false)
+
   createdAt DateTime @default(now())
   orders    Order[]
   journalEntries JournalEntry[]

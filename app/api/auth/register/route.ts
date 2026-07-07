@@ -6,6 +6,7 @@ import { serializeUser } from "@/lib/serializeUser";
 import { trackEvent, getAnonId } from "@/lib/analytics";
 import { clientIpFrom } from "@/lib/adminThrottle";
 import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
+import { ensureReferralCode, attributeReferral } from "@/lib/referral";
 
 // Cap account creation per-IP so the users table (and each bcrypt hash's CPU cost) can't be
 // flooded by a script. 10 signups per hour is generous for shared/NAT IPs but stops abuse.
@@ -33,9 +34,17 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await hashPassword(password);
-  const user = await prisma.user.create({ data: { email, passwordHash } });
+  const created = await prisma.user.create({ data: { email, passwordHash } });
+
+  // Give the new account its own invite code, and record who referred them (if they arrived via
+  // a ?ref= link the client forwarded). The referrer's reward is only paid once this account
+  // actually completes a reading — see creditReferrerForReading in the draw-consume route.
+  const referralCode = typeof body?.referralCode === "string" ? body.referralCode : undefined;
+  const user = await ensureReferralCode(created);
+  await attributeReferral(user, referralCode);
+
   await setSessionCookie(user.id);
-  await trackEvent("signup", { anonId: await getAnonId(), userId: user.id });
+  await trackEvent("signup", { anonId: await getAnonId(), userId: user.id, props: referralCode ? { referred: true } : undefined });
 
   return NextResponse.json({ user: serializeUser(user) }, { status: 201 });
 }

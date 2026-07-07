@@ -9,5 +9,9 @@ export function serializeUser(user: User) {
     planExpiresAt: user.planExpiresAt,
     isPremium: isPremiumActive(user),
     createdAt: user.createdAt,
+    // Referral loop — safe to expose: the code is meant to be shared, and the credit count is
+    // the user's own balance. `referredByCode`/`referralRewarded` stay server-only.
+    referralCode: user.referralCode,
+    premiumSpreadCredits: user.premiumSpreadCredits,
   };
 }

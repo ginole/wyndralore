@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { getSpread } from "@/lib/spreads";
 import { getDeckManifest } from "@/lib/cards";
 import { getCurrentUser } from "@/lib/auth";
-import { isPremiumActive } from "@/lib/quota";
+import { premiumSpreadAccess, PremiumSpreadAccess } from "@/lib/premiumSpread";
 import { SpreadConfig } from "@/lib/types";
 import ReadingExperience from "@/components/ReadingExperience";
 
@@ -43,8 +43,14 @@ function PremiumUpsell({ spread }: { spread: SpreadConfig }) {
         Go Premium
       </Link>
       <Link
+        href="/account"
+        className="mt-6 text-xs uppercase tracking-[0.2em] text-gold-dim underline underline-offset-4 hover:text-gold"
+      >
+        Or invite friends to earn free unlocks
+      </Link>
+      <Link
         href="/reading/daily"
-        className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
+        className="mt-4 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
       >
         Or draw your free daily card
       </Link>
@@ -67,21 +73,25 @@ export default async function ReadingPage({ params }: { params: Promise<{ spread
     );
   }
 
+  let access: PremiumSpreadAccess = { allowed: false, creditsRemaining: 0 };
   if (!spread.free) {
-    // Fail closed, not crash: any error while checking premium status routes to the
-    // upsell/pricing page instead of a raw 500 — a broken auth check should never block
-    // the whole page from rendering.
-    let premium = false;
+    // Fail closed, not crash: any error while checking access routes to the upsell/pricing page
+    // instead of a raw 500 — a broken auth check should never block the whole page from rendering.
     try {
       const user = await getCurrentUser();
-      premium = user ? isPremiumActive(user) : false;
+      access = user ? premiumSpreadAccess(user) : { allowed: false, creditsRemaining: 0 };
     } catch (err) {
       console.error("[reading] premium check failed, degrading to upsell", err);
     }
-    if (!premium) return <PremiumUpsell spread={spread} />;
+    if (!access.allowed) return <PremiumUpsell spread={spread} />;
   }
 
   const deck = getDeckManifest();
 
-  return <ReadingExperience spread={spread} deck={deck} />;
+  // Tell the client when this premium spread is being unlocked by a referral credit (vs. a paid
+  // plan) so it can show the "using 1 free unlock" note; the credit is actually spent server-side
+  // at first card pick (draw-consume), never on merely opening the page.
+  const creditUnlock = access.allowed && access.via === "credit" ? { creditsRemaining: access.creditsRemaining } : undefined;
+
+  return <ReadingExperience spread={spread} deck={deck} creditUnlock={creditUnlock} />;
 }

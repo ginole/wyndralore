@@ -13,6 +13,7 @@ import DrawnCardBlock from "./DrawnCardBlock";
 import AdBonusModal from "./AdBonusModal";
 import ShareCardModal from "./ShareCardModal";
 import AiReadingPanel from "./AiReadingPanel";
+import FortuneShareCard from "./FortuneShareCard";
 
 type Phase = "checking" | "limited" | "intro" | "shuffle" | "select" | "reveal";
 
@@ -61,9 +62,13 @@ interface ResumePayload {
 interface ReadingExperienceProps {
   spread: SpreadConfig;
   deck: DeckCard[];
+  // Present only when a non-member is opening this PREMIUM spread with a referral-earned unlock
+  // credit (vs. a paid plan). Drives the "using 1 free unlock" note; the credit is spent
+  // server-side at first card pick.
+  creditUnlock?: { creditsRemaining: number };
 }
 
-export default function ReadingExperience({ spread, deck }: ReadingExperienceProps) {
+export default function ReadingExperience({ spread, deck, creditUnlock }: ReadingExperienceProps) {
   const { user, quota, loading: authLoading, refresh: refreshAuth } = useAuth();
   const [phase, setPhase] = useState<Phase>("checking");
   const [question, setQuestion] = useState("");
@@ -110,9 +115,15 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
       }
     }
 
-    const allowed = user ? Boolean(quota?.isPremium) || (quota?.remaining ?? 0) > 0 : canDraw();
+    // Premium spreads are already access-gated on the server (reached here only via an active
+    // plan or a referral unlock credit), so they don't re-gate on the daily free-draw quota.
+    const allowed = !spread.free
+      ? true
+      : user
+        ? Boolean(quota?.isPremium) || (quota?.remaining ?? 0) > 0
+        : canDraw();
     setPhase(allowed ? "intro" : "limited");
-  }, [authLoading, user, quota, spread.slug]);
+  }, [authLoading, user, quota, spread.slug, spread.free]);
 
   function handleBeforePurchase() {
     const payload: ResumePayload = { spreadSlug: spread.slug, selected, theme, question, savedAt: Date.now() };
@@ -141,6 +152,9 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
   }, [phase, spread.slug, theme]);
 
   const takenIds = useMemo(() => new Set(selected.map((s) => s.card.id)), [selected]);
+  // Stable reference so the share card isn't regenerated on unrelated re-renders (note typing,
+  // AI reading completing) — only when the actual drawn cards change.
+  const fortuneCards = useMemo(() => selected.map((s) => ({ image: s.card.image, orientation: s.orientation })), [selected]);
 
   function startShuffle() {
     setSelected([]);
@@ -192,7 +206,7 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
       fetch("/api/draws/consume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: todayLocal() }),
+        body: JSON.stringify({ date: todayLocal(), spread: spread.slug }),
       }).then((res) => {
         refreshAuth();
         if (!res.ok) {
@@ -345,9 +359,14 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spread.count} card{spread.count > 1 ? "s" : ""}</p>
         <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">{spread.title}</h1>
         <p className="mt-4 text-sm leading-relaxed text-moon-dim sm:text-base">{spread.subtitle}</p>
-        {user && quota && !quota.isPremium && (
+        {spread.free && user && quota && !quota.isPremium && (
           <p className="mt-3 text-xs uppercase tracking-[0.2em] text-gold-dim">
             {quota.remaining} of {quota.limit} readings left today
+          </p>
+        )}
+        {creditUnlock && (
+          <p className="mt-3 text-xs uppercase tracking-[0.2em] text-gold-bright">
+            ✦ Unlocking with 1 of your {creditUnlock.creditsRemaining} free premium {creditUnlock.creditsRemaining === 1 ? "unlock" : "unlocks"}
           </p>
         )}
 
@@ -496,6 +515,13 @@ export default function ReadingExperience({ spread, deck }: ReadingExperiencePro
         spreadSlug={spread.slug}
         onDeepReadingComplete={setAiReadingText}
         onBeforePurchase={handleBeforePurchase}
+      />
+
+      <FortuneShareCard
+        spreadTitle={spread.title}
+        cards={fortuneCards}
+        firstCardId={selected[0].card.id}
+        referralCode={user?.referralCode ?? null}
       />
 
       {user?.isPremium && (

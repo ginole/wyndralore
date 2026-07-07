@@ -6,6 +6,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { AuthProvider } from "@/components/AuthProvider";
 import VisitTracker from "@/components/VisitTracker";
+import ReferralCapture from "@/components/ReferralCapture";
 import MetaPixel from "@/components/MetaPixel";
 import AdSenseScript from "@/components/AdSenseScript";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
@@ -60,6 +61,7 @@ export default function RootLayout({
         <AuthProvider>
           <Suspense fallback={null}>
             <VisitTracker />
+            <ReferralCapture />
             <MetaPixel />
             <AdSenseScript />
             <GoogleAnalytics />
