@@ -56,10 +56,10 @@ export default function DrawnCardBlock({ position, deckCard, orientation, theme,
 
   return (
     <div
-      className="reveal-fade grid grid-cols-[minmax(0,140px)_1fr] gap-6 border-b border-ink-line/60 pb-10 last:border-b-0 sm:grid-cols-[160px_1fr] sm:gap-10"
+      className="reveal-fade flex flex-col gap-6 border-b border-ink-line/60 pb-10 last:border-b-0 sm:grid sm:grid-cols-[160px_1fr] sm:gap-10"
       style={{ animationDelay: `${index * 150}ms` }}
     >
-      <div>
+      <div className="w-32 shrink-0 sm:w-full">
         <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold-dim">{position}</p>
         <div className="aspect-[5/8] w-full">
           <FlipCard
