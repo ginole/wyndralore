@@ -54,6 +54,11 @@ model User {
   orders    Order[]
   journalEntries JournalEntry[]
   creatorInvites CreatorInvite[]
+
+  // "Meet Our Masters" marketplace: a User may BE a master (their storefront profile) and/or
+  // BUY from masters (their storefront orders). Both optional relations.
+  masterProfile MasterProfile?
+  masterOrders  MasterOrder[]
 }
 
 // Saved readings for Premium members (PRD §4.2). Kept even after a plan lapses so a
@@ -161,6 +166,86 @@ model RateLimit {
   updatedAt   DateTime @updatedAt
 
   @@index([windowStart])
+}
+
+// A tarot creator's storefront in the "Meet Our Masters" marketplace. Onboarded by an admin
+// (like the creator-outreach flow); the underlying account is a normal User. Holds both the
+// public storefront fields and the private AI-style + payout config.
+model MasterProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  handle        String   @unique              // storefront URL: /masters/[handle]
+  displayName   String
+  tagline       String?                        // one-line credo shown on her card/altar
+  photoUrl      String?
+  channelUrl    String?                        // YouTube/TikTok/IG — the "as seen on" badge
+  followerTier  String?                        // internal ordering only, never shown
+  styleTone     String   @default("gentle")    // gentle | direct | playful | poetic (AI voice)
+  focusAreas    String   @default("[]")        // JSON string[] — love/career/shadow/...
+  voiceSamples  String   @default("[]")        // JSON string[] — few-shot phrases for AI style
+  avoidTopics   String?
+  dailyCapacity Int      @default(5)           // max live_voice orders/day (anti-oversell)
+  slaHours      Int      @default(48)          // live_voice delivery deadline
+  vacationMode  Boolean  @default(false)       // pause live_voice intake; AI layer unaffected
+  deepLinkUrl   String?                        // her external $151 booking link (hidden if null)
+  payoutMethod  String?                        // paypal | wise (optional at onboarding)
+  payoutHandle  String?                        // email / phone for the payout method
+  strikeCount   Int      @default(0)           // missed-SLA strikes (3 -> paused)
+  status        String   @default("active")    // active | paused
+  createdAt     DateTime @default(now())
+
+  orders MasterOrder[]
+  ledger LedgerEntry[]
+
+  @@index([status])
+}
+
+// One purchase from a master's storefront — distinct from the membership `Order`. `live_voice`
+// runs the hold-and-release flow (deliver within SLA or auto-refund); `ai_style` is delivered
+// instantly, so it settles without an escrow hold.
+model MasterOrder {
+  id                   String        @id @default(cuid())
+  code                 String        @unique   // WL-M-XXXX
+  masterId             String
+  master               MasterProfile @relation(fields: [masterId], references: [id])
+  buyerId              String
+  buyer                User          @relation(fields: [buyerId], references: [id])
+  kind                 String                  // ai_style | live_voice
+  amountUsd            Float
+  commissionPct        Float                   // snapshot at purchase (0.5 | 0.7)
+  status               String        @default("paid") // paid | delivered | released | refunded
+  deliverBy            DateTime?               // paidAt + slaHours (live_voice only)
+  deliveredAt          DateTime?
+  deliveryUrl          String?                 // stored audio/video blob URL
+  disputeUntil         DateTime?               // deliveredAt + 72h; ledger releases after this
+  uploadTokenHash      String?                 // authorizes the master's tokenized upload page
+  uploadTokenExpiresAt DateTime?
+  createdAt            DateTime      @default(now())
+  paidAt               DateTime?
+
+  ledgerEntry LedgerEntry?
+
+  @@index([masterId])
+  @@index([status])
+}
+
+// The master's earned commission for one order, and where it sits in the
+// held -> available -> paid_out flow (or void on refund). amountUsd is the master's cut
+// (commissionPct * order price); the platform absorbs the Lemon Squeezy fee out of its own share.
+model LedgerEntry {
+  id          String        @id @default(cuid())
+  masterId    String
+  master      MasterProfile @relation(fields: [masterId], references: [id])
+  orderId     String        @unique
+  order       MasterOrder   @relation(fields: [orderId], references: [id])
+  amountUsd   Float
+  status      String        @default("held")  // held | available | paid_out | void
+  availableAt DateTime?
+  paidOutAt   DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([masterId, status])
 }
 
 model WiseWebhookEvent {
