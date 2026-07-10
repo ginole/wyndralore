@@ -12,7 +12,7 @@ export default function SiteHeader() {
       <Link href="/" aria-label="Wyndralore">
         <Image src="/wyndralore-wordmark.png" alt="Wyndralore" width={647} height={117} className="h-7 w-auto sm:h-8" priority />
       </Link>
-      <nav className="flex items-center gap-5 text-xs uppercase tracking-[0.2em] text-moon-dim">
+      <nav className="font-accent flex items-center gap-5 text-xs uppercase tracking-[0.2em] text-moon-dim">
         <Link href="/cards" className="hidden transition-colors hover:text-gold sm:inline">
           Cards
         </Link>

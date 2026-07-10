@@ -13,6 +13,7 @@
 
   --font-display: var(--font-cormorant);
   --font-body: var(--font-inter);
+  --font-accent: var(--font-cinzel);
 
   /* motion tokens — keep the whole site on one rhythm (PRD §6.3) */
   --ease-ritual: cubic-bezier(0.22, 1, 0.36, 1);
@@ -45,7 +46,12 @@ html {
 }
 
 body {
-  background: var(--color-ink);
+  /* Ambient candlelit wash instead of flat near-black: a faint violet aurora from the top and
+     a whisper of gold from the upper right. Pure gradients — zero image weight, every page. */
+  background:
+    radial-gradient(1100px 520px at 50% -120px, rgba(94, 70, 148, 0.14), transparent 70%),
+    radial-gradient(900px 480px at 88% 4%, rgba(201, 169, 110, 0.05), transparent 62%),
+    var(--color-ink);
   color: var(--color-moon);
   font-family: var(--font-body), system-ui, sans-serif;
 }
@@ -56,6 +62,17 @@ h3,
 h4,
 .font-display {
   font-family: var(--font-display), Georgia, serif;
+}
+
+/* Engraved Roman accent face — for tracked-uppercase eyebrows, nav, badges. */
+.font-accent {
+  font-family: var(--font-accent), Georgia, serif;
+}
+
+/* Consistent, visible keyboard-focus treatment site-wide (gold, offset, never clipped). */
+:where(a, button, [role="button"]):focus-visible {
+  outline: 2px solid rgba(228, 200, 148, 0.75);
+  outline-offset: 3px;
 }
 
 ::selection {
@@ -228,17 +245,60 @@ button.bg-gold:hover {
 
 /* --- breathing glow to guide the next action --- */
 @keyframes btnBreathe {
+  /* Keeps .cta-gold's metallic insets while the outer glow breathes — animating box-shadow
+     replaces the whole stack, so the insets must ride along in every keyframe. */
   0%,
   100% {
-    box-shadow: 0 0 12px -4px rgba(228, 200, 148, 0.3);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(90, 62, 20, 0.25),
+      0 0 12px -4px rgba(228, 200, 148, 0.3);
   }
   50% {
-    box-shadow: 0 0 36px -4px rgba(228, 200, 148, 0.75);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(90, 62, 20, 0.25),
+      0 0 36px -4px rgba(228, 200, 148, 0.75);
   }
 }
 
 .btn-breathe {
   animation: btnBreathe 2.6s var(--ease-soft) infinite;
+}
+
+/* --- primary gold CTA: metal-leaf gradient, inner highlight, tap feedback --- */
+/* Replaces flat `bg-gold` on the buttons that actually take money or start the ritual.
+   Hover states don't exist on the phones almost all traffic arrives on, so the pressed
+   state (`:active`) is the one doing the "this button is real" work. */
+.cta-gold {
+  font-family: var(--font-accent), Georgia, serif;
+  color: var(--color-ink);
+  background: linear-gradient(180deg, #f0dcae 0%, #ddbe85 52%, #c9a96e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(90, 62, 20, 0.25),
+    0 10px 32px -12px rgba(201, 169, 110, 0.65);
+  transition:
+    transform var(--duration-fast) var(--ease-soft),
+    box-shadow var(--duration-fast) var(--ease-soft),
+    filter var(--duration-fast) var(--ease-soft);
+}
+
+.cta-gold:hover:not(:disabled) {
+  filter: brightness(1.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(90, 62, 20, 0.25),
+    0 14px 40px -12px rgba(228, 200, 148, 0.8);
+}
+
+.cta-gold:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(0.97);
+}
+
+.cta-gold:disabled {
+  opacity: 0.55;
 }
 
 /* --- shuffle animation (PRD §6.3.1) --- */

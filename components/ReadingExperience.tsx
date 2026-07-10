@@ -340,7 +340,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
 
         <Link
           href="/pricing"
-          className="mt-6 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright"
+          className="cta-gold mt-6 rounded-full px-7 py-3 text-sm font-medium uppercase tracking-[0.2em]"
         >
           Go Premium for Unlimited
         </Link>
@@ -404,7 +404,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         <button
           type="button"
           onClick={handleBegin}
-          className="mt-10 rounded-full bg-gold px-9 py-4 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright"
+          className="cta-gold mt-10 w-full max-w-xs rounded-full px-9 py-4 text-sm font-medium uppercase tracking-[0.2em] sm:w-auto"
         >
           Begin Shuffling
         </button>
@@ -438,7 +438,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
           <button
             type="button"
             onClick={() => setPhase("select")}
-            className={`rounded-full bg-gold px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright ${
+            className={`cta-gold rounded-full px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] ${
               isShuffling ? "" : "btn-breathe"
             }`}
           >
@@ -574,7 +574,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         <button
           type="button"
           onClick={handleDrawAgain}
-          className="rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright"
+          className="cta-gold rounded-full px-7 py-3 text-sm font-medium uppercase tracking-[0.2em]"
         >
           Draw Again
         </button>

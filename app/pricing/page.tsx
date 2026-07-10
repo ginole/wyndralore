@@ -43,7 +43,7 @@ export default function PricingPage() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-20 text-center sm:px-10">
-      <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Wyndralore Premium</p>
+      <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">Wyndralore Premium</p>
       <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">Read without limits</h1>
       <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-moon-dim">
         No sneaky auto-renewals. You&apos;re always in control — every plan is a one-time payment, and nothing
@@ -59,11 +59,13 @@ export default function PricingPage() {
             <div
               key={id}
               className={`relative flex flex-col rounded-2xl border p-8 text-left ${
-                plan.highlight ? "border-gold bg-ink-raised md:-translate-y-3 md:scale-105" : "border-ink-line bg-ink-raised/50"
+                plan.highlight
+                  ? "border-gold bg-ink-raised shadow-[0_0_50px_-16px_rgba(228,200,148,0.5),inset_0_1px_0_rgba(228,200,148,0.15)] max-md:order-first md:-translate-y-3 md:scale-105"
+                  : "border-ink-line bg-ink-raised/50 shadow-[inset_0_1px_0_rgba(228,200,148,0.05)]"
               }`}
             >
               {plan.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-ink">
+                <span className="font-accent absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-ink shadow-[0_4px_14px_-4px_rgba(201,169,110,0.8)]">
                   Most Popular
                 </span>
               )}
@@ -83,8 +85,10 @@ export default function PricingPage() {
                 type="button"
                 onClick={() => handleSelectPlan(id)}
                 disabled={pending !== null}
-                className={`mt-8 rounded-full px-6 py-3 text-sm font-medium uppercase tracking-[0.2em] transition-transform duration-200 hover:scale-[1.02] disabled:opacity-60 ${
-                  plan.highlight ? "bg-gold text-ink hover:bg-gold-bright" : "border border-gold-dim text-moon hover:border-gold hover:text-gold"
+                className={`mt-8 rounded-full px-6 py-3.5 text-sm font-medium uppercase tracking-[0.2em] disabled:opacity-60 ${
+                  plan.highlight
+                    ? "cta-gold"
+                    : "font-accent border border-gold-dim text-moon transition-[border-color,color,transform] duration-200 hover:border-gold hover:text-gold active:scale-[0.97]"
                 }`}
               >
                 {pending === id ? "Please wait…" : "Get Premium"}

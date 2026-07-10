@@ -30,7 +30,7 @@ export default async function MasterAltarPage({ params }: { params: Promise<{ ha
 
   return (
     <section className="mx-auto max-w-2xl px-6 py-16 text-center">
-      <div className="mx-auto h-24 w-24 overflow-hidden rounded-full border border-gold bg-ink-raised">
+      <div className="mx-auto h-28 w-28 overflow-hidden rounded-full border-2 border-gold bg-ink-raised shadow-[0_0_44px_-10px_rgba(228,200,148,0.55)]">
         {master.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={master.photoUrl} alt={master.displayName} className="h-full w-full object-cover" />
@@ -39,10 +39,10 @@ export default async function MasterAltarPage({ params }: { params: Promise<{ ha
         )}
       </div>
 
-      <h1 className="font-display mt-5 text-3xl italic text-moon sm:text-4xl">Reading with {master.displayName}</h1>
-      {master.tagline && <p className="mt-2 text-sm text-moon-dim">&ldquo;{master.tagline}&rdquo;</p>}
+      <h1 className="font-display mt-6 text-3xl italic text-moon sm:text-4xl">Reading with {master.displayName}</h1>
+      {master.tagline && <p className="mt-3 text-base italic leading-relaxed text-moon-dim sm:text-sm">&ldquo;{master.tagline}&rdquo;</p>}
       {master.channelUrl && (
-        <a href={master.channelUrl} target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs uppercase tracking-[0.2em] text-gold hover:text-gold-bright">
+        <a href={master.channelUrl} target="_blank" rel="noreferrer" className="font-accent mt-4 inline-block py-1 text-xs uppercase tracking-[0.2em] text-gold transition-colors hover:text-gold-bright">
           ✦ As seen on her channel
         </a>
       )}

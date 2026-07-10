@@ -109,7 +109,7 @@ export default function MasterDrawRitual({ code, deck, masterName }: { code: str
           <button
             type="button"
             onClick={() => setPhase("select")}
-            className={`rounded-full bg-gold px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright ${
+            className={`cta-gold rounded-full px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] ${
               isShuffling ? "" : "btn-breathe"
             }`}
           >

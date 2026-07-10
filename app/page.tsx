@@ -30,7 +30,7 @@ export default function Home() {
           className="pointer-events-none absolute left-1/2 top-[40%] h-[48vh] w-[85vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-full"
           style={{ background: "radial-gradient(closest-side, rgba(201,169,110,0.13), transparent 72%)" }}
         />
-        <p className="relative z-10 mb-5 text-xs uppercase tracking-[0.4em] text-gold">
+        <p className="font-accent relative z-10 mb-5 text-xs uppercase tracking-[0.4em] text-gold">
           Free · No account needed
         </p>
         <h1 className="font-display relative z-10 max-w-3xl text-balance text-5xl font-medium leading-[1.1] text-moon sm:text-6xl md:text-7xl">
@@ -40,16 +40,16 @@ export default function Home() {
           Shuffle by hand. Choose your own cards. Watch them turn. Wyndralore brings the quiet ceremony
           of an in-person tarot reading to your screen.
         </p>
-        <div className="relative z-10 mt-10 flex flex-col items-center gap-4 sm:flex-row">
+        <div className="relative z-10 mt-10 flex w-full flex-col items-center gap-5 sm:w-auto sm:flex-row">
           <Link
             href="/reading/daily"
-            className="rounded-full bg-gold px-9 py-4 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright"
+            className="cta-gold w-full max-w-xs rounded-full px-9 py-4 text-center text-sm font-medium uppercase tracking-[0.2em] sm:w-auto"
           >
             Draw Your Card
           </Link>
           <a
             href="#spreads"
-            className="text-sm uppercase tracking-[0.2em] text-moon-dim underline decoration-gold-dim underline-offset-8 transition-colors hover:text-moon"
+            className="font-accent py-2 text-sm uppercase tracking-[0.2em] text-moon-dim underline decoration-gold-dim underline-offset-8 transition-colors hover:text-moon"
           >
             See all spreads
           </a>
@@ -58,8 +58,8 @@ export default function Home() {
 
       <section className="mx-auto grid max-w-5xl grid-cols-1 gap-10 px-6 py-20 sm:px-10 md:grid-cols-3">
         {STEPS.map((step) => (
-          <div key={step.n} className="text-center md:text-left">
-            <span className="font-display text-3xl text-gold-dim">{step.n}</span>
+          <div key={step.n} className="border-t border-gold-dim/40 pt-6 text-center md:text-left">
+            <span className="font-accent text-2xl text-gold-dim">{step.n}</span>
             <h3 className="font-display mt-3 text-2xl text-moon">{step.title}</h3>
             <p className="mt-3 text-sm leading-relaxed text-moon-dim">{step.body}</p>
           </div>
@@ -67,7 +67,7 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-3xl px-6 py-20 text-center sm:px-10">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">AI-Powered Personal Insight Engine</p>
+        <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">AI-Powered Personal Insight Engine</p>
         <h2 className="font-display mt-4 text-3xl text-moon sm:text-4xl">The ritual, then a mirror</h2>
         <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moon-dim">
           You still shuffle, choose, and reveal by hand — nothing about that changes. Once your cards are turned,
@@ -91,10 +91,10 @@ export default function Home() {
               <Link
                 key={slug}
                 href={`/reading/${slug}`}
-                className="group relative flex h-full flex-col justify-between rounded-2xl border border-ink-line bg-ink-raised/60 p-6 transition-colors hover:border-gold-dim"
+                className="group relative flex h-full flex-col justify-between rounded-2xl border border-ink-line bg-ink-raised/60 p-6 shadow-[inset_0_1px_0_rgba(228,200,148,0.06)] transition-[border-color,transform,box-shadow] duration-200 hover:border-gold-dim hover:shadow-[inset_0_1px_0_rgba(228,200,148,0.12),0_18px_40px_-24px_rgba(201,169,110,0.35)] active:scale-[0.985]"
               >
                 {premium && (
-                  <span className="absolute right-4 top-4 rounded-full border border-gold-dim px-2.5 py-1 text-[10px] uppercase tracking-widest text-gold">
+                  <span className="font-accent absolute right-4 top-4 rounded-full border border-gold-dim bg-gold/5 px-2.5 py-1 text-[10px] uppercase tracking-widest text-gold">
                     Premium
                   </span>
                 )}
@@ -102,8 +102,9 @@ export default function Home() {
                   <h3 className="font-display text-xl text-moon">{spread.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-moon-dim">{spread.subtitle}</p>
                 </div>
-                <p className="mt-6 text-xs uppercase tracking-[0.2em] text-gold-dim">
+                <p className="font-accent mt-6 text-xs uppercase tracking-[0.2em] text-gold-dim">
                   {spread.count} card{spread.count > 1 ? "s" : ""}
+                  <span className="ml-2 inline-block text-gold opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-1 group-hover:opacity-100">→</span>
                 </p>
               </Link>
             );

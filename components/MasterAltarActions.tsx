@@ -83,74 +83,78 @@ export default function MasterAltarActions({
       )}
 
       <label className="block text-left">
-        <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Your question (optional)</span>
+        <span className="font-accent text-xs uppercase tracking-[0.2em] text-gold-dim">Your question (optional)</span>
         <textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="What's on your mind right now?"
           rows={2}
           maxLength={500}
-          className="mt-2 w-full resize-none rounded-xl border border-ink-line bg-ink-raised/60 p-4 text-sm text-moon placeholder:text-moon-dim/50 focus:border-gold-dim focus:outline-none"
+          className="mt-2 w-full resize-none rounded-xl border border-ink-line bg-ink-raised/60 p-4 text-base text-moon transition-colors placeholder:text-moon-dim/50 focus:border-gold-dim focus:outline-none sm:text-sm"
         />
       </label>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-stretch">
-        <div className="flex flex-col rounded-2xl border border-ink-line bg-ink-raised/40 p-5 text-left">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-moon-dim">Start here</p>
-          <p className="font-display mt-2 text-2xl text-moon">{aiPriceLabel}</p>
-          <p className="mt-2 flex-1 text-xs leading-relaxed text-moon-dim">{displayName}&apos;s AI-trained reading style, delivered the moment you ask.</p>
+      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3 sm:items-stretch">
+        <div className="flex flex-col rounded-2xl border border-ink-line bg-ink-raised/40 p-6 text-left shadow-[inset_0_1px_0_rgba(228,200,148,0.06)]">
+          <p className="font-accent text-[10px] uppercase tracking-[0.18em] text-moon-dim">Start here</p>
+          <p className="font-display mt-2 text-3xl text-moon">{aiPriceLabel}</p>
+          <p className="mt-2 flex-1 text-sm leading-relaxed text-moon-dim sm:text-xs">{displayName}&apos;s AI-trained reading style, delivered the moment you ask.</p>
           <button
             type="button"
             onClick={() => buy("ai_style")}
             disabled={pending !== null || loading}
-            className="mt-4 rounded-full border border-ink-line py-2.5 text-xs uppercase tracking-widest text-moon transition-colors hover:border-gold-dim disabled:opacity-60"
+            className="font-accent mt-5 rounded-full border border-gold-dim py-3 text-xs uppercase tracking-widest text-gold transition-[border-color,transform] duration-200 hover:border-gold active:scale-[0.97] disabled:opacity-60"
           >
             {pending === "ai_style" ? "…" : "Get Instant Reading"}
           </button>
         </div>
 
-        <div className="relative flex flex-col rounded-2xl border border-gold bg-gradient-to-b from-gold/10 to-transparent p-5 text-left shadow-[0_0_40px_-15px_rgba(228,200,148,0.5)]">
-          <span className="absolute -top-3 left-5 rounded-full bg-gold px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-ink">
+        <div className="relative flex flex-col rounded-2xl border border-gold bg-gradient-to-b from-gold/12 to-transparent p-6 text-left shadow-[0_0_50px_-14px_rgba(228,200,148,0.55),inset_0_1px_0_rgba(228,200,148,0.15)] max-sm:order-first">
+          <span className="font-accent absolute -top-3 left-5 rounded-full bg-gold px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-ink shadow-[0_4px_14px_-4px_rgba(201,169,110,0.8)]">
             Her voice, for you
           </span>
-          <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-gold">Most requested</p>
-          <p className="font-display mt-2 text-3xl text-gold-bright">{voicePriceLabel}</p>
-          <p className="mt-2 flex-1 text-xs leading-relaxed text-moon-dim">
+          <p className="font-accent mt-2 text-[10px] uppercase tracking-[0.18em] text-gold">Most requested</p>
+          <p className="font-display mt-2 text-4xl text-gold-bright">{voicePriceLabel}</p>
+          <p className="mt-2 flex-1 text-sm leading-relaxed text-moon-dim sm:text-xs">
             {displayName} personally reads your cards and sends you her own voice — recorded just for your question.
           </p>
-          <p className="mt-2 text-[11px] uppercase tracking-widest text-emerald-300">
+          <p className="font-accent mt-3 text-[11px] uppercase tracking-widest text-emerald-300">
             {vacationMode ? "Currently resting" : `${spotsLeft} of ${dailyCapacity} today's spots left`}
           </p>
           <button
             type="button"
             onClick={() => buy("live_voice")}
             disabled={voiceDisabled}
-            className="mt-4 rounded-full bg-gold py-3 text-xs font-medium uppercase tracking-widest text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
+            className="cta-gold mt-5 rounded-full py-3.5 text-xs font-medium uppercase tracking-widest"
           >
             {pending === "live_voice" ? "…" : vacationMode || spotsLeft <= 0 ? "Fully Booked Today" : "Request Her Reading"}
           </button>
         </div>
 
-        <div className="flex flex-col rounded-2xl border border-dashed border-ink-line p-5 text-left opacity-90">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-moon-dim">Go deeper</p>
+        <div className="flex flex-col rounded-2xl border border-dashed border-ink-line p-6 text-left opacity-90">
+          <p className="font-accent text-[10px] uppercase tracking-[0.18em] text-moon-dim">Go deeper</p>
           {deepLinkUrl ? (
             <>
-              <p className="font-display mt-2 text-2xl text-moon">$151</p>
-              <p className="mt-2 flex-1 text-xs leading-relaxed text-moon-dim">A full private 1:1 session with {displayName}, live.</p>
+              <p className="font-display mt-2 text-3xl text-moon">$151</p>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-moon-dim sm:text-xs">A full private 1:1 session with {displayName}, live.</p>
               <a
                 href={deepLinkUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 text-center text-xs uppercase tracking-widest text-moon-dim underline underline-offset-4 hover:text-moon"
+                className="font-accent mt-5 py-2 text-center text-xs uppercase tracking-widest text-moon-dim underline underline-offset-4 transition-colors hover:text-moon"
               >
                 Book on her site ↗
               </a>
             </>
           ) : (
-            <p className="mt-2 flex-1 text-xs leading-relaxed text-moon-dim/70">{displayName} doesn&apos;t offer private sessions yet.</p>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-moon-dim/70 sm:text-xs">{displayName} doesn&apos;t offer private sessions yet.</p>
           )}
         </div>
       </div>
+
+      <p className="font-accent mt-6 text-[11px] uppercase tracking-[0.18em] text-moon-dim/70">
+        Secure checkout · Instant delivery on AI readings · Refunded if never delivered
+      </p>
 
       {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
       {!loading && !user && <p className="mt-4 text-xs text-moon-dim">Sign in to request a reading.</p>}
