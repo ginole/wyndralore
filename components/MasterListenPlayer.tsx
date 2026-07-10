@@ -52,6 +52,7 @@ export default function MasterListenPlayer({ token }: { token: string }) {
           .
         </video>
       </div>
+      <p className="mt-4 text-xs text-moon-dim/70">Available for 7 days from delivery — download it if you&apos;d like to keep it.</p>
     </section>
   );
 }

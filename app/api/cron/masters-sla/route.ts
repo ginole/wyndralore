@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { del } from "@vercel/blob";
 import { isAuthorizedCronRequest } from "@/lib/cronAuth";
-import { getOverdueUndeliveredOrders, markOrderRefunded, releaseDueLedger } from "@/lib/masters";
+import { getOverdueUndeliveredOrders, markOrderRefunded, releaseDueLedger, getExpiredRecordings, clearRecording } from "@/lib/masters";
 import { refundLemonSqueezyOrder } from "@/lib/lemonsqueezy";
 
 // Daily SLA sweep for the "Meet Our Masters" live_voice product — the automated half of the
@@ -13,6 +14,8 @@ import { refundLemonSqueezyOrder } from "@/lib/lemonsqueezy";
 //    silently strand a buyer who never got their money back.
 // 2. Any delivered order whose 72h dispute window has closed gets its held commission released
 //    to the master's `available` balance, ready for the next twice-monthly payout.
+// 3. Any recording older than the retention window gets deleted from Blob storage (the buyer was
+//    already told it's a 7-day link — see buyerReadingDeliveredEmail).
 export async function GET(req: NextRequest) {
   if (!isAuthorizedCronRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,5 +50,27 @@ export async function GET(req: NextRequest) {
 
   const released = await releaseDueLedger();
 
-  return NextResponse.json({ ok: true, overdueFound: overdue.length, refunded, refundFailed, released });
+  const expiredRecordings = await getExpiredRecordings();
+  let recordingsDeleted = 0;
+  let recordingsFailed = 0;
+  for (const order of expiredRecordings) {
+    try {
+      if (order.deliveryUrl) await del(order.deliveryUrl);
+      await clearRecording(order.id);
+      recordingsDeleted += 1;
+    } catch (err) {
+      console.error(`[cron/masters-sla] failed to clean up recording for order ${order.code}:`, err);
+      recordingsFailed += 1;
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    overdueFound: overdue.length,
+    refunded,
+    refundFailed,
+    released,
+    recordingsDeleted,
+    recordingsFailed,
+  });
 }

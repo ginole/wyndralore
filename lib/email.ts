@@ -139,6 +139,7 @@ export function buyerReadingDeliveredEmail(masterName: string, listenLink: strin
         <h1 style="font-size: 22px;">Your reading has arrived</h1>
         <p>${masterName} recorded a personal reading just for you.</p>
         <p><a href="${listenLink}" style="color: #c9a96e;">Listen to your reading</a></p>
+        <p style="font-size: 13px; color: #6b6558;">This recording is available for 7 days — download or save it if you'd like to keep it longer.</p>
         <p>With warmth,<br/>Wyndralore</p>
       </div>
     `,
@@ -192,15 +193,27 @@ export function payoutReminderEmail(lines: PayoutReminderLine[]): { subject: str
   };
 }
 
-export function masterClaimAccountEmail(displayName: string, claimLink: string): { subject: string; html: string } {
+/**
+ * ONE combined invitation, replacing what used to be two separate creator programs (the
+ * affiliate/free-premium invite and a standalone "your storefront is live" email) — a creator
+ * who's becoming a Master gets a single email, single action link, covering both. If she doesn't
+ * have an affiliate link yet, that section is simply omitted rather than shown empty.
+ */
+export function masterInviteEmail(affiliateLink: string | null, setupLink: string): { subject: string; html: string } {
   return {
-    subject: "Your Wyndralore storefront is live — set your password",
+    subject: "You're invited: Wyndralore Creator Partnership",
     html: `
       <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 22px;">Your altar is ready, ${displayName}</h1>
-        <p>Your "Meet Our Masters" storefront is live. Set a password so you can log in any time to see your earnings, order history, and payouts:</p>
-        <p><a href="${claimLink}" style="color: #c9a96e;">Set your password</a></p>
-        <p>Reading requests for your $39 tier will always come to you by email with a direct link — you don't need to log in to deliver those. This login is just for checking your dashboard.</p>
+        <h1 style="font-size: 22px;">Welcome to Wyndralore</h1>
+        <p>We'd love to partner with you. Here's what that includes:</p>
+        <p>✦ <strong>Free Premium membership</strong>, on us${
+          affiliateLink
+            ? `, plus your own affiliate link — earn 50% cash commission any time someone subscribes through it:<br/><a href="${affiliateLink}" style="color: #c9a96e; word-break: break-all;">${affiliateLink}</a>`
+            : "."
+        }</p>
+        <p>✦ <strong>Your own "Meet Our Masters" storefront</strong> — a page with your name, your style, where your audience can get a reading directly from you.</p>
+        <p>One last step: set up your storefront (takes about five minutes — your photo, your reading style, how you'd like to be paid). We'll review it and it'll go live shortly after.</p>
+        <p><a href="${setupLink}" style="color: #c9a96e;">Set up your partnership</a></p>
         <p>With warmth,<br/>Wyndralore</p>
       </div>
     `,

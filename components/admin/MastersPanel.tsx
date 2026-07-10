@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import MasterOnboardingForm from "../MasterOnboardingForm";
+import MasterInviteForm from "../MasterInviteForm";
 import { PanelHeader, fmtDateTime, EmptyRow, Pill, ghostButtonClass } from "./shared";
 
 interface Master {
@@ -20,6 +20,7 @@ interface Master {
 export default function MastersPanel() {
   const [masters, setMasters] = useState<Master[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/masters", { cache: "no-store" });
@@ -41,11 +42,77 @@ export default function MastersPanel() {
     load();
   }
 
+  async function approve(id: string) {
+    setBusy(id);
+    await fetch(`/api/admin/masters/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "active" }),
+    });
+    setBusy(null);
+    load();
+  }
+
+  async function reject(id: string) {
+    if (!confirm("Reject this submission? It'll be deleted.")) return;
+    setBusy(id);
+    await fetch(`/api/admin/masters/${id}`, { method: "DELETE" });
+    setBusy(null);
+    load();
+  }
+
+  const pending = masters.filter((m) => m.status === "pending_review");
+  const settled = masters.filter((m) => m.status !== "pending_review");
+
   return (
     <div>
-      <PanelHeader title="大师入驻" subtitle="Onboard a creator's 'Meet Our Masters' storefront, or pause/reactivate an existing one." />
+      <PanelHeader title="大师入驻" subtitle="Invite a creator — she fills her own storefront, you review and approve it below." />
 
-      <MasterOnboardingForm onSuccess={load} />
+      <MasterInviteForm onSuccess={load} />
+
+      {pending.length > 0 && (
+        <>
+          <h3 className="font-display mt-10 mb-3 text-lg text-moon">待审核 ({pending.length})</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-widest text-moon-dim">
+                <tr>
+                  <th className="py-2">Submitted</th>
+                  <th>Name</th>
+                  <th>Handle</th>
+                  <th>Payout</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {pending.map((m) => (
+                  <tr key={m.id} className="border-t border-ink-line/60">
+                    <td className="py-2 text-moon-dim">{fmtDateTime(m.createdAt)}</td>
+                    <td className="text-moon">{m.displayName}</td>
+                    <td className="text-moon-dim">/masters/{m.handle}</td>
+                    <td className="text-moon-dim">{m.payoutMethod ? `${m.payoutMethod} · ${m.payoutHandle}` : "not set"}</td>
+                    <td>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => approve(m.id)} disabled={busy === m.id} className={ghostButtonClass}>
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => reject(m.id)}
+                          disabled={busy === m.id}
+                          className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs uppercase tracking-widest text-red-300 hover:border-red-400"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       <h3 className="font-display mt-10 mb-3 text-lg text-moon">All masters</h3>
       <div className="overflow-x-auto">
@@ -64,9 +131,9 @@ export default function MastersPanel() {
           </thead>
           <tbody>
             {loading && <EmptyRow colSpan={8} label="Loading…" />}
-            {!loading && masters.length === 0 && <EmptyRow colSpan={8} label="No masters onboarded yet." />}
+            {!loading && settled.length === 0 && <EmptyRow colSpan={8} label="No approved masters yet." />}
             {!loading &&
-              masters.map((m) => (
+              settled.map((m) => (
                 <tr key={m.id} className="border-t border-ink-line/60">
                   <td className="py-2 text-moon-dim">{fmtDateTime(m.createdAt)}</td>
                   <td className="text-moon">{m.displayName}</td>

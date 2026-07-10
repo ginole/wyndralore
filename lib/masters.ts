@@ -75,9 +75,28 @@ function tokensEqual(hashA: string, rawB: string): boolean {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-/** The master's commission for one order — their cut of the sticker price (platform eats the LS fee). */
+// Lemon Squeezy's own transaction fee — estimated, since our webhook payload doesn't expose their
+// actual per-order fee breakdown. Standard published rate as of this writing: 5% + $0.50/order.
+// If LS's API ever starts reporting the real fee amount, swap this estimate for that number.
+const LS_FEE_PCT = 0.05;
+const LS_FEE_FLAT_CENTS = 50;
+
+/**
+ * The master's commission for one order — their percentage of the NET amount after Lemon
+ * Squeezy's fee, not the gross sticker price. Paying commission on money the platform never
+ * actually keeps would mean the platform loses money on every sale as volume grows.
+ *
+ * Computed entirely in integer cents with a single rounding step at the end. Doing this in
+ * floating-point dollars is a real footgun for money math: e.g. 39 * 0.7 * (0.95) - fee arithmetic
+ * lands exactly on a X.5-cent boundary, and JS float representation (2558.5 stored as
+ * 2558.4999999999995) rounds it DOWN to the wrong cent instead of up. Cents-then-round-once avoids
+ * the whole class of bug.
+ */
 export function masterCut(amountUsd: number, commissionPct: number): number {
-  return Math.round(amountUsd * commissionPct * 100) / 100;
+  const grossCents = Math.round(amountUsd * 100);
+  const netCents = Math.max(0, grossCents - grossCents * LS_FEE_PCT - LS_FEE_FLAT_CENTS);
+  const cutCents = Math.round(netCents * commissionPct);
+  return cutCents / 100;
 }
 
 /**
@@ -256,6 +275,24 @@ export async function releaseDueLedger(now: Date = new Date()): Promise<number> 
  */
 export async function getOverdueUndeliveredOrders(now: Date = new Date()): Promise<MasterOrder[]> {
   return prisma.masterOrder.findMany({ where: { status: "paid", kind: "live_voice", deliverBy: { lte: now } } });
+}
+
+// Recordings aren't kept forever — Blob storage is the one cost that grows unbounded with order
+// volume (unlike ai_style's cached text, which is nearly free to keep). 7 days is well past the
+// 72h dispute window, so this never touches a recording still in play.
+export const RECORDING_RETENTION_DAYS = 7;
+
+/** Cron step: live_voice deliveries whose recording is due for cleanup. */
+export async function getExpiredRecordings(now: Date = new Date()): Promise<MasterOrder[]> {
+  const cutoff = new Date(now.getTime() - RECORDING_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  return prisma.masterOrder.findMany({
+    where: { kind: "live_voice", deliveryUrl: { not: null }, deliveredAt: { lte: cutoff } },
+  });
+}
+
+/** Clears the order's reference to a (by then already Blob-deleted) recording. */
+export async function clearRecording(orderId: string): Promise<void> {
+  await prisma.masterOrder.update({ where: { id: orderId }, data: { deliveryUrl: null } });
 }
 
 /** Marks an order refunded, voids its ledger entry, and adds a strike (auto-pausing at 3). */
