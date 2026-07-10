@@ -226,7 +226,7 @@ model MasterOrder {
   uploadTokenExpiresAt DateTime?
   listenTokenHash      String? // authorizes the buyer's tokenized listen page (long-lived)
   listenTokenExpiresAt DateTime?
-  cardsDrawn           String? // ai_style only — JSON: [{ position, cardId, orientation }], auto-drawn at payment
+  cardsDrawn           String? // ai_style only — JSON: [{ position, cardId, orientation }], set once the buyer hand-draws (see recordAiStyleDraw)
   aiReadingText        String? // ai_style only — the generated reading, ready the moment the buyer's redirect lands
   createdAt            DateTime      @default(now())
   paidAt               DateTime?

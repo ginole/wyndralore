@@ -46,3 +46,9 @@ export interface DrawnCard {
   card: TarotCard;
   orientation: Orientation;
 }
+
+/** Fixed 3-position spread for the Masters storefront's AI-style product — same "Past / Present /
+ * Future" vocabulary as the site's own free three-card spread. Shared between the client draw
+ * ritual (components/MasterDrawRitual) and the server-side validation of what it submits
+ * (lib/masters.ts's recordAiStyleDraw), so the two can never drift out of sync. */
+export const AI_STYLE_POSITIONS = ["Past", "Present", "Future"] as const;

@@ -4,8 +4,9 @@ import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ensureMasterAiReading, DrawnCard } from "@/lib/masters";
-import { getCardById } from "@/lib/cards";
+import { getCardById, getDeckManifest } from "@/lib/cards";
 import CardFace from "@/components/CardFace";
+import MasterDrawRitual from "@/components/MasterDrawRitual";
 
 export const metadata: Metadata = {
   title: "Your Reading — Wyndralore Masters",
@@ -29,7 +30,11 @@ export default async function MasterReadingPage({ params }: { params: Promise<{ 
     );
   }
 
-  const cards: DrawnCard[] = order.cardsDrawn ? JSON.parse(order.cardsDrawn) : [];
+  if (!order.cardsDrawn) {
+    return <MasterDrawRitual code={order.code} deck={getDeckManifest()} masterName={order.master.displayName} />;
+  }
+
+  const cards: DrawnCard[] = JSON.parse(order.cardsDrawn);
   const readingText = await ensureMasterAiReading(order, order.master);
 
   return (

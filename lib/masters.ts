@@ -3,31 +3,13 @@ import { MasterOrder, MasterProfile } from "@prisma/client";
 import { prisma } from "./db";
 import { getDeckManifest } from "./cards";
 import { generateMasterStyleReading, ReadingCardInput } from "./claude";
-import { Orientation } from "./types";
-
-// Fixed 3-position spread for the storefront's AI-style product — same "Past / Present / Future"
-// vocabulary as the site's own free three-card spread, so it reads as familiar rather than
-// inventing new ritual language just for this product.
-const AI_STYLE_POSITIONS = ["Past", "Present", "Future"];
+import { AI_STYLE_POSITIONS, Orientation } from "./types";
 
 export interface DrawnCard {
   position: string;
   cardId: number;
   cardName: string;
   orientation: Orientation;
-}
-
-/** Draws a random, non-repeating 3-card spread server-side (no browser involved — the buyer
- * never shuffles for this product, unlike the site's own reading ritual; see Phase 5 scope notes). */
-function drawRandomCards(): DrawnCard[] {
-  const deck = getDeckManifest();
-  const shuffled = [...deck].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, AI_STYLE_POSITIONS.length).map((card, i) => ({
-    position: AI_STYLE_POSITIONS[i]!,
-    cardId: card.id,
-    cardName: card.name,
-    orientation: Math.random() < 0.5 ? "upright" : "reversed",
-  }));
 }
 
 // The two storefront products. Prices and commission are snapshotted onto each order at purchase
@@ -136,8 +118,11 @@ export interface MarkPaidResult {
  * Called from the Lemon Squeezy webhook once payment is confirmed. Atomically claims the
  * pending -> paid/delivered transition (a redelivered webhook is a safe no-op: `claimed: false`).
  *
- * - ai_style: delivered instantly, ledger `available` immediately — no chargeback-from-
- *   non-delivery risk since the AI reading is generated and shown the moment payment clears.
+ * - ai_style: payment clears instantly and the ledger goes `available` right away — no
+ *   chargeback-from-non-delivery risk either way. The buyer still has to hand-shuffle and draw
+ *   her own 3 cards before the reading appears (see recordAiStyleDraw + components/MasterDrawRitual);
+ *   the reading TEXT itself is generated lazily on first view (see ensureMasterAiReading) so a
+ *   slow/failed Claude call can never hold up settlement.
  * - live_voice: money is HELD. The master gets a one-time tokenized upload link + an SLA
  *   deadline; the commission only becomes `available` after she delivers AND the dispute window
  *   passes. If she never delivers, the SLA-sweep cron refunds it before the buyer can dispute.
@@ -147,13 +132,9 @@ export async function markMasterOrderPaid(order: MasterOrder, master: MasterProf
   const cut = masterCut(args.amountUsd, order.commissionPct);
 
   if (order.kind === "ai_style") {
-    // Draw the cards now (instant, no external dependency) — the actual reading TEXT is
-    // generated lazily on first view (see ensureMasterAiReading) so a slow/failed Claude call
-    // can never hold up settlement. Money and content are deliberately decoupled.
-    const cardsDrawn = drawRandomCards();
     const claimed = await prisma.masterOrder.updateMany({
       where: { id: order.id, status: "pending" },
-      data: { status: "delivered", lsOrderId: args.lsOrderId, paidAt: now, deliveredAt: now, cardsDrawn: JSON.stringify(cardsDrawn) },
+      data: { status: "paid", lsOrderId: args.lsOrderId, paidAt: now },
     });
     if (claimed.count !== 1) return { claimed: false };
     await prisma.ledgerEntry.create({
@@ -336,6 +317,40 @@ export async function markMasterPaidOut(masterId: string): Promise<number> {
     data: { status: "paid_out", paidOutAt: new Date() },
   });
   return res.count;
+}
+
+/**
+ * Persists the buyer's own hand-drawn cards for a paid ai_style order — the "亲手洗牌" ritual
+ * (components/MasterDrawRitual), same shuffle/select interaction as the site's own free reading,
+ * just scoped to the fixed Past/Present/Future spread. Validates the submitted cards server-side
+ * (right position order, real card ids, no repeats) rather than trusting the client, and the
+ * status-guarded update means a retried/duplicate submission can't redraw over an already-recorded
+ * hand. Returns false on any validation failure or if the order isn't in a drawable state.
+ */
+export async function recordAiStyleDraw(order: MasterOrder, rawCards: unknown): Promise<boolean> {
+  if (order.kind !== "ai_style" || order.status !== "paid") return false;
+  if (!Array.isArray(rawCards) || rawCards.length !== AI_STYLE_POSITIONS.length) return false;
+
+  const deck = getDeckManifest();
+  const validIds = new Set(deck.map((c) => c.id));
+  const cards: DrawnCard[] = [];
+  for (let i = 0; i < rawCards.length; i++) {
+    const c = rawCards[i] as Record<string, unknown>;
+    const position = AI_STYLE_POSITIONS[i];
+    const cardId = Number(c?.cardId);
+    const orientation = c?.orientation;
+    if (c?.position !== position) return false;
+    if (!validIds.has(cardId)) return false;
+    if (orientation !== "upright" && orientation !== "reversed") return false;
+    cards.push({ position, cardId, cardName: deck.find((d) => d.id === cardId)!.name, orientation });
+  }
+  if (new Set(cards.map((c) => c.cardId)).size !== cards.length) return false; // no repeated cards
+
+  const claimed = await prisma.masterOrder.updateMany({
+    where: { id: order.id, status: "paid" },
+    data: { status: "delivered", deliveredAt: new Date(), cardsDrawn: JSON.stringify(cards) },
+  });
+  return claimed.count === 1;
 }
 
 /**

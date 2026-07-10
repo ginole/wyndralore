@@ -22,6 +22,7 @@
   --duration-flip: 600ms;
   --duration-shuffle: 1400ms;
   --duration-float: 26s;
+  --duration-rise: 3200ms;
 }
 
 @theme inline {
@@ -319,6 +320,58 @@ button.bg-gold:hover {
   .float-card {
     animation-duration: calc(var(--duration-float) * 1.4);
   }
+}
+
+/* --- hero entrance: cards drift slowly up out of the dark, trailing gold sparks, into their
+   floating positions on first load. Long travel distance + slow duration + a blur-to-sharp
+   settle is deliberate — a short/small rise reads as a pop-in flash rather than an ascent. */
+@keyframes cardRise {
+  0% {
+    transform: translate3d(0, 210px, 0) scale(0.68) rotate(var(--rise-rot, 0deg));
+    opacity: 0;
+    filter: blur(6px);
+  }
+  10% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--float-rot-a, -6deg));
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.card-rise {
+  /* Rises once (`both` holds the settled end-state), then floatDrift takes over transform once
+     its own delay elapses — same handoff trick as deck-idle/shuffle: end state of one animation
+     matches the start state of the next so there's no visible seam between them. */
+  animation:
+    cardRise var(--duration-rise) var(--ease-ritual) var(--rise-delay, 0s) both,
+    floatDrift var(--duration-float) var(--ease-soft) infinite var(--float-delay, 3.2s);
+  will-change: transform, opacity, filter;
+}
+
+@keyframes sparkleRise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.3);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--spark-x, 0px), -190px, 0) scale(1);
+    opacity: 0;
+  }
+}
+
+.hero-spark {
+  animation: sparkleRise 2.4s var(--ease-soft) both;
+  box-shadow: 0 0 7px rgba(228, 200, 148, 0.8);
+  will-change: transform, opacity;
 }
 
 /* --- hero atmosphere: constellation sigil, stardust, twinkles --- */

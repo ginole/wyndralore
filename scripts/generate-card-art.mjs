@@ -41,12 +41,12 @@ const toRad = (deg) => (deg * Math.PI) / 180;
 
 // ---------- primitive helpers (all return SVG fragment strings) ----------
 
-function ring(cx, cy, r, opacity = 1, width = 1.4) {
-  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${GOLD}" stroke-width="${width}" opacity="${opacity}"/>`;
+function ring(cx, cy, r, opacity = 1, width = 1.4, dash = null) {
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${GOLD}" stroke-width="${width}" opacity="${opacity}"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
 }
 
-function dot(cx, cy, r = 2.2, fill = GOLD) {
-  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"/>`;
+function dot(cx, cy, r = 2.2, fill = GOLD, opacity = 1) {
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" opacity="${opacity}"/>`;
 }
 
 function line(x1, y1, x2, y2, width = 1.4, opacity = 1) {
@@ -203,6 +203,61 @@ function defs(accent = GOLD_BRIGHT) {
 
 function diamond(cx, cy, r, fill = GOLD_BRIGHT, opacity = 1) {
   return `<polygon points="${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}" fill="${fill}" opacity="${opacity}"/>`;
+}
+
+// ---------- card-back-only motifs: astrolabe medallion, moon-phase strip, constellations ----------
+
+// Moon phase icon via the standard terminator-ellipse trick. p in [0,1): 0 = new,
+// 0.25 = first quarter, 0.5 = full, 0.75 = last quarter.
+function moonPhase(cx, cy, r, p, opacity = 1) {
+  const theta = p * 2 * Math.PI;
+  const rx = Math.abs(r * Math.cos(theta));
+  const waxing = p < 0.5; // illuminated limb on the right while waxing
+  const outerSweep = waxing ? 1 : 0;
+  const bulgesSameSide = Math.cos(theta) >= 0; // true for crescents on both ends of the cycle
+  const innerSweep = waxing ? (bulgesSameSide ? 0 : 1) : bulgesSameSide ? 1 : 0;
+  let out = ring(cx, cy, r, 0.55, 0.9);
+  if (p < 0.02 || p > 0.98) return out; // new moon — outline only
+  if (Math.abs(p - 0.5) < 0.02) return out + `<circle cx="${cx}" cy="${cy}" r="${r - 0.8}" fill="${GOLD}" opacity="${opacity}"/>`;
+  const d = `M ${cx} ${cy - r} A ${r} ${r} 0 0 ${outerSweep} ${cx} ${cy + r} A ${rx} ${r} 0 0 ${innerSweep} ${cx} ${cy - r} Z`;
+  return out + `<path d="${d}" fill="${GOLD}" opacity="${opacity}"/>`;
+}
+
+// A strip of moon phases across the top of the card back — one full synodic month
+// compressed into a decorative row, new-to-new, dipping slightly at the center.
+function moonPhaseArc(cx, y, totalWidth, count, moonR, dip = 8) {
+  let out = "";
+  const startX = cx - totalWidth / 2;
+  const step = totalWidth / (count - 1);
+  for (let i = 0; i < count; i++) {
+    const t = i / (count - 1);
+    const x = startX + step * i;
+    const yOff = Math.sin(t * Math.PI) * dip;
+    out += moonPhase(x, y + yOff, moonR, t, 0.85);
+  }
+  return out;
+}
+
+// Small connected constellations scattered in the margins beside the medallion.
+function constellation(points, opts = {}) {
+  const { opacity = 0.55 } = opts;
+  let out = "";
+  for (let i = 0; i < points.length - 1; i++) out += line(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1], 0.7, opacity * 0.75);
+  for (const [x, y] of points) out += dot(x, y, 1.8, GOLD_BRIGHT, opacity);
+  return out;
+}
+
+// Zodiac-wheel tick marks around the astrolabe's outer ring, every 3rd tick drawn longer.
+function tickRing(cx, cy, r, count, opts = {}) {
+  const { width = 0.9, opacity = 0.55, shortLen = 7, longLen = 13, everyNth = 3 } = opts;
+  let out = "";
+  for (let i = 0; i < count; i++) {
+    const a = toRad((360 / count) * i - 90);
+    const isLong = i % everyNth === 0;
+    const l = isLong ? longLen : shortLen;
+    out += line(cx + (r - l) * Math.cos(a), cy + (r - l) * Math.sin(a), cx + r * Math.cos(a), cy + r * Math.sin(a), width, isLong ? opacity + 0.15 : opacity);
+  }
+  return out;
 }
 
 function frame(seed = 1) {
@@ -576,14 +631,23 @@ function courtCard(suit, rank) {
 
 const files = [];
 
-// card back
+// card back — a celestial astrolabe: zodiac-ticked medallion, a full moon-phase cycle
+// across the top, and small constellations in the margins (see PRD design-refresh notes).
 {
+  const astrolabeCY = 360;
   const inner = `
-    ${ring(CX, CY, 150, 0.8, 1.6)}
-    ${ring(CX, CY, 120, 0.5, 1)}
-    ${rayBurst(CX, CY, 60, 150, 12, { width: 1, opacity: 0.5 })}
-    ${star(CX, CY, 8, 60, 26, { width: 1.8 })}
-    <text x="${CX}" y="${CY + 8}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="26" fill="${GOLD_LUMEN}">W</text>
+    ${moonPhaseArc(CX, 128, 300, 9, 9.5)}
+    ${constellation([[52, 200],[74, 220],[62, 250],[88, 262]])}
+    ${constellation([[348, 210],[324, 232],[338, 258],[312, 270]])}
+    ${constellation([[56, 470],[80, 486],[66, 512]])}
+    ${constellation([[344, 480],[320, 498],[336, 522],[310, 532]])}
+    ${ring(CX, astrolabeCY, 168, 0.75, 1.5)}
+    ${tickRing(CX, astrolabeCY, 168, 36)}
+    ${ring(CX, astrolabeCY, 150, 0.4, 0.8, "1 4")}
+    ${ring(CX, astrolabeCY, 108, 0.55, 1)}
+    ${rayBurst(CX, astrolabeCY, 60, 100, 16, { width: 0.9, opacity: 0.45 })}
+    ${star(CX, astrolabeCY, 8, 62, 27, { width: 1.8 })}
+    <text x="${CX}" y="${astrolabeCY + 9}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="27" fill="${GOLD_LUMEN}">W</text>
     <text x="${CX}" y="${H - 46}" text-anchor="middle" font-family="Georgia, serif" font-size="14" letter-spacing="5" fill="${GOLD}" opacity="0.8">WYNDRALORE</text>
   `;
   const svg = svgWrap(inner, { seed: 999 });

@@ -3,17 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import MasterInviteForm from "../MasterInviteForm";
 import { PanelHeader, fmtDateTime, EmptyRow, Pill, ghostButtonClass } from "./shared";
+import MasterEditModal, { EditableMaster } from "./MasterEditModal";
 
-interface Master {
-  id: string;
-  handle: string;
-  displayName: string;
+interface Master extends EditableMaster {
   status: string;
   strikeCount: number;
-  dailyCapacity: number;
-  slaHours: number;
-  payoutMethod: string | null;
-  payoutHandle: string | null;
   createdAt: string;
 }
 
@@ -21,6 +15,7 @@ export default function MastersPanel() {
   const [masters, setMasters] = useState<Master[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Master | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/masters", { cache: "no-store" });
@@ -147,15 +142,22 @@ export default function MastersPanel() {
                     {m.payoutMethod ? `${m.payoutMethod} · ${m.payoutHandle}` : "not set"}
                   </td>
                   <td>
-                    <button type="button" onClick={() => toggleStatus(m.id, m.status)} className={ghostButtonClass}>
-                      {m.status === "active" ? "Pause" : "Reactivate"}
-                    </button>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setEditing(m)} className={ghostButtonClass}>
+                        Edit
+                      </button>
+                      <button type="button" onClick={() => toggleStatus(m.id, m.status)} className={ghostButtonClass}>
+                        {m.status === "active" ? "Pause" : "Reactivate"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
           </tbody>
         </table>
       </div>
+
+      {editing && <MasterEditModal master={editing} onClose={() => setEditing(null)} onSaved={load} />}
     </div>
   );
 }

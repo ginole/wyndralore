@@ -4,8 +4,14 @@ import { prisma } from "@/lib/db";
 import { isMasterProductKind, masterOrderCode, createPendingMasterOrder } from "@/lib/masters";
 import { createMasterCheckout } from "@/lib/lemonsqueezy";
 import { trackEvent, getAnonId } from "@/lib/analytics";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
 
 const SITE_URL = "https://wyndralore.com";
+
+// Cap checkout attempts per buyer — this creates a pending order + Lemon Squeezy checkout on
+// every call, so an unthrottled loop (bug or abuse) could spam order rows and LS API calls.
+const CHECKOUT_LIMIT = 20;
+const CHECKOUT_WINDOW_MS = 10 * 60 * 1000;
 
 // Buyer-facing checkout for a master's storefront (the "Meet Our Masters" $9.90 AI-style /
 // $39 live-voice products). Ready for the storefront page (still to be built) to call — creates
@@ -14,6 +20,9 @@ const SITE_URL = "https://wyndralore.com";
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+
+  const rl = await checkRateLimit("masters_checkout", user.id, CHECKOUT_LIMIT, CHECKOUT_WINDOW_MS);
+  if (!rl.allowed) return rateLimitedResponse(rl.retryAfterSeconds);
 
   const body = await req.json().catch(() => null);
   const handle = typeof body?.masterHandle === "string" ? body.masterHandle : "";
