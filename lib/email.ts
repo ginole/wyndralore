@@ -145,6 +145,53 @@ export function buyerReadingDeliveredEmail(masterName: string, listenLink: strin
   };
 }
 
+export interface PayoutReminderLine {
+  masterName: string;
+  totalUsd: number;
+  payoutMethod: string | null;
+  payoutHandle: string | null;
+}
+
+export function payoutReminderEmail(lines: PayoutReminderLine[]): { subject: string; html: string } {
+  const totalUsd = Math.round(lines.reduce((sum, l) => sum + l.totalUsd, 0) * 100) / 100;
+  const rows = lines
+    .map(
+      (l) => `
+        <tr>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #e5e0d5;">${l.masterName}</td>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #e5e0d5;">$${l.totalUsd.toFixed(2)}</td>
+          <td style="padding: 8px 12px; border-bottom: 1px solid #e5e0d5;">${
+            l.payoutMethod && l.payoutHandle ? `${l.payoutMethod} — ${l.payoutHandle}` : "not set"
+          }</td>
+        </tr>`
+    )
+    .join("");
+
+  return {
+    subject: lines.length ? `Masters payout due today — $${totalUsd.toFixed(2)} across ${lines.length}` : "Masters payout day — nothing owed today",
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 560px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Masters payout reminder</h1>
+        ${
+          lines.length
+            ? `<p>It's the 3rd or 18th — the twice-monthly payout day. Send these before marking them paid in the admin dashboard:</p>
+               <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+                 <thead><tr>
+                   <th style="text-align:left; padding: 8px 12px; border-bottom: 2px solid #0b0e1a;">Master</th>
+                   <th style="text-align:left; padding: 8px 12px; border-bottom: 2px solid #0b0e1a;">Amount</th>
+                   <th style="text-align:left; padding: 8px 12px; border-bottom: 2px solid #0b0e1a;">Send via</th>
+                 </tr></thead>
+                 <tbody>${rows}</tbody>
+               </table>
+               <p style="margin-top: 16px;"><strong>Total: $${totalUsd.toFixed(2)}</strong></p>
+               <p><a href="https://wyndralore.com/admin">Open the payouts dashboard</a></p>`
+            : `<p>No master commissions are owed today — nothing to send.</p>`
+        }
+      </div>
+    `,
+  };
+}
+
 export function passwordResetEmail(resetLink: string): { subject: string; html: string } {
   return {
     subject: "Reset your Wyndralore password",
