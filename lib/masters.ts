@@ -18,13 +18,15 @@ export const MASTER_COMMISSION: Record<MasterProductKind, number> = {
 // After a live_voice reading is delivered, the buyer has this long to dispute before the master's
 // commission is released. Failing to deliver at all within the master's SLA auto-refunds instead.
 export const DISPUTE_WINDOW_HOURS = 72;
-const UPLOAD_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days to deliver a paid order
+const UPLOAD_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; // master's delivery link: 14 days to use it
+const LISTEN_TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000; // buyer's listen link: long-lived, re-listenable
 
 export function isMasterProductKind(v: string): v is MasterProductKind {
   return v === "ai_style" || v === "live_voice";
 }
 
-/** Short human-facing order code, e.g. "WL-M-7Q2K". */
+/** Short human-facing order code, e.g. "WL-M-7Q2K" — the "-M-" segment keeps it disjoint from
+ * membership Order codes ("WL-XXXX") even though both flow through the same LS custom_data key. */
 export function masterOrderCode(): string {
   const alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
   const bytes = crypto.randomBytes(4);
@@ -33,8 +35,16 @@ export function masterOrderCode(): string {
   return `WL-M-${s}`;
 }
 
+function randomToken(): string {
+  return crypto.randomBytes(24).toString("base64url");
+}
 function hashToken(raw: string): string {
   return crypto.createHash("sha256").update(raw).digest("hex");
+}
+function tokensEqual(hashA: string, rawB: string): boolean {
+  const a = Buffer.from(hashA, "utf8");
+  const b = Buffer.from(hashToken(rawB), "utf8");
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 /** The master's commission for one order — their cut of the sticker price (platform eats the LS fee). */
@@ -42,109 +52,149 @@ export function masterCut(amountUsd: number, commissionPct: number): number {
   return Math.round(amountUsd * commissionPct * 100) / 100;
 }
 
-export interface FulfillMasterOrderArgs {
+/**
+ * Creates the `pending` order row at checkout time (before Lemon Squeezy has confirmed payment) —
+ * mirrors the existing membership-Order and AI-read-purchase pattern. The caller (the checkout
+ * route) owns the order-code collision retry loop, same convention as those two routes.
+ */
+export async function createPendingMasterOrder(args: {
+  code: string;
   master: MasterProfile;
   buyerId: string;
   kind: MasterProductKind;
-  amountUsd: number;
+  question?: string;
+}): Promise<MasterOrder> {
+  return prisma.masterOrder.create({
+    data: {
+      code: args.code,
+      masterId: args.master.id,
+      buyerId: args.buyerId,
+      kind: args.kind,
+      question: args.question?.trim() || undefined,
+      amountUsd: MASTER_PRICE_USD[args.kind],
+      commissionPct: MASTER_COMMISSION[args.kind],
+      status: "pending",
+    },
+  });
 }
 
-export interface FulfillResult {
-  order: MasterOrder;
-  /** Raw upload token — returned ONCE for live_voice so the caller can email the delivery link. */
+export interface MarkPaidResult {
+  /** True once for a genuinely-new confirmation; false if this webhook delivery was a dupe. */
+  claimed: boolean;
+  /** Only set for live_voice — the raw token to email the master (never persisted in the clear). */
   uploadToken?: string;
 }
 
 /**
- * Records a paid storefront purchase and opens the right settlement path. Called from the Lemon
- * Squeezy webhook once payment is confirmed.
+ * Called from the Lemon Squeezy webhook once payment is confirmed. Atomically claims the
+ * pending -> paid/delivered transition (a redelivered webhook is a safe no-op: `claimed: false`).
  *
- * - ai_style: delivered instantly (the AI reading), so there's no chargeback-from-non-delivery
- *   risk — the ledger entry is immediately `available`, no hold.
- * - live_voice: money is HELD. The master gets a tokenized upload link and an SLA deadline; the
- *   commission only becomes `available` after she delivers AND the dispute window passes. If she
- *   never delivers, refundOverdueOrders() reverses it before the buyer can charge back.
- *
- * Everything runs in one transaction so an order can never exist without its ledger entry.
+ * - ai_style: delivered instantly, ledger `available` immediately — no chargeback-from-
+ *   non-delivery risk since the AI reading is generated and shown the moment payment clears.
+ * - live_voice: money is HELD. The master gets a one-time tokenized upload link + an SLA
+ *   deadline; the commission only becomes `available` after she delivers AND the dispute window
+ *   passes. If she never delivers, the SLA-sweep cron refunds it before the buyer can dispute.
  */
-export async function fulfillMasterOrderPaid({ master, buyerId, kind, amountUsd }: FulfillMasterOrderArgs): Promise<FulfillResult> {
-  const commissionPct = MASTER_COMMISSION[kind];
-  const cut = masterCut(amountUsd, commissionPct);
+export async function markMasterOrderPaid(order: MasterOrder, master: MasterProfile, args: { lsOrderId: string; amountUsd: number }): Promise<MarkPaidResult> {
   const now = new Date();
+  const cut = masterCut(args.amountUsd, order.commissionPct);
 
-  if (kind === "ai_style") {
-    const order = await prisma.$transaction(async (tx) => {
-      const created = await tx.masterOrder.create({
-        data: {
-          code: masterOrderCode(),
-          masterId: master.id,
-          buyerId,
-          kind,
-          amountUsd,
-          commissionPct,
-          status: "delivered",
-          paidAt: now,
-          deliveredAt: now,
-        },
-      });
-      await tx.ledgerEntry.create({
-        data: { masterId: master.id, orderId: created.id, amountUsd: cut, status: "available", availableAt: now },
-      });
-      return created;
+  if (order.kind === "ai_style") {
+    const claimed = await prisma.masterOrder.updateMany({
+      where: { id: order.id, status: "pending" },
+      data: { status: "delivered", lsOrderId: args.lsOrderId, paidAt: now, deliveredAt: now },
     });
-    return { order };
+    if (claimed.count !== 1) return { claimed: false };
+    await prisma.ledgerEntry.create({
+      data: { masterId: master.id, orderId: order.id, amountUsd: cut, status: "available", availableAt: now },
+    });
+    return { claimed: true };
   }
 
   // live_voice — held with an SLA deadline and a one-time upload token.
-  const rawToken = crypto.randomBytes(24).toString("base64url");
+  const rawToken = randomToken();
   const deliverBy = new Date(now.getTime() + master.slaHours * 60 * 60 * 1000);
-  const order = await prisma.$transaction(async (tx) => {
-    const created = await tx.masterOrder.create({
-      data: {
-        code: masterOrderCode(),
-        masterId: master.id,
-        buyerId,
-        kind,
-        amountUsd,
-        commissionPct,
-        status: "paid",
-        paidAt: now,
-        deliverBy,
-        uploadTokenHash: hashToken(rawToken),
-        uploadTokenExpiresAt: new Date(now.getTime() + UPLOAD_TOKEN_TTL_MS),
-      },
-    });
-    await tx.ledgerEntry.create({
-      data: { masterId: master.id, orderId: created.id, amountUsd: cut, status: "held" },
-    });
-    return created;
+  const claimed = await prisma.masterOrder.updateMany({
+    where: { id: order.id, status: "pending" },
+    data: {
+      status: "paid",
+      lsOrderId: args.lsOrderId,
+      paidAt: now,
+      deliverBy,
+      uploadTokenHash: hashToken(rawToken),
+      uploadTokenExpiresAt: new Date(now.getTime() + UPLOAD_TOKEN_TTL_MS),
+    },
   });
-  return { order, uploadToken: rawToken };
+  if (claimed.count !== 1) return { claimed: false };
+  await prisma.ledgerEntry.create({
+    data: { masterId: master.id, orderId: order.id, amountUsd: cut, status: "held" },
+  });
+  return { claimed: true, uploadToken: rawToken };
 }
 
 /** Verifies a master's upload-link token against an order (constant-time, checks expiry + status). */
 export function verifyUploadToken(order: MasterOrder, rawToken: string): boolean {
-  if (order.status !== "paid") return false; // already delivered/refunded
+  if (order.status !== "paid") return false; // already delivered/refunded, or never paid
   if (!order.uploadTokenHash || !order.uploadTokenExpiresAt) return false;
   if (order.uploadTokenExpiresAt.getTime() < Date.now()) return false;
-  const a = Buffer.from(order.uploadTokenHash, "utf8");
-  const b = Buffer.from(hashToken(rawToken), "utf8");
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  return tokensEqual(order.uploadTokenHash, rawToken);
+}
+
+/** Verifies a buyer's listen-link token against an order (constant-time, checks expiry). */
+export function verifyListenToken(order: MasterOrder, rawToken: string): boolean {
+  if (!order.deliveryUrl) return false; // nothing delivered yet
+  if (!order.listenTokenHash || !order.listenTokenExpiresAt) return false;
+  if (order.listenTokenExpiresAt.getTime() < Date.now()) return false;
+  return tokensEqual(order.listenTokenHash, rawToken);
+}
+
+/** Looks up the order a raw upload token belongs to (deterministic-hash lookup, same pattern as
+ * lib/passwordReset's resetTokenHash) and confirms the token is still valid via verifyUploadToken. */
+export async function findOrderByUploadToken(rawToken: string): Promise<(MasterOrder & { master: MasterProfile }) | null> {
+  const order = await prisma.masterOrder.findFirst({ where: { uploadTokenHash: hashToken(rawToken) }, include: { master: true } });
+  if (!order || !verifyUploadToken(order, rawToken)) return null;
+  return order;
+}
+
+/** Looks up the order a raw listen token belongs to and confirms it's still valid via verifyListenToken. */
+export async function findOrderByListenToken(rawToken: string): Promise<(MasterOrder & { master: MasterProfile }) | null> {
+  const order = await prisma.masterOrder.findFirst({ where: { listenTokenHash: hashToken(rawToken) }, include: { master: true } });
+  if (!order || !verifyListenToken(order, rawToken)) return null;
+  return order;
+}
+
+export interface DeliveryResult {
+  ok: boolean;
+  /** Raw listen token to email the buyer — only set when this call actually recorded delivery. */
+  listenToken?: string;
 }
 
 /**
- * Records a live_voice delivery: stops the SLA clock, opens the dispute window, and consumes the
- * upload token. Guarded so only a still-"paid" order can be delivered (no double-delivery, no
- * delivering an already-refunded order).
+ * Records a live_voice delivery: stops the SLA clock, opens the dispute window, issues the
+ * buyer's listen token, and consumes the (now-used) upload token. Guarded so only a still-"paid"
+ * order can be delivered — a second call (e.g. both the client confirm AND the Blob
+ * onUploadCompleted callback firing) is a safe no-op, matching the idempotency pattern used
+ * throughout this codebase's payment webhooks.
  */
-export async function recordDelivery(orderId: string, deliveryUrl: string): Promise<boolean> {
+export async function recordDelivery(orderId: string, deliveryUrl: string): Promise<DeliveryResult> {
   const now = new Date();
   const disputeUntil = new Date(now.getTime() + DISPUTE_WINDOW_HOURS * 60 * 60 * 1000);
+  const rawListenToken = randomToken();
   const claimed = await prisma.masterOrder.updateMany({
     where: { id: orderId, status: "paid" },
-    data: { status: "delivered", deliveredAt: now, deliveryUrl, disputeUntil, uploadTokenHash: null, uploadTokenExpiresAt: null },
+    data: {
+      status: "delivered",
+      deliveredAt: now,
+      deliveryUrl,
+      disputeUntil,
+      uploadTokenHash: null,
+      uploadTokenExpiresAt: null,
+      listenTokenHash: hashToken(rawListenToken),
+      listenTokenExpiresAt: new Date(now.getTime() + LISTEN_TOKEN_TTL_MS),
+    },
   });
-  return claimed.count === 1;
+  if (claimed.count !== 1) return { ok: false };
+  return { ok: true, listenToken: rawListenToken };
 }
 
 /**

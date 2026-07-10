@@ -113,6 +113,38 @@ export function creatorInviteEmail(email: string, affiliateLink: string, actionL
   };
 }
 
+export function masterDeliveryRequestEmail(buyerFirstQuestion: string | undefined, deliverByLabel: string, uploadLink: string): { subject: string; html: string } {
+  return {
+    subject: "New reading request — record within 48 hours",
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">You have a new reading to record</h1>
+        <p>Someone just requested a personal reading from you. ${
+          buyerFirstQuestion ? `They asked: <em>"${buyerFirstQuestion}"</em>` : "They didn't leave a specific question — read generally."
+        }</p>
+        <p>Record a short voice or video reading and upload it here — takes about five minutes:</p>
+        <p><a href="${uploadLink}" style="color: #c9a96e;">Record and deliver the reading</a></p>
+        <p>Please deliver by <strong>${deliverByLabel}</strong> so the reading stays automatic and your payout isn't affected.</p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
+export function buyerReadingDeliveredEmail(masterName: string, listenLink: string): { subject: string; html: string } {
+  return {
+    subject: `${masterName} sent you a reading`,
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Your reading has arrived</h1>
+        <p>${masterName} recorded a personal reading just for you.</p>
+        <p><a href="${listenLink}" style="color: #c9a96e;">Listen to your reading</a></p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
 export function passwordResetEmail(resetLink: string): { subject: string; html: string } {
   return {
     subject: "Reset your Wyndralore password",

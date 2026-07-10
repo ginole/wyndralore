@@ -9,17 +9,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  passwordHash String
-  plan      String   @default("free") // free | monthly | yearly | lifetime
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  plan          String    @default("free") // free | monthly | yearly | lifetime
   planExpiresAt DateTime?
 
   // Server-side free-tier quota (PRD §4.1), mirrors the localStorage logic used pre-auth.
-  dailyDrawsUsed      Int      @default(0)
-  bonusShareUsedToday Int      @default(0) // 0 or 1 (max 1 share bonus / day)
-  bonusAdUsedToday    Int      @default(0) // 0-3 (max 3 ad bonuses / day)
-  quotaDate           String?  // client-local YYYY-MM-DD these counters belong to
+  dailyDrawsUsed      Int     @default(0)
+  bonusShareUsedToday Int     @default(0) // 0 or 1 (max 1 share bonus / day)
+  bonusAdUsedToday    Int     @default(0) // 0-3 (max 3 ad bonuses / day)
+  quotaDate           String? // client-local YYYY-MM-DD these counters belong to
 
   // AI deep-reading quota (AI-reading PRD §2). Lemon Squeezy plans are one-time payments, not
   // real subscriptions, so there's no billing-cycle object to anchor resets to — instead we
@@ -45,13 +45,13 @@ model User {
   // otherwise-paid PREMIUM spread (Love/Career/Celtic Cross). `referredByCode` records who
   // invited this account (set once, at registration), and `referralRewarded` guards that a
   // given referred account only ever pays out its inviter's +3 reward one time.
-  referralCode         String?  @unique
-  premiumSpreadCredits Int      @default(0)
+  referralCode         String? @unique
+  premiumSpreadCredits Int     @default(0)
   referredByCode       String?
-  referralRewarded     Boolean  @default(false)
+  referralRewarded     Boolean @default(false)
 
-  createdAt DateTime @default(now())
-  orders    Order[]
+  createdAt      DateTime        @default(now())
+  orders         Order[]
   journalEntries JournalEntry[]
   creatorInvites CreatorInvite[]
 
@@ -67,12 +67,12 @@ model JournalEntry {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  spread    String   // spread slug
-  theme     String   // general | love | career | wellness
+  spread    String // spread slug
+  theme     String // general | love | career | wellness
   question  String?
-  note      String?  // user's own written note
-  cards     String   // JSON: [{ position, cardId, orientation }]
-  aiReading String?  // the generated AI deep-reading text, if one was revealed for this reading
+  note      String? // user's own written note
+  cards     String // JSON: [{ position, cardId, orientation }]
+  aiReading String? // the generated AI deep-reading text, if one was revealed for this reading
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -83,7 +83,7 @@ model Order {
   code          String    @unique // WL-XXXX
   userId        String
   user          User      @relation(fields: [userId], references: [id])
-  plan          String    // monthly | yearly | lifetime | ai_overage
+  plan          String // monthly | yearly | lifetime | ai_overage
   kind          String    @default("plan") // plan | ai_overage — ai_overage never touches user.plan/planExpiresAt
   amountUsd     Float
   status        String    @default("pending") // pending | awaiting_confirmation | paid | underpaid | expired
@@ -91,7 +91,7 @@ model Order {
   expiresAt     DateTime
   paidAt        DateTime?
   paidAmountUsd Float?
-  affiliateId   String?   // Lemon Squeezy affiliate/influencer id, passed through custom_data (AI-reading PRD §3)
+  affiliateId   String? // Lemon Squeezy affiliate/influencer id, passed through custom_data (AI-reading PRD §3)
 
   webhookEvents WiseWebhookEvent[]
 
@@ -112,10 +112,10 @@ model DrawEvent {
 // visitors identified only by an anonymous client id stored in a first-party cookie.
 model AnalyticsEvent {
   id        String   @id @default(cuid())
-  name      String   // e.g. visit, signup, reading_completed, share_click, ad_completed, pricing_view, order_created, payment_completed
-  anonId    String?  // anonymous visitor id (cookie), for funnel stitching
+  name      String // e.g. visit, signup, reading_completed, share_click, ad_completed, pricing_view, order_created, payment_completed
+  anonId    String? // anonymous visitor id (cookie), for funnel stitching
   userId    String?
-  props     String?  // JSON blob of extra properties
+  props     String? // JSON blob of extra properties
   createdAt DateTime @default(now())
 
   @@index([name])
@@ -132,7 +132,7 @@ model CreatorInvite {
   userId        String
   user          User     @relation(fields: [userId], references: [id])
   wasNewAccount Boolean  @default(false) // true if a placeholder account was created for this invite
-  planGranted   String   // the plan the account ended up with after the invite (may be unchanged if already better)
+  planGranted   String // the plan the account ended up with after the invite (may be unchanged if already better)
   emailSent     Boolean  @default(false)
   createdAt     DateTime @default(now())
 
@@ -175,24 +175,24 @@ model MasterProfile {
   id            String   @id @default(cuid())
   userId        String   @unique
   user          User     @relation(fields: [userId], references: [id])
-  handle        String   @unique              // storefront URL: /masters/[handle]
+  handle        String   @unique // storefront URL: /masters/[handle]
   displayName   String
-  tagline       String?                        // one-line credo shown on her card/altar
+  tagline       String? // one-line credo shown on her card/altar
   photoUrl      String?
-  channelUrl    String?                        // YouTube/TikTok/IG — the "as seen on" badge
-  followerTier  String?                        // internal ordering only, never shown
-  styleTone     String   @default("gentle")    // gentle | direct | playful | poetic (AI voice)
-  focusAreas    String   @default("[]")        // JSON string[] — love/career/shadow/...
-  voiceSamples  String   @default("[]")        // JSON string[] — few-shot phrases for AI style
+  channelUrl    String? // YouTube/TikTok/IG — the "as seen on" badge
+  followerTier  String? // internal ordering only, never shown
+  styleTone     String   @default("gentle") // gentle | direct | playful | poetic (AI voice)
+  focusAreas    String   @default("[]") // JSON string[] — love/career/shadow/...
+  voiceSamples  String   @default("[]") // JSON string[] — few-shot phrases for AI style
   avoidTopics   String?
-  dailyCapacity Int      @default(5)           // max live_voice orders/day (anti-oversell)
-  slaHours      Int      @default(48)          // live_voice delivery deadline
-  vacationMode  Boolean  @default(false)       // pause live_voice intake; AI layer unaffected
-  deepLinkUrl   String?                        // her external $151 booking link (hidden if null)
-  payoutMethod  String?                        // paypal | wise (optional at onboarding)
-  payoutHandle  String?                        // email / phone for the payout method
-  strikeCount   Int      @default(0)           // missed-SLA strikes (3 -> paused)
-  status        String   @default("active")    // active | paused
+  dailyCapacity Int      @default(5) // max live_voice orders/day (anti-oversell)
+  slaHours      Int      @default(48) // live_voice delivery deadline
+  vacationMode  Boolean  @default(false) // pause live_voice intake; AI layer unaffected
+  deepLinkUrl   String? // her external $151 booking link (hidden if null)
+  payoutMethod  String? // paypal | wise (optional at onboarding)
+  payoutHandle  String? // email / phone for the payout method
+  strikeCount   Int      @default(0) // missed-SLA strikes (3 -> paused)
+  status        String   @default("active") // active | paused
   createdAt     DateTime @default(now())
 
   orders MasterOrder[]
@@ -201,26 +201,31 @@ model MasterProfile {
   @@index([status])
 }
 
-// One purchase from a master's storefront — distinct from the membership `Order`. `live_voice`
-// runs the hold-and-release flow (deliver within SLA or auto-refund); `ai_style` is delivered
-// instantly, so it settles without an escrow hold.
+// One purchase from a master's storefront — distinct from the membership `Order`. Created at
+// checkout time as `pending`; the Lemon Squeezy webhook confirms payment. `live_voice` then runs
+// the hold-and-release flow (deliver within SLA or auto-refund); `ai_style` is delivered
+// instantly on payment, so it settles without an escrow hold.
 model MasterOrder {
   id                   String        @id @default(cuid())
-  code                 String        @unique   // WL-M-XXXX
+  code                 String        @unique // WL-M-XXXX
   masterId             String
   master               MasterProfile @relation(fields: [masterId], references: [id])
   buyerId              String
   buyer                User          @relation(fields: [buyerId], references: [id])
-  kind                 String                  // ai_style | live_voice
+  kind                 String // ai_style | live_voice
+  question             String? // buyer's optional note/question, shown to the master for context
   amountUsd            Float
-  commissionPct        Float                   // snapshot at purchase (0.5 | 0.7)
-  status               String        @default("paid") // paid | delivered | released | refunded
-  deliverBy            DateTime?               // paidAt + slaHours (live_voice only)
+  commissionPct        Float // snapshot at purchase (0.5 | 0.7)
+  status               String        @default("pending") // pending|paid|delivered|released|refunded
+  lsOrderId            String? // Lemon Squeezy's own order id — needed to call their refund API
+  deliverBy            DateTime? // paidAt + slaHours (live_voice only)
   deliveredAt          DateTime?
-  deliveryUrl          String?                 // stored audio/video blob URL
-  disputeUntil         DateTime?               // deliveredAt + 72h; ledger releases after this
-  uploadTokenHash      String?                 // authorizes the master's tokenized upload page
+  deliveryUrl          String? // stored audio/video blob URL (private)
+  disputeUntil         DateTime? // deliveredAt + 72h; ledger releases after this
+  uploadTokenHash      String? // authorizes the master's tokenized upload page (single-use)
   uploadTokenExpiresAt DateTime?
+  listenTokenHash      String? // authorizes the buyer's tokenized listen page (long-lived)
+  listenTokenExpiresAt DateTime?
   createdAt            DateTime      @default(now())
   paidAt               DateTime?
 
@@ -240,7 +245,7 @@ model LedgerEntry {
   orderId     String        @unique
   order       MasterOrder   @relation(fields: [orderId], references: [id])
   amountUsd   Float
-  status      String        @default("held")  // held | available | paid_out | void
+  status      String        @default("held") // held | available | paid_out | void
   availableAt DateTime?
   paidOutAt   DateTime?
   createdAt   DateTime      @default(now())
@@ -251,9 +256,9 @@ model LedgerEntry {
 model WiseWebhookEvent {
   id            String   @id @default(cuid())
   eventKey      String   @unique // dedupe key derived from the Wise payload
-  rawPayload    String   // full JSON payload, kept for dispute resolution (PRD §5.2)
+  rawPayload    String // full JSON payload, kept for dispute resolution (PRD §5.2)
   receivedAt    DateTime @default(now())
-  status        String   // matched | unmatched | duplicate | underpaid | overpaid
+  status        String // matched | unmatched | duplicate | underpaid | overpaid
   orderId       String?
   order         Order?   @relation(fields: [orderId], references: [id])
   amountUsd     Float?
