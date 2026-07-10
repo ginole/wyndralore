@@ -122,3 +122,58 @@ export function streamDeepReading(args: ReadingPromptArgs): AsyncGenerator<strin
   )}\n\nWrite a deep narrative reading of about 1500 characters. Trace the subconscious "energy flow" between the drawn cards — how they build on or tension against each other — and close with concrete, actionable advice tied directly to the querent's question. Write in flowing prose, no headers or bullet lists.`;
   return streamText(systemBlocks(), prompt, 900);
 }
+
+const STYLE_TONE_DESCRIPTIONS: Record<string, string> = {
+  gentle: "gentle and healing — soft, validating language, focused on comfort and self-compassion",
+  direct: "direct and sharp — plain-spoken, no hedging, names the hard truth of a card without softening it",
+  playful: "playful and witty — warm humor, light touch, never mocking the querent's situation",
+  poetic: "mystic and poetic — imagery-rich, unhurried, leans into the symbolic/ritual register",
+};
+
+export interface MasterStyleProfile {
+  displayName: string;
+  styleTone: string;
+  focusAreas: string[];
+  voiceSamples: string[];
+  avoidTopics: string | null;
+}
+
+/**
+ * "Meet Our Masters" storefront's $9.90 product — an AI reading styled after a specific
+ * creator's own established voice, built from her onboarding profile (lib/masters.ts).
+ *
+ * Deliberately styles her TONE and vocabulary rather than impersonating her identity: the prompt
+ * never instructs the model to claim "I am [name]" in first person. The product page/emails are
+ * already explicit that this is an AI interpretation in her style (see lib/lemonsqueezy.ts's
+ * MASTER_VARIANT_ENV comment on buyer-facing honesty) — having the generated text itself claim to
+ * literally BE her, unreviewed, would quietly contradict that same disclosure.
+ */
+export async function generateMasterStyleReading(master: MasterStyleProfile, args: ReadingPromptArgs): Promise<string> {
+  const toneDesc = STYLE_TONE_DESCRIPTIONS[master.styleTone] ?? STYLE_TONE_DESCRIPTIONS.gentle;
+  const persona = `You are writing an AI-generated tarot reading styled after ${master.displayName}'s own established reading voice, for Wyndralore's "Meet Our Masters" storefront.
+
+Her reading style is ${toneDesc}.
+${master.focusAreas.length ? `Her usual focus areas: ${master.focusAreas.join(", ")}.` : ""}
+${
+  master.voiceSamples.length
+    ? `Match her actual phrasing as closely as the reading allows — here are real lines of hers:\n${master.voiceSamples.map((s) => `- "${s}"`).join("\n")}`
+    : ""
+}
+${master.avoidTopics ? `Do not address these topics even if the question touches them: ${master.avoidTopics}.` : ""}
+
+Write in her voice and tone — but this is an AI interpretation styled after her, not literally her. Never write "I am ${master.displayName}" or claim personal authorship in the first person as her; write as a reading delivered in her style, not as an impersonation of her identity.
+
+Be economical. Never pad toward a length target with filler — say only what the cards and the question actually support, then stop.`;
+
+  const prompt = `${drawSummary(args)}\n\nWrite a narrative reading of about 900 characters. Trace how the drawn cards speak to each other and close with concrete advice tied to the querent's question. Flowing prose, no headers or bullet lists.`;
+
+  const res = await getClient().messages.create({
+    model: MODEL,
+    max_tokens: 700,
+    thinking: { type: "disabled" },
+    system: [{ type: "text", text: persona }],
+    messages: [{ role: "user", content: prompt }],
+  });
+  const block = res.content.find((b) => b.type === "text");
+  return block && block.type === "text" ? block.text.trim() : "";
+}

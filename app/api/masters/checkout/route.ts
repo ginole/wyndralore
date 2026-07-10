@@ -53,12 +53,11 @@ export async function POST(req: NextRequest) {
       const order = await createPendingMasterOrder({ code, master, buyerId: user.id, kind, question });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { masterHandle: handle, kind } });
 
-      const checkoutUrl = await createMasterCheckout({
-        kind,
-        orderCode: order.code,
-        email: user.email,
-        redirectUrl: `${SITE_URL}/account`,
-      });
+      // ai_style is delivered instantly — send the buyer straight to her generated reading.
+      // live_voice is held pending the master's delivery — back to the altar page with a note.
+      const redirectUrl =
+        kind === "ai_style" ? `${SITE_URL}/masters/reading/${order.code}` : `${SITE_URL}/masters/${handle}?ordered=live_voice`;
+      const checkoutUrl = await createMasterCheckout({ kind, orderCode: order.code, email: user.email, redirectUrl });
 
       return NextResponse.json({ order, checkoutUrl }, { status: 201 });
     } catch (err: unknown) {

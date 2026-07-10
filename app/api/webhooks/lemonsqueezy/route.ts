@@ -135,7 +135,10 @@ async function handleMasterOrderWebhook(payload: LemonSqueezyOrderPayload, order
     return NextResponse.json({ ok: true, note: "already claimed by a concurrent delivery" });
   }
 
-  await trackEvent("payment_completed", { userId: order.buyerId, props: { masterOrder: true, kind: order.kind, amountUsd } });
+  await trackEvent("payment_completed", {
+    userId: order.buyerId,
+    props: { masterOrder: true, kind: order.kind, amountUsd, masterId: order.master.id, masterHandle: order.master.handle },
+  });
 
   if (order.kind === "live_voice" && result.uploadToken) {
     const uploadLink = `https://wyndralore.com/deliver/${result.uploadToken}`;

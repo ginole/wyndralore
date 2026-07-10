@@ -192,6 +192,35 @@ export function payoutReminderEmail(lines: PayoutReminderLine[]): { subject: str
   };
 }
 
+export function masterClaimAccountEmail(displayName: string, claimLink: string): { subject: string; html: string } {
+  return {
+    subject: "Your Wyndralore storefront is live — set your password",
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Your altar is ready, ${displayName}</h1>
+        <p>Your "Meet Our Masters" storefront is live. Set a password so you can log in any time to see your earnings, order history, and payouts:</p>
+        <p><a href="${claimLink}" style="color: #c9a96e;">Set your password</a></p>
+        <p>Reading requests for your $39 tier will always come to you by email with a direct link — you don't need to log in to deliver those. This login is just for checking your dashboard.</p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
+export function masterPayoutSentEmail(displayName: string, amountUsd: number): { subject: string; html: string } {
+  return {
+    subject: `You've been paid — $${amountUsd.toFixed(2)}`,
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Payout sent</h1>
+        <p>Hi ${displayName}, your commission of <strong>$${amountUsd.toFixed(2)}</strong> has been sent to your payout account.</p>
+        <p>You can see your full earnings history any time in your dashboard: <a href="https://wyndralore.com/masters/dashboard" style="color: #c9a96e;">wyndralore.com/masters/dashboard</a></p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
 export function passwordResetEmail(resetLink: string): { subject: string; html: string } {
   return {
     subject: "Reset your Wyndralore password",

@@ -1,6 +1,34 @@
 import crypto from "node:crypto";
 import { MasterOrder, MasterProfile } from "@prisma/client";
 import { prisma } from "./db";
+import { getDeckManifest } from "./cards";
+import { generateMasterStyleReading, ReadingCardInput } from "./claude";
+import { Orientation } from "./types";
+
+// Fixed 3-position spread for the storefront's AI-style product — same "Past / Present / Future"
+// vocabulary as the site's own free three-card spread, so it reads as familiar rather than
+// inventing new ritual language just for this product.
+const AI_STYLE_POSITIONS = ["Past", "Present", "Future"];
+
+export interface DrawnCard {
+  position: string;
+  cardId: number;
+  cardName: string;
+  orientation: Orientation;
+}
+
+/** Draws a random, non-repeating 3-card spread server-side (no browser involved — the buyer
+ * never shuffles for this product, unlike the site's own reading ritual; see Phase 5 scope notes). */
+function drawRandomCards(): DrawnCard[] {
+  const deck = getDeckManifest();
+  const shuffled = [...deck].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, AI_STYLE_POSITIONS.length).map((card, i) => ({
+    position: AI_STYLE_POSITIONS[i]!,
+    cardId: card.id,
+    cardName: card.name,
+    orientation: Math.random() < 0.5 ? "upright" : "reversed",
+  }));
+}
 
 // The two storefront products. Prices and commission are snapshotted onto each order at purchase
 // time, so changing these later never rewrites what a master was already promised for past sales.
@@ -100,9 +128,13 @@ export async function markMasterOrderPaid(order: MasterOrder, master: MasterProf
   const cut = masterCut(args.amountUsd, order.commissionPct);
 
   if (order.kind === "ai_style") {
+    // Draw the cards now (instant, no external dependency) — the actual reading TEXT is
+    // generated lazily on first view (see ensureMasterAiReading) so a slow/failed Claude call
+    // can never hold up settlement. Money and content are deliberately decoupled.
+    const cardsDrawn = drawRandomCards();
     const claimed = await prisma.masterOrder.updateMany({
       where: { id: order.id, status: "pending" },
-      data: { status: "delivered", lsOrderId: args.lsOrderId, paidAt: now, deliveredAt: now },
+      data: { status: "delivered", lsOrderId: args.lsOrderId, paidAt: now, deliveredAt: now, cardsDrawn: JSON.stringify(cardsDrawn) },
     });
     if (claimed.count !== 1) return { claimed: false };
     await prisma.ledgerEntry.create({
@@ -267,4 +299,34 @@ export async function markMasterPaidOut(masterId: string): Promise<number> {
     data: { status: "paid_out", paidOutAt: new Date() },
   });
   return res.count;
+}
+
+/**
+ * Returns the ai_style order's reading text, generating and caching it on first call. Called
+ * from the buyer's result page — the first person to load it pays the ~1-2s Claude latency,
+ * everyone after (including the same buyer refreshing) gets the cached text instantly. Safe to
+ * call concurrently: a second caller mid-generation just regenerates once more (wasted tokens,
+ * never wrong data) rather than needing a lock, since writes are idempotent overwrites of the
+ * same field with equivalent content.
+ */
+export async function ensureMasterAiReading(order: MasterOrder, master: MasterProfile): Promise<string> {
+  if (order.aiReadingText) return order.aiReadingText;
+  if (!order.cardsDrawn) throw new Error(`Order ${order.code} has no cardsDrawn — cannot generate a reading`);
+
+  const cards: DrawnCard[] = JSON.parse(order.cardsDrawn);
+  const cardInputs: ReadingCardInput[] = cards.map((c) => ({ position: c.position, name: c.cardName, orientation: c.orientation }));
+
+  const text = await generateMasterStyleReading(
+    {
+      displayName: master.displayName,
+      styleTone: master.styleTone,
+      focusAreas: JSON.parse(master.focusAreas || "[]"),
+      voiceSamples: JSON.parse(master.voiceSamples || "[]"),
+      avoidTopics: master.avoidTopics,
+    },
+    { cards: cardInputs, theme: "general", question: order.question ?? undefined },
+  );
+
+  await prisma.masterOrder.update({ where: { id: order.id }, data: { aiReadingText: text } });
+  return text;
 }

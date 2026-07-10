@@ -283,6 +283,15 @@ export default function AccountPage() {
         )}
       </div>
 
+      {user.isMaster && (
+        <Link
+          href="/masters/dashboard"
+          className="mt-6 rounded-full border border-gold-dim px-7 py-3 text-center text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
+        >
+          Your Master Dashboard
+        </Link>
+      )}
+
       {user.isPremium ? (
         <Link
           href="/journal"

@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { prisma } from "@/lib/db";
 import { isValidEmail, hashPassword } from "@/lib/password";
+import { generateResetToken } from "@/lib/passwordReset";
+import { sendEmail, masterClaimAccountEmail } from "@/lib/email";
 import crypto from "node:crypto";
+
+const SITE_URL = "https://wyndralore.com";
+const CLAIM_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // same window as the creator-outreach claim link
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) {
@@ -15,9 +20,10 @@ export async function GET() {
 const HANDLE_RE = /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/;
 
 // Onboards a master's storefront profile. Finds or creates the underlying User by email — same
-// find-or-create-placeholder pattern as the creator-outreach flow, minus the claim-link email:
-// masters operate entirely through the tokenised /deliver/[token] link, so there's nothing yet
-// that requires her to actually log in.
+// find-or-create-placeholder pattern as the creator-outreach flow. She gets a claim-account email
+// so she can log in to /masters/dashboard and see her own earnings — a new placeholder account
+// gets a real claim link (set-your-password, reused resetToken plumbing); an account that already
+// has a password just gets pointed at the normal login instead of silently resetting it.
 export async function POST(req: NextRequest) {
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -40,9 +46,13 @@ export async function POST(req: NextRequest) {
     : "[]";
 
   let user = await prisma.user.findUnique({ where: { email } });
+  let claimLink = `${SITE_URL}/account`;
   if (!user) {
     const placeholderPasswordHash = await hashPassword(crypto.randomBytes(32).toString("hex"));
     user = await prisma.user.create({ data: { email, passwordHash: placeholderPasswordHash, isPlaceholder: true } });
+    const { token, tokenHash, expiresAt } = generateResetToken(CLAIM_TOKEN_TTL_MS);
+    await prisma.user.update({ where: { id: user.id }, data: { resetTokenHash: tokenHash, resetTokenExpiresAt: expiresAt } });
+    claimLink = `${SITE_URL}/reset-password?token=${token}`;
   }
 
   try {
@@ -65,7 +75,12 @@ export async function POST(req: NextRequest) {
         payoutHandle: typeof body?.payoutHandle === "string" ? body.payoutHandle.trim() || null : null,
       },
     });
-    return NextResponse.json({ master }, { status: 201 });
+
+    const { subject, html } = masterClaimAccountEmail(displayName, claimLink);
+    const sent = await sendEmail({ to: email, subject, html });
+    if (!sent.ok) console.error(`[admin/masters] claim-account email failed for master ${handle}:`, sent.error);
+
+    return NextResponse.json({ master, emailSent: sent.ok }, { status: 201 });
   } catch (err: unknown) {
     const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";
     if (isUniqueViolation) {

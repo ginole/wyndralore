@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { serializeUser } from "@/lib/serializeUser";
 import { getQuotaStatus } from "@/lib/quota";
 import { ensureReferralCode } from "@/lib/referral";
@@ -14,6 +15,7 @@ export async function GET(req: NextRequest) {
 
   const clientDate = req.nextUrl.searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
   const quota = getQuotaStatus(user, clientDate);
+  const master = await prisma.masterProfile.findUnique({ where: { userId: user.id }, select: { id: true } });
 
-  return NextResponse.json({ user: serializeUser(user), quota });
+  return NextResponse.json({ user: serializeUser(user, Boolean(master)), quota });
 }

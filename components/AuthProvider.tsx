@@ -11,6 +11,7 @@ export interface SessionUser {
   createdAt: string;
   referralCode: string | null;
   premiumSpreadCredits: number;
+  isMaster: boolean;
 }
 
 export interface QuotaStatus {
