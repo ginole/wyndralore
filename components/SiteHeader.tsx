@@ -13,6 +13,9 @@ export default function SiteHeader() {
         <Image src="/wyndralore-wordmark.png" alt="Wyndralore" width={647} height={117} className="h-7 w-auto sm:h-8" priority />
       </Link>
       <nav className="font-accent flex items-center gap-5 text-xs uppercase tracking-[0.2em] text-moon-dim">
+        <Link href="/masters" className="transition-colors hover:text-gold">
+          Masters
+        </Link>
         <Link href="/cards" className="hidden transition-colors hover:text-gold sm:inline">
           Cards
         </Link>

@@ -7,6 +7,9 @@ export default function SiteFooter() {
         <Link href="/cards" className="transition-colors hover:text-gold">
           Card Meanings
         </Link>
+        <Link href="/masters" className="transition-colors hover:text-gold">
+          Masters
+        </Link>
         <Link href="/pricing" className="transition-colors hover:text-gold">
           Pricing
         </Link>
