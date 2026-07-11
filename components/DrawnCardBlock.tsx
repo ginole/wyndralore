@@ -56,7 +56,7 @@ export default function DrawnCardBlock({ position, deckCard, orientation, theme,
 
   return (
     <div
-      className="reveal-fade grid grid-cols-[128px_1fr] gap-x-5 gap-y-5 border-b border-ink-line/60 pb-10 last:border-b-0 sm:grid-cols-[160px_1fr] sm:gap-x-10 sm:gap-y-0"
+      className="reveal-fade grid grid-cols-[110px_1fr] gap-x-6 gap-y-5 border-b border-ink-line/60 pb-10 last:border-b-0 sm:grid-cols-[160px_1fr] sm:gap-x-10 sm:gap-y-0"
       style={{ animationDelay: `${index * 150}ms` }}
     >
       <div className="col-start-1 row-start-1">
@@ -80,9 +80,9 @@ export default function DrawnCardBlock({ position, deckCard, orientation, theme,
           className="col-start-2 row-start-1 self-center transition-opacity duration-700"
           style={{ opacity: textVisible ? 1 : 0 }}
         >
-          <h3 className="font-display text-2xl text-moon sm:text-3xl">
+          <h3 className="font-display text-2xl leading-[1.15] text-moon sm:text-3xl">
             {deckCard.name}
-            <span className="ml-3 align-middle text-xs font-sans uppercase tracking-[0.2em] text-gold-dim">
+            <span className="mt-1 block text-xs font-sans uppercase tracking-[0.2em] text-gold-dim sm:ml-3 sm:mt-0 sm:inline sm:align-middle">
               {orientation === "upright" ? "Upright" : "Reversed"}
             </span>
           </h3>
