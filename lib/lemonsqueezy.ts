@@ -61,6 +61,10 @@ export async function createLemonSqueezyCheckout({ plan, orderCode, email, first
           // Without this, Lemon Squeezy's own "Thank you" screen is the end of the flow —
           // the buyer has to manually navigate back. Send them straight to their account page.
           product_options: { redirect_url: `${SITE_URL}/account` },
+          // Without this, LS falls back to the buyer's browser language (or a GeoIP guess),
+          // which can land a US/PH buyer on a checkout in a language neither the buyer nor the
+          // site's own copy is in — the whole site is English-only, so the checkout should be too.
+          checkout_options: { locale: "en" },
         },
         relationships: {
           store: { data: { type: "stores", id: requireEnv("LEMONSQUEEZY_STORE_ID") } },
@@ -125,6 +129,7 @@ export async function createAiReadCheckout({ kind, orderCode, email, redirectUrl
         attributes: {
           checkout_data: { email, custom: { order_code: orderCode } },
           product_options: { redirect_url: redirectUrl },
+          checkout_options: { locale: "en" },
         },
         relationships: {
           store: { data: { type: "stores", id: requireEnv("LEMONSQUEEZY_STORE_ID") } },
@@ -184,6 +189,7 @@ export async function createMasterCheckout({ kind, orderCode, email, redirectUrl
         attributes: {
           checkout_data: { email, custom: { order_code: orderCode } },
           product_options: { redirect_url: redirectUrl },
+          checkout_options: { locale: "en" },
         },
         relationships: {
           store: { data: { type: "stores", id: requireEnv("LEMONSQUEEZY_STORE_ID") } },
