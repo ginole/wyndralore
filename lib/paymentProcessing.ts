@@ -5,6 +5,7 @@ import { sendEmail, paymentConfirmationEmail, aiReadPurchaseEmail } from "./emai
 import { trackEvent } from "./analytics";
 import { grantExtraAiReads } from "./aiQuota";
 import { sendMetaPurchaseEvent } from "./metaCapi";
+import { sendGa4PurchaseEvent } from "./ga4";
 
 /** Shared by the Wise webhook handler and the admin manual-match action. */
 export async function markOrderPaid(order: Order, amountUsd: number) {
@@ -33,6 +34,7 @@ export async function markOrderPaid(order: Order, amountUsd: number) {
     }
     await trackEvent("ai_read_purchased", { userId: order.userId, props: { kind: order.kind, amountUsd } });
     await sendMetaPurchaseEvent({ email: user.email, value: amountUsd, eventId: order.code, contentName: order.plan });
+    await sendGa4PurchaseEvent({ userId: order.userId, value: amountUsd, transactionId: order.code, itemName: order.plan });
     return;
   }
 
@@ -56,4 +58,5 @@ export async function markOrderPaid(order: Order, amountUsd: number) {
   }
   await trackEvent("payment_completed", { userId: order.userId, props: { plan: order.plan, amountUsd } });
   await sendMetaPurchaseEvent({ email: user.email, value: amountUsd, eventId: order.code, contentName: order.plan });
+  await sendGa4PurchaseEvent({ userId: order.userId, value: amountUsd, transactionId: order.code, itemName: order.plan });
 }
