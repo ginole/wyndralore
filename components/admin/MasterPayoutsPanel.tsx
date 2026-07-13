@@ -45,7 +45,7 @@ export default function MasterPayoutsPanel() {
     <div>
       <PanelHeader
         title="达人打款"
-        subtitle="Masters' earned commissions, released and waiting to be paid. Send via PayPal/Wise by hand, then mark paid here. Runs twice monthly — 3rd & 18th."
+        subtitle="Masters request a payout themselves once they clear $30 and their 15-day hold passes. Send via PayPal/Wise by hand, then mark paid here."
       />
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">

@@ -9,6 +9,7 @@ interface Master extends EditableMaster {
   status: string;
   strikeCount: number;
   createdAt: string;
+  balances: { heldUsd: number; availableUsd: number; requestedUsd: number; paidOutUsd: number; totalEarnedUsd: number };
 }
 
 export default function MastersPanel() {
@@ -111,7 +112,7 @@ export default function MastersPanel() {
 
       <h3 className="font-display mt-10 mb-3 text-lg text-moon">All masters</h3>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
+        <table className="w-full min-w-[980px] text-left text-sm">
           <thead className="text-xs uppercase tracking-widest text-moon-dim">
             <tr>
               <th className="py-2">Onboarded</th>
@@ -121,12 +122,15 @@ export default function MastersPanel() {
               <th>Strikes</th>
               <th>Capacity / SLA</th>
               <th>Payout</th>
+              <th>Earned</th>
+              <th>Available</th>
+              <th>Requested</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {loading && <EmptyRow colSpan={8} label="Loading…" />}
-            {!loading && settled.length === 0 && <EmptyRow colSpan={8} label="No approved masters yet." />}
+            {loading && <EmptyRow colSpan={11} label="Loading…" />}
+            {!loading && settled.length === 0 && <EmptyRow colSpan={11} label="No approved masters yet." />}
             {!loading &&
               settled.map((m) => (
                 <tr key={m.id} className="border-t border-ink-line/60">
@@ -141,6 +145,9 @@ export default function MastersPanel() {
                   <td className="max-w-[160px] truncate text-moon-dim" title={m.payoutHandle ?? ""}>
                     {m.payoutMethod ? `${m.payoutMethod} · ${m.payoutHandle}` : "not set"}
                   </td>
+                  <td className="text-moon-dim">${m.balances.totalEarnedUsd.toFixed(2)}</td>
+                  <td className="text-moon-dim">${m.balances.availableUsd.toFixed(2)}</td>
+                  <td className="text-gold-bright">${m.balances.requestedUsd.toFixed(2)}</td>
                   <td>
                     <div className="flex gap-2">
                       <button type="button" onClick={() => setEditing(m)} className={ghostButtonClass}>

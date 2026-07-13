@@ -25,9 +25,15 @@ export const MASTER_COMMISSION: Record<MasterProductKind, number> = {
   live_voice: 0.7, // she records a short voice/video reading herself
 };
 
-// After a live_voice reading is delivered, the buyer has this long to dispute before the master's
-// commission is released. Failing to deliver at all within the master's SLA auto-refunds instead.
-export const DISPUTE_WINDOW_HOURS = 72;
+// After a reading is delivered (recording uploaded for live_voice, cards drawn for ai_style), the
+// master's commission sits `held` for this long before it's safe to promise her — it doubles as
+// the buyer's dispute window AND a settlement-safety margin: Lemon Squeezy holds our own funds for
+// ~14 days before they land in the platform's account, so releasing sooner risks the platform
+// fronting money out of pocket for a sale LS hasn't actually paid out to us yet.
+export const DISPUTE_WINDOW_HOURS = 15 * 24; // 360h = 15 days
+// A master can't request a withdrawal for less than this — avoids processing a PayPal/Wise
+// transfer for a few dollars. Below this, her available balance just keeps accruing.
+export const MIN_WITHDRAWAL_USD = 30;
 const UPLOAD_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; // master's delivery link: 14 days to use it
 const LISTEN_TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000; // buyer's listen link: long-lived, re-listenable
 
@@ -118,11 +124,10 @@ export interface MarkPaidResult {
  * Called from the Lemon Squeezy webhook once payment is confirmed. Atomically claims the
  * pending -> paid/delivered transition (a redelivered webhook is a safe no-op: `claimed: false`).
  *
- * - ai_style: payment clears instantly and the ledger goes `available` right away — no
- *   chargeback-from-non-delivery risk either way. The buyer still has to hand-shuffle and draw
- *   her own 3 cards before the reading appears (see recordAiStyleDraw + components/MasterDrawRitual);
- *   the reading TEXT itself is generated lazily on first view (see ensureMasterAiReading) so a
- *   slow/failed Claude call can never hold up settlement.
+ * - ai_style: payment clears instantly, but the commission is HELD until the buyer hand-shuffles
+ *   and draws her own 3 cards (see recordAiStyleDraw + components/MasterDrawRitual), which starts
+ *   the same DISPUTE_WINDOW_HOURS hold live_voice uses. The reading TEXT itself is generated lazily
+ *   on first view (see ensureMasterAiReading) so a slow/failed Claude call can never hold up delivery.
  * - live_voice: money is HELD. The master gets a one-time tokenized upload link + an SLA
  *   deadline; the commission only becomes `available` after she delivers AND the dispute window
  *   passes. If she never delivers, the SLA-sweep cron refunds it before the buyer can dispute.
@@ -138,7 +143,7 @@ export async function markMasterOrderPaid(order: MasterOrder, master: MasterProf
     });
     if (claimed.count !== 1) return { claimed: false };
     await prisma.ledgerEntry.create({
-      data: { masterId: master.id, orderId: order.id, amountUsd: cut, status: "available", availableAt: now },
+      data: { masterId: master.id, orderId: order.id, amountUsd: cut, status: "held" },
     });
     return { claimed: true };
   }
@@ -297,9 +302,9 @@ export interface PayoutDue {
   entryIds: string[];
 }
 
-/** Reconciliation: every master with `available` (owed, unpaid) commission, grouped for payout. */
+/** Reconciliation: every master with a `requested` (actively asked-for, unpaid) commission, grouped for payout. */
 export async function payoutsDue(): Promise<PayoutDue[]> {
-  const entries = await prisma.ledgerEntry.findMany({ where: { status: "available" }, include: { master: true } });
+  const entries = await prisma.ledgerEntry.findMany({ where: { status: "requested" }, include: { master: true } });
   const byMaster = new Map<string, PayoutDue>();
   for (const e of entries) {
     const cur = byMaster.get(e.masterId) ?? { master: e.master, totalUsd: 0, entryIds: [] };
@@ -310,13 +315,56 @@ export async function payoutsDue(): Promise<PayoutDue[]> {
   return [...byMaster.values()].sort((a, b) => b.totalUsd - a.totalUsd);
 }
 
-/** Admin marks a master's available commission as paid out (after sending via PayPal/Wise). */
+/** Admin marks a master's requested commission as paid out (after sending via PayPal/Wise). */
 export async function markMasterPaidOut(masterId: string): Promise<number> {
   const res = await prisma.ledgerEntry.updateMany({
-    where: { masterId, status: "available" },
+    where: { masterId, status: "requested" },
     data: { status: "paid_out", paidOutAt: new Date() },
   });
   return res.count;
+}
+
+export interface MasterBalances {
+  heldUsd: number;
+  availableUsd: number;
+  requestedUsd: number;
+  paidOutUsd: number;
+  totalEarnedUsd: number;
+}
+
+/** Sums one master's ledger by status — shared by her dashboard and the withdraw route. */
+export async function getMasterBalances(masterId: string): Promise<MasterBalances> {
+  const ledger = await prisma.ledgerEntry.findMany({ where: { masterId } });
+  const sum = (status: string) => Math.round(ledger.filter((l) => l.status === status).reduce((s, l) => s + l.amountUsd, 0) * 100) / 100;
+  const heldUsd = sum("held");
+  const availableUsd = sum("available");
+  const requestedUsd = sum("requested");
+  const paidOutUsd = sum("paid_out");
+  const totalEarnedUsd = Math.round((heldUsd + availableUsd + requestedUsd + paidOutUsd) * 100) / 100;
+  return { heldUsd, availableUsd, requestedUsd, paidOutUsd, totalEarnedUsd };
+}
+
+export interface WithdrawalRequestResult {
+  ok: boolean;
+  amountUsd: number;
+}
+
+/**
+ * A master actively asking to be paid: atomically flips every currently-`available` ledger entry
+ * of hers to `requested`. Status-guarded like markMasterPaidOut, so a double-click (or a retried
+ * request) is a safe no-op the second time — nothing is left `available` to re-claim. Enforces
+ * MIN_WITHDRAWAL_USD server-side (the dashboard button is also disabled below this, but that's
+ * just UX, not the actual boundary).
+ */
+export async function requestWithdrawal(masterId: string): Promise<WithdrawalRequestResult> {
+  const { availableUsd } = await getMasterBalances(masterId);
+  if (availableUsd < MIN_WITHDRAWAL_USD) return { ok: false, amountUsd: availableUsd };
+  const res = await prisma.ledgerEntry.updateMany({
+    where: { masterId, status: "available" },
+    data: { status: "requested", requestedAt: new Date() },
+  });
+  if (res.count === 0) return { ok: false, amountUsd: 0 };
+  return { ok: true, amountUsd: availableUsd };
 }
 
 /**
@@ -346,9 +394,11 @@ export async function recordAiStyleDraw(order: MasterOrder, rawCards: unknown): 
   }
   if (new Set(cards.map((c) => c.cardId)).size !== cards.length) return false; // no repeated cards
 
+  const now = new Date();
+  const disputeUntil = new Date(now.getTime() + DISPUTE_WINDOW_HOURS * 60 * 60 * 1000);
   const claimed = await prisma.masterOrder.updateMany({
     where: { id: order.id, status: "paid" },
-    data: { status: "delivered", deliveredAt: new Date(), cardsDrawn: JSON.stringify(cards) },
+    data: { status: "delivered", deliveredAt: now, disputeUntil, cardsDrawn: JSON.stringify(cards) },
   });
   return claimed.count === 1;
 }

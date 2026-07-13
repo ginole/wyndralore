@@ -169,13 +169,13 @@ export function payoutReminderEmail(lines: PayoutReminderLine[]): { subject: str
     .join("");
 
   return {
-    subject: lines.length ? `Masters payout due today — $${totalUsd.toFixed(2)} across ${lines.length}` : "Masters payout day — nothing owed today",
+    subject: lines.length ? `Masters payout reminder — $${totalUsd.toFixed(2)} requested across ${lines.length}` : "Masters payout reminder — nothing requested",
     html: `
       <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 560px; margin: 0 auto;">
         <h1 style="font-size: 22px;">Masters payout reminder</h1>
         ${
           lines.length
-            ? `<p>It's the 3rd or 18th — the twice-monthly payout day. Send these before marking them paid in the admin dashboard:</p>
+            ? `<p>These masters have requested a withdrawal and are still waiting on you. Send these before marking them paid in the admin dashboard:</p>
                <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
                  <thead><tr>
                    <th style="text-align:left; padding: 8px 12px; border-bottom: 2px solid #0b0e1a;">Master</th>
@@ -186,7 +186,7 @@ export function payoutReminderEmail(lines: PayoutReminderLine[]): { subject: str
                </table>
                <p style="margin-top: 16px;"><strong>Total: $${totalUsd.toFixed(2)}</strong></p>
                <p><a href="https://wyndralore.com/admin">Open the payouts dashboard</a></p>`
-            : `<p>No master commissions are owed today — nothing to send.</p>`
+            : `<p>No masters have an outstanding withdrawal request right now — nothing to send.</p>`
         }
       </div>
     `,
@@ -229,6 +229,27 @@ export function masterPayoutSentEmail(displayName: string, amountUsd: number): {
         <p>Hi ${displayName}, your commission of <strong>$${amountUsd.toFixed(2)}</strong> has been sent to your payout account.</p>
         <p>You can see your full earnings history any time in your dashboard: <a href="https://wyndralore.com/masters/dashboard" style="color: #c9a96e;">wyndralore.com/masters/dashboard</a></p>
         <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
+/** Sent to the admin the moment a master clicks "Request Withdrawal" — the on-demand counterpart
+ * to payoutReminderEmail's twice-monthly digest, so a request doesn't just sit silently unnoticed. */
+export function masterWithdrawalRequestedEmail(
+  displayName: string,
+  amountUsd: number,
+  payoutMethod: string | null,
+  payoutHandle: string | null
+): { subject: string; html: string } {
+  return {
+    subject: `Withdrawal requested — ${displayName}, $${amountUsd.toFixed(2)}`,
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">New withdrawal request</h1>
+        <p><strong>${displayName}</strong> just requested a payout of <strong>$${amountUsd.toFixed(2)}</strong>.</p>
+        <p>Send via ${payoutMethod && payoutHandle ? `${payoutMethod} — ${payoutHandle}` : "her payout method (not set — email her)"}, then mark it paid in the admin dashboard.</p>
+        <p><a href="https://wyndralore.com/admin">Open the payouts dashboard</a></p>
       </div>
     `,
   };

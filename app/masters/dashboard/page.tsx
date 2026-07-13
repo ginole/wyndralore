@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { trackEvent } from "@/lib/analytics";
+import { getMasterBalances, MIN_WITHDRAWAL_USD } from "@/lib/masters";
+import WithdrawButton from "@/components/WithdrawButton";
 
 export const metadata: Metadata = {
   title: "Your Dashboard — Wyndralore Masters",
@@ -51,16 +53,11 @@ export default async function MasterDashboardPage() {
   // Lets the admin see "which master checked her dashboard, and when" (admin's own log panel).
   await trackEvent("master_dashboard_viewed", { userId: user.id, props: { masterId: master.id, masterHandle: master.handle } });
 
-  const [orders, ledger] = await Promise.all([
+  const [orders, balances] = await Promise.all([
     prisma.masterOrder.findMany({ where: { masterId: master.id }, orderBy: { createdAt: "desc" }, take: 50 }),
-    prisma.ledgerEntry.findMany({ where: { masterId: master.id } }),
+    getMasterBalances(master.id),
   ]);
-
-  const sum = (status: string) => Math.round(ledger.filter((l) => l.status === status).reduce((s, l) => s + l.amountUsd, 0) * 100) / 100;
-  const heldUsd = sum("held");
-  const availableUsd = sum("available");
-  const paidOutUsd = sum("paid_out");
-  const totalEarnedUsd = Math.round((heldUsd + availableUsd + paidOutUsd) * 100) / 100;
+  const { heldUsd, availableUsd, requestedUsd, paidOutUsd, totalEarnedUsd } = balances;
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-16">
@@ -68,7 +65,7 @@ export default async function MasterDashboardPage() {
       <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">{master.displayName}</h1>
       <p className="mt-2 text-sm text-moon-dim">/masters/{master.handle}</p>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div className="rounded-2xl border border-gold-dim bg-ink-raised/60 p-4">
           <p className="text-[10px] uppercase tracking-[0.2em] text-moon-dim">Total earned</p>
           <p className="font-display mt-1 text-2xl text-gold-bright">${totalEarnedUsd.toFixed(2)}</p>
@@ -78,7 +75,11 @@ export default async function MasterDashboardPage() {
           <p className="font-display mt-1 text-2xl text-moon">${paidOutUsd.toFixed(2)}</p>
         </div>
         <div className="rounded-2xl border border-ink-line bg-ink-raised/60 p-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-moon-dim">Ready to pay out</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-moon-dim">Requested (processing)</p>
+          <p className="font-display mt-1 text-2xl text-moon">${requestedUsd.toFixed(2)}</p>
+        </div>
+        <div className="rounded-2xl border border-ink-line bg-ink-raised/60 p-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-moon-dim">Ready to withdraw</p>
           <p className="font-display mt-1 text-2xl text-moon">${availableUsd.toFixed(2)}</p>
         </div>
         <div className="rounded-2xl border border-ink-line bg-ink-raised/60 p-4">
@@ -87,9 +88,7 @@ export default async function MasterDashboardPage() {
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-moon-dim">
-        Paid out on the 3rd and 18th of each month, to your {master.payoutMethod ?? "payout method (not set — email us)"}.
-      </p>
+      <WithdrawButton availableUsd={availableUsd} minWithdrawalUsd={MIN_WITHDRAWAL_USD} payoutMethod={master.payoutMethod} />
 
       <h2 className="font-display mt-12 text-xl text-moon">Your readings</h2>
       <div className="mt-4 overflow-x-auto">

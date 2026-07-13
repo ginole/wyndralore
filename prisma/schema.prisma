@@ -238,8 +238,8 @@ model MasterOrder {
 }
 
 // The master's earned commission for one order, and where it sits in the
-// held -> available -> paid_out flow (or void on refund). amountUsd is the master's cut
-// (commissionPct * order price); the platform absorbs the Lemon Squeezy fee out of its own share.
+// held -> available -> requested -> paid_out flow (or void on refund). amountUsd is the master's
+// cut (commissionPct * order price); the platform absorbs the Lemon Squeezy fee out of its own share.
 model LedgerEntry {
   id          String        @id @default(cuid())
   masterId    String
@@ -247,8 +247,9 @@ model LedgerEntry {
   orderId     String        @unique
   order       MasterOrder   @relation(fields: [orderId], references: [id])
   amountUsd   Float
-  status      String        @default("held") // held | available | paid_out | void
+  status      String        @default("held") // held | available | requested | paid_out | void
   availableAt DateTime?
+  requestedAt DateTime?
   paidOutAt   DateTime?
   createdAt   DateTime      @default(now())
 
