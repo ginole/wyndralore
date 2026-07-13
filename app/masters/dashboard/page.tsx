@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { trackEvent } from "@/lib/analytics";
-import { getMasterBalances, MIN_WITHDRAWAL_USD } from "@/lib/masters";
+import { getMasterBalances, MIN_WITHDRAWAL_USD, DISPUTE_WINDOW_HOURS } from "@/lib/masters";
 import WithdrawButton from "@/components/WithdrawButton";
 
 export const metadata: Metadata = {
@@ -11,11 +11,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+const HOLD_DAYS = DISPUTE_WINDOW_HOURS / 24;
+
 const KIND_LABEL: Record<string, string> = { ai_style: "AI-style reading", live_voice: "Personal reading" };
 const STATUS_LABEL: Record<string, string> = {
   pending: "Awaiting payment",
   paid: "Awaiting your delivery",
-  delivered: "Delivered — in dispute window",
+  delivered: `Delivered — in ${HOLD_DAYS}-day hold`,
   released: "Complete",
   refunded: "Refunded",
 };
@@ -83,7 +85,7 @@ export default async function MasterDashboardPage() {
           <p className="font-display mt-1 text-2xl text-moon">${availableUsd.toFixed(2)}</p>
         </div>
         <div className="rounded-2xl border border-ink-line bg-ink-raised/60 p-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-moon-dim">Pending delivery</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-moon-dim">In {HOLD_DAYS}-day hold</p>
           <p className="font-display mt-1 text-2xl text-moon">${heldUsd.toFixed(2)}</p>
         </div>
       </div>
