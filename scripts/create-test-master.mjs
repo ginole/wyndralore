@@ -75,15 +75,15 @@ async function seedOrder({ kind, amountUsd, commissionPct, cutUsd, orderStatus, 
   });
 }
 
-// held — delivered recently, still inside its 15-day hold.
+// held — delivered recently, still inside its 30-day hold.
 await seedOrder({
   kind: "live_voice",
   amountUsd: 39,
   commissionPct: 0.7,
   cutUsd: 25.59,
   orderStatus: "delivered",
-  deliveredAt: daysAgo(2),
-  disputeUntil: new Date(now + 13 * 24 * 60 * 60 * 1000),
+  deliveredAt: daysAgo(5),
+  disputeUntil: new Date(now + 25 * 24 * 60 * 60 * 1000),
   ledgerStatus: "held",
 });
 
@@ -94,7 +94,7 @@ await seedOrder({
   commissionPct: 0.5,
   cutUsd: 4.45,
   orderStatus: "released",
-  deliveredAt: daysAgo(20),
+  deliveredAt: daysAgo(35),
   disputeUntil: daysAgo(5),
   ledgerStatus: "available",
   availableAt: daysAgo(5),
@@ -105,7 +105,7 @@ await seedOrder({
   commissionPct: 0.7,
   cutUsd: 25.59,
   orderStatus: "released",
-  deliveredAt: daysAgo(20),
+  deliveredAt: daysAgo(35),
   disputeUntil: daysAgo(5),
   ledgerStatus: "available",
   availableAt: daysAgo(5),
@@ -118,7 +118,7 @@ await seedOrder({
   commissionPct: 0.7,
   cutUsd: 25.59,
   orderStatus: "released",
-  deliveredAt: daysAgo(25),
+  deliveredAt: daysAgo(40),
   disputeUntil: daysAgo(10),
   ledgerStatus: "requested",
   availableAt: daysAgo(10),
@@ -132,7 +132,7 @@ await seedOrder({
   commissionPct: 0.5,
   cutUsd: 4.45,
   orderStatus: "released",
-  deliveredAt: daysAgo(45),
+  deliveredAt: daysAgo(60),
   disputeUntil: daysAgo(30),
   ledgerStatus: "paid_out",
   availableAt: daysAgo(30),

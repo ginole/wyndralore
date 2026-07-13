@@ -28,9 +28,10 @@ export const MASTER_COMMISSION: Record<MasterProductKind, number> = {
 // After a reading is delivered (recording uploaded for live_voice, cards drawn for ai_style), the
 // master's commission sits `held` for this long before it's safe to promise her — it doubles as
 // the buyer's dispute window AND a settlement-safety margin: Lemon Squeezy holds our own funds for
-// ~14 days before they land in the platform's account, so releasing sooner risks the platform
-// fronting money out of pocket for a sale LS hasn't actually paid out to us yet.
-export const DISPUTE_WINDOW_HOURS = 15 * 24; // 360h = 15 days
+// ~14 days before they land in the platform's account. This is deliberately padded well past that
+// (14d -> 30d) so the platform is never fronting money out of pocket for a sale LS hasn't actually
+// paid out to us yet, even if LS's own payout timing slips.
+export const DISPUTE_WINDOW_HOURS = 30 * 24; // 720h = 30 days
 // A master can't request a withdrawal for less than this — avoids processing a PayPal/Wise
 // transfer for a few dollars. Below this, her available balance just keeps accruing.
 export const MIN_WITHDRAWAL_USD = 30;
