@@ -12,6 +12,10 @@ export interface DrawnCard {
   orientation: Orientation;
 }
 
+// Re-exported so existing server-side callers can keep importing it from here; the actual value
+// lives in lib/featureFlags.ts (a zero-dependency module client components can safely import too).
+export { MASTERS_MARKETPLACE_ENABLED } from "./featureFlags";
+
 // The two storefront products. Prices and commission are snapshotted onto each order at purchase
 // time, so changing these later never rewrites what a master was already promised for past sales.
 export type MasterProductKind = "ai_style" | "live_voice";

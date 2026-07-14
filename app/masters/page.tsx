@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
+import { MASTERS_MARKETPLACE_ENABLED } from "@/lib/masters";
 
 export const metadata: Metadata = {
   title: "Meet Our Masters — Wyndralore",
@@ -10,6 +12,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function MastersHallPage() {
+  if (!MASTERS_MARKETPLACE_ENABLED) notFound();
+
   const masters = await prisma.masterProfile.findMany({
     where: { status: "active" },
     orderBy: { createdAt: "desc" },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { isMasterProductKind, masterOrderCode, createPendingMasterOrder } from "@/lib/masters";
+import { isMasterProductKind, masterOrderCode, createPendingMasterOrder, MASTERS_MARKETPLACE_ENABLED } from "@/lib/masters";
 import { createMasterCheckout } from "@/lib/lemonsqueezy";
 import { trackEvent, getAnonId } from "@/lib/analytics";
 import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
@@ -18,6 +18,8 @@ const CHECKOUT_WINDOW_MS = 10 * 60 * 1000;
 // the `pending` MasterOrder, then a Lemon Squeezy checkout; the webhook confirms payment and
 // hands off to the settlement flow in lib/masters.ts.
 export async function POST(req: NextRequest) {
+  if (!MASTERS_MARKETPLACE_ENABLED) return NextResponse.json({ error: "Not found." }, { status: 404 });
+
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
 

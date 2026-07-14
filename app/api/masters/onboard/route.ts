@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser, setSessionCookie } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { hashResetToken } from "@/lib/passwordReset";
+import { MASTERS_MARKETPLACE_ENABLED } from "@/lib/masters";
 
 const HANDLE_RE = /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/;
 
@@ -39,6 +40,8 @@ export async function GET(req: NextRequest) {
 // profile as `pending_review`. Never goes live on her own submission; an admin approves it
 // (components/admin/MastersPanel's review queue) before it's bookable.
 export async function POST(req: NextRequest) {
+  if (!MASTERS_MARKETPLACE_ENABLED) return NextResponse.json({ error: "Not found." }, { status: 404 });
+
   const body = await req.json().catch(() => null);
   const token = typeof body?.token === "string" ? body.token : null;
   const actor = await resolveActor(token);

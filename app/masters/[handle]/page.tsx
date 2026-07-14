@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
-import { MASTER_PRICE_USD } from "@/lib/masters";
+import { MASTER_PRICE_USD, MASTERS_MARKETPLACE_ENABLED } from "@/lib/masters";
 import MasterAltarActions from "@/components/MasterAltarActions";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,8 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
 }
 
 export default async function MasterAltarPage({ params }: { params: Promise<{ handle: string }> }) {
+  if (!MASTERS_MARKETPLACE_ENABLED) notFound();
+
   const { handle } = await params;
   const master = await prisma.masterProfile.findUnique({ where: { handle } });
   if (!master || master.status !== "active") notFound();

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
+import { MASTERS_MARKETPLACE_ENABLED } from "@/lib/featureFlags";
 
 export default function SiteHeader() {
   const { user, loading } = useAuth();
@@ -22,9 +23,11 @@ export default function SiteHeader() {
         )}
       </div>
       <nav className="font-accent flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs uppercase tracking-[0.15em] text-moon-dim sm:justify-end sm:tracking-[0.2em]">
-        <Link href="/masters" className="transition-colors hover:text-gold">
-          Masters
-        </Link>
+        {MASTERS_MARKETPLACE_ENABLED && (
+          <Link href="/masters" className="transition-colors hover:text-gold">
+            Masters
+          </Link>
+        )}
         <Link href="/cards" className="transition-colors hover:text-gold">
           Cards
         </Link>
