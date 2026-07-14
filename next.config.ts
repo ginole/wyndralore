@@ -16,6 +16,11 @@ const ADSENSE = [
   "https://*.google.com",
   "https://*.googleadservices.com",
 ];
+// Paddle.js (checkout overlay) — cdn.paddle.com serves the script; the overlay itself opens an
+// iframe and makes API calls from various paddle.com subdomains (checkout, buy, api, and their
+// sandbox-* equivalents) that aren't documented as a fixed list, so a single wildcard covers the
+// vendor rather than risking missing one and re-debugging a CSP block later.
+const PADDLE = ["https://*.paddle.com"];
 
 // A CSP that still allows the ad/analytics stack: those vendors inject inline <script> snippets
 // (Meta Pixel, gtag init), so 'unsafe-inline' in script-src is unavoidable without moving every
@@ -27,12 +32,12 @@ const ADSENSE = [
 // dev runtime uses eval for error overlays); it is NOT allowed in production.
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${[...GA, ...META, ...ADSENSE].join(" ")}`,
-  `style-src 'self' 'unsafe-inline'`, // next/font + Tailwind emit inline styles
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${[...GA, ...META, ...ADSENSE, ...PADDLE].join(" ")}`,
+  `style-src 'self' 'unsafe-inline' ${[...PADDLE].join(" ")}`, // next/font + Tailwind emit inline styles; Paddle's checkout loads its own stylesheet
   `img-src 'self' data: blob: https:`, // ad creatives + tracking pixels come from many advertiser hosts
   `font-src 'self' data:`,
-  `connect-src 'self' ${[...GA, ...META, ...ADSENSE].join(" ")}`,
-  `frame-src 'self' ${[...ADSENSE].join(" ")}`, // AdSense renders ad units in iframes it injects
+  `connect-src 'self' ${[...GA, ...META, ...ADSENSE, ...PADDLE].join(" ")}`,
+  `frame-src 'self' ${[...ADSENSE, ...PADDLE].join(" ")}`, // AdSense renders ad units in iframes it injects; Paddle's checkout overlay is an iframe too
   `object-src 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,
