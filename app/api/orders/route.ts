@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 import { isPlanId, PLANS } from "@/lib/pricing";
 import { generateOrderCode } from "@/lib/orderCode";
 import { trackEvent, getAnonId } from "@/lib/analytics";
-import { createLemonSqueezyCheckout, isFirstTimeBuyer } from "@/lib/lemonsqueezy";
+import { isFirstTimeBuyer } from "@/lib/lemonsqueezy";
+import { priceIdFor, firstTimeDiscountIdFor } from "@/lib/paddle";
 
 const ORDER_TTL_MS = 48 * 60 * 60 * 1000;
 
@@ -31,14 +32,10 @@ export async function POST(req: NextRequest) {
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { plan } });
 
       const firstTimeBuyer = plan !== "lifetime" && (await isFirstTimeBuyer(user.id));
-      const checkoutUrl = await createLemonSqueezyCheckout({
-        plan,
-        orderCode: order.code,
-        email: user.email,
-        firstTimeBuyer,
-      });
+      const priceId = priceIdFor(plan);
+      const discountId = firstTimeBuyer ? firstTimeDiscountIdFor(plan) : undefined;
 
-      return NextResponse.json({ order, checkoutUrl }, { status: 201 });
+      return NextResponse.json({ order, priceId, discountId }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";
       if (!isUniqueViolation) throw err;

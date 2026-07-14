@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { PLANS, PlanId } from "@/lib/pricing";
 import { pixelTrack } from "@/lib/pixel";
+import { ensurePaddleReady } from "@/lib/paddleClient";
 
 const PLAN_ORDER: PlanId[] = ["monthly", "yearly", "lifetime"];
 
@@ -35,7 +36,15 @@ export default function PricingPage() {
       }
       // FB ad conversion signal — user committed to a plan and reached checkout.
       pixelTrack("InitiateCheckout", { value: PLANS[plan].amountUsd, currency: "USD", content_name: plan });
-      window.location.href = data.checkoutUrl;
+      const paddle = await ensurePaddleReady();
+      paddle.Checkout.open({
+        items: [{ priceId: data.priceId, quantity: 1 }],
+        customData: { orderCode: data.order.code },
+        discountId: data.discountId,
+        settings: { successUrl: "https://wyndralore.com/account" },
+      });
+    } catch {
+      setError("Could not open checkout — please try again.");
     } finally {
       setPending(null);
     }

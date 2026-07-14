@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateOrderCode } from "@/lib/orderCode";
 import { trackEvent, getAnonId } from "@/lib/analytics";
-import { createAiReadCheckout, AiReadCheckoutKind } from "@/lib/lemonsqueezy";
+import { priceIdFor, AiReadCheckoutKind } from "@/lib/paddle";
 import { AI_SINGLE_PRICE_USD, AI_OVERAGE_PRICE_USD } from "@/lib/aiQuota";
 import { getSpread } from "@/lib/spreads";
 
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { kind } });
 
-      const checkoutUrl = await createAiReadCheckout({ kind, orderCode: order.code, email: user.email, redirectUrl });
-      return NextResponse.json({ order, checkoutUrl }, { status: 201 });
+      const priceId = priceIdFor(kind);
+      return NextResponse.json({ order, priceId, redirectUrl }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";
       if (!isUniqueViolation) throw err;

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Theme } from "@/lib/types";
+import { ensurePaddleReady } from "@/lib/paddleClient";
 
 interface ReadingCard {
   position: string;
@@ -183,8 +184,17 @@ export default function AiReadingPanel({
         body: JSON.stringify({ kind, spreadSlug }),
       });
       const data = await res.json().catch(() => null);
-      if (data?.checkoutUrl) window.location.href = data.checkoutUrl;
-      else setPurchasing(false);
+      if (data?.priceId) {
+        const paddle = await ensurePaddleReady();
+        paddle.Checkout.open({
+          items: [{ priceId: data.priceId, quantity: 1 }],
+          customData: { orderCode: data.order.code },
+          settings: { successUrl: data.redirectUrl },
+        });
+        setPurchasing(false);
+      } else {
+        setPurchasing(false);
+      }
     } catch {
       setPurchasing(false);
     }
