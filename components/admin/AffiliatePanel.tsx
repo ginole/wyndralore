@@ -20,8 +20,29 @@ interface Partner {
   payingUsers: number;
 }
 
+interface Activity {
+  id: string;
+  createdAt: string;
+  partner: string;
+  customer: string;
+  tier: string;
+  commissionUsd: number;
+  status: string;
+  paidAt: string | null;
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  held: "In hold",
+  available: "Ready",
+  requested: "Requested",
+  paid: "Paid ✓",
+  reversed: "Refunded",
+  reversed_settled: "Refunded (settled)",
+};
+
 export default function AffiliatePanel() {
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [activity, setActivity] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [blEmail, setBlEmail] = useState("");
@@ -33,6 +54,7 @@ export default function AffiliatePanel() {
       const res = await fetch("/api/admin/affiliate/partners");
       const data = await res.json().catch(() => ({}));
       setPartners(data.partners ?? []);
+      setActivity(data.activity ?? []);
     } finally {
       setLoading(false);
     }
@@ -165,6 +187,41 @@ export default function AffiliatePanel() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Commission & payout log */}
+      {activity.length > 0 && (
+        <>
+          <h3 className="font-display mt-10 text-lg text-moon">佣金与打款流水</h3>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-widest text-moon-dim">
+                <tr>
+                  <th className="py-2">Date</th>
+                  <th>Partner</th>
+                  <th>Customer</th>
+                  <th>Type</th>
+                  <th>Commission</th>
+                  <th>Status</th>
+                  <th>Paid</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activity.map((a) => (
+                  <tr key={a.id} className="border-t border-ink-line/60">
+                    <td className="py-2 text-moon-dim">{new Date(a.createdAt).toLocaleDateString()}</td>
+                    <td className="text-moon">{a.partner}</td>
+                    <td className="text-moon-dim">{a.customer}</td>
+                    <td className="text-moon-dim">{a.tier === "first" ? "First 50%" : "Repeat 20%"}</td>
+                    <td className="text-gold-bright">${a.commissionUsd.toFixed(2)}</td>
+                    <td className="text-moon-dim">{STATUS_LABEL[a.status] ?? a.status}</td>
+                    <td className="text-moon-dim">{a.paidAt ? new Date(a.paidAt).toLocaleDateString() : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
