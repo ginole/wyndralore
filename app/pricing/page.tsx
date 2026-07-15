@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { PLANS, PURCHASABLE_PLANS, PlanId, BillingMode, planOption } from "@/lib/pricing";
 import { pixelTrack } from "@/lib/pixel";
-import { ensurePaddleReady } from "@/lib/paddleClient";
+import WhopCheckoutModal, { WhopCheckoutTarget } from "@/components/WhopCheckoutModal";
 
 export default function PricingPage() {
   const { user, loading } = useAuth();
@@ -13,6 +13,7 @@ export default function PricingPage() {
   const [mode, setMode] = useState<BillingMode>("sub");
   const [pending, setPending] = useState<PlanId | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [checkout, setCheckout] = useState<WhopCheckoutTarget | null>(null);
 
   // A plan without a subscription price is one-time only; every other plan follows the toggle.
   function modeFor(plan: PlanId): BillingMode {
@@ -41,12 +42,7 @@ export default function PricingPage() {
       }
       // FB ad conversion signal — user committed to a plan and reached checkout.
       pixelTrack("InitiateCheckout", { value: planOption(plan, billingMode).amountUsd, currency: "USD", content_name: plan });
-      const paddle = await ensurePaddleReady();
-      paddle.Checkout.open({
-        items: [{ priceId: data.priceId, quantity: 1 }],
-        customData: { orderCode: data.order.code },
-        settings: { successUrl: "https://wyndralore.com/account" },
-      });
+      setCheckout({ planId: data.planId, sessionId: data.sessionId });
     } catch {
       setError("Could not open checkout — please try again.");
     } finally {
@@ -56,6 +52,14 @@ export default function PricingPage() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-20 text-center sm:px-10">
+      <WhopCheckoutModal
+        target={checkout}
+        email={user?.email}
+        onClose={() => setCheckout(null)}
+        // The webhook is what actually grants the plan; this just moves the buyer along once Whop
+        // says the payment went through.
+        onComplete={() => router.push("/account")}
+      />
       <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">Wyndralore Premium</p>
       <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">Read without limits</h1>
       <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-moon-dim">

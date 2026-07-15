@@ -20,7 +20,15 @@ const ADSENSE = [
 // iframe and makes API calls from various paddle.com subdomains (checkout, buy, api, and their
 // sandbox-* equivalents) that aren't documented as a fixed list, so a single wildcard covers the
 // vendor rather than risking missing one and re-debugging a CSP block later.
+// DORMANT: Paddle declined the domain on category grounds (2026-07-15) and no longer serves any
+// checkout here. Left in the allowlist only because removing it is churn with no security gain.
 const PADDLE = ["https://*.paddle.com"];
+// Whop embedded checkout — the live processor. js.whop.com serves the loader, the checkout itself
+// renders in an iframe from whop.com and talks to api/sandbox-api subdomains. Same reasoning as
+// Paddle's entry: one vendor wildcard beats enumerating hosts and re-debugging a silent CSP block.
+// This exact trap already cost real time once — Paddle.js was blocked outright by this CSP and the
+// failure was invisible in the on-page error UI (see the LS→Paddle migration notes).
+const WHOP = ["https://*.whop.com"];
 
 // A CSP that still allows the ad/analytics stack: those vendors inject inline <script> snippets
 // (Meta Pixel, gtag init), so 'unsafe-inline' in script-src is unavoidable without moving every
@@ -32,12 +40,12 @@ const PADDLE = ["https://*.paddle.com"];
 // dev runtime uses eval for error overlays); it is NOT allowed in production.
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${[...GA, ...META, ...ADSENSE, ...PADDLE].join(" ")}`,
-  `style-src 'self' 'unsafe-inline' ${[...PADDLE].join(" ")}`, // next/font + Tailwind emit inline styles; Paddle's checkout loads its own stylesheet
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${[...GA, ...META, ...ADSENSE, ...PADDLE, ...WHOP].join(" ")}`,
+  `style-src 'self' 'unsafe-inline' ${[...PADDLE, ...WHOP].join(" ")}`, // next/font + Tailwind emit inline styles; the checkout loads its own stylesheet
   `img-src 'self' data: blob: https:`, // ad creatives + tracking pixels come from many advertiser hosts
   `font-src 'self' data:`,
-  `connect-src 'self' ${[...GA, ...META, ...ADSENSE, ...PADDLE].join(" ")}`,
-  `frame-src 'self' ${[...ADSENSE, ...PADDLE].join(" ")}`, // AdSense renders ad units in iframes it injects; Paddle's checkout overlay is an iframe too
+  `connect-src 'self' ${[...GA, ...META, ...ADSENSE, ...PADDLE, ...WHOP].join(" ")}`,
+  `frame-src 'self' ${[...ADSENSE, ...PADDLE, ...WHOP].join(" ")}`, // AdSense renders ad units in iframes it injects; Whop's checkout is an iframe too
   `object-src 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,

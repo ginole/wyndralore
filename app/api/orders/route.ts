@@ -4,9 +4,10 @@ import { prisma } from "@/lib/db";
 import { isPlanId, isBillingMode, planOption, PLANS, BillingMode } from "@/lib/pricing";
 import { generateOrderCode } from "@/lib/orderCode";
 import { trackEvent, getAnonId } from "@/lib/analytics";
-import { priceIdFor } from "@/lib/paddle";
+import { planIdFor, createCheckoutSession } from "@/lib/whop";
 
 const ORDER_TTL_MS = 48 * 60 * 60 * 1000;
+const SITE_URL = "https://wyndralore.com";
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -40,8 +41,10 @@ export async function POST(req: NextRequest) {
       });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { plan, billingMode } });
 
-      const priceId = priceIdFor(plan, billingMode);
-      return NextResponse.json({ order, priceId }, { status: 201 });
+      // The session is what carries our orderCode through Whop's checkout and back on the webhook.
+      const planId = planIdFor(plan, billingMode);
+      const sessionId = await createCheckoutSession(planId, order.code, `${SITE_URL}/account`);
+      return NextResponse.json({ order, planId, sessionId }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";
       if (!isUniqueViolation) throw err;

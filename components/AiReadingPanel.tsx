@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Theme } from "@/lib/types";
-import { ensurePaddleReady } from "@/lib/paddleClient";
+import WhopCheckoutModal, { WhopCheckoutTarget } from "@/components/WhopCheckoutModal";
 
 interface ReadingCard {
   position: string;
@@ -99,6 +99,7 @@ export default function AiReadingPanel({
   const [deepText, setDeepText] = useState("");
   const [quota, setQuota] = useState<AiQuotaStatus | null>(null);
   const [purchasing, setPurchasing] = useState(false);
+  const [checkout, setCheckout] = useState<WhopCheckoutTarget | null>(null);
   const started = useRef(false);
 
   useEffect(() => {
@@ -174,6 +175,29 @@ export default function AiReadingPanel({
     }
   }
 
+  /**
+   * Whop's onComplete only means "the card went through" — the READ is granted by our webhook, which
+   * can land a beat later. Poll briefly instead of immediately re-rendering a stale "0 reads left"
+   * at someone who just paid. Gives up quietly after ~8s; the credit still lands, it just needs a
+   * refresh to show.
+   */
+  async function refreshQuotaAfterPurchase() {
+    const before = quota?.extraReadsAvailable ?? 0;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      await new Promise((r) => setTimeout(r, 1000));
+      try {
+        const res = await fetch("/api/ai-reading/quota", { cache: "no-store" });
+        const data = await res.json();
+        if (data?.quota) {
+          setQuota(data.quota);
+          if (data.quota.extraReadsAvailable > before) return;
+        }
+      } catch {
+        /* keep polling */
+      }
+    }
+  }
+
   async function handlePurchase(kind: "ai_single" | "ai_overage") {
     setPurchasing(true);
     onBeforePurchase?.();
@@ -184,17 +208,10 @@ export default function AiReadingPanel({
         body: JSON.stringify({ kind, spreadSlug }),
       });
       const data = await res.json().catch(() => null);
-      if (data?.priceId) {
-        const paddle = await ensurePaddleReady();
-        paddle.Checkout.open({
-          items: [{ priceId: data.priceId, quantity: 1 }],
-          customData: { orderCode: data.order.code },
-          settings: { successUrl: data.redirectUrl },
-        });
-        setPurchasing(false);
-      } else {
-        setPurchasing(false);
+      if (data?.planId && data?.sessionId) {
+        setCheckout({ planId: data.planId, sessionId: data.sessionId });
       }
+      setPurchasing(false);
     } catch {
       setPurchasing(false);
     }
@@ -202,6 +219,14 @@ export default function AiReadingPanel({
 
   return (
     <div className="mt-12 border-t border-ink-line/60 pt-8">
+      <WhopCheckoutModal
+        target={checkout}
+        onClose={() => setCheckout(null)}
+        onComplete={() => {
+          setCheckout(null);
+          void refreshQuotaAfterPurchase();
+        }}
+      />
       {summary && (
         <p className="text-center text-sm italic text-gold-dim" aria-live="polite">
           {summary}
