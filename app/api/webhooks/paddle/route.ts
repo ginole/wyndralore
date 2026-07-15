@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyPaddleSignature, expectedPriceIdsForOrder } from "@/lib/paddle";
 import { markOrderPaid } from "@/lib/paymentProcessing";
+import { reverseAffiliateCommission } from "@/lib/affiliate";
 import {
   linkSubscriptionToUser,
   applySubscriptionUpdate,
@@ -26,7 +27,7 @@ interface PaddleTransactionData {
   status?: string;
   custom_data?: { orderCode?: string } | null;
   items?: { price?: { id?: string } }[];
-  details?: { totals?: { total?: string; currency_code?: string } };
+  details?: { totals?: { total?: string; tax?: string; fee?: string; earnings?: string; currency_code?: string } };
   currency_code?: string;
 }
 
@@ -59,6 +60,19 @@ export async function POST(req: NextRequest) {
   if (eventType === "subscription.canceled") {
     await markSubscriptionCanceled(payload.data as PaddleSubscriptionData);
     return NextResponse.json({ ok: true, note: "subscription canceled" });
+  }
+
+  // Refund / chargeback → claw back the partner's commission for that order and mark it refunded.
+  if (eventType === "adjustment.created") {
+    const adj = payload.data as { transaction_id?: string; action?: string };
+    if (adj.transaction_id && (adj.action === "refund" || adj.action === "chargeback")) {
+      const order = await prisma.order.findFirst({ where: { paddleTransactionId: adj.transaction_id } });
+      if (order) {
+        await reverseAffiliateCommission(order.id);
+        await prisma.order.updateMany({ where: { id: order.id, status: { not: "refunded" } }, data: { status: "refunded" } });
+      }
+    }
+    return NextResponse.json({ ok: true, note: "adjustment processed" });
   }
 
   if (eventType !== "transaction.completed") {
@@ -100,10 +114,17 @@ export async function POST(req: NextRequest) {
 
   // Paddle's tax-inclusive total (minor units). Falls back to the order's own sticker amount only
   // if that path is ever missing on a real payload — a safety net to notice during sandbox testing.
-  const totalMinorUnits = data?.details?.totals?.total;
-  const amountUsd = totalMinorUnits ? Number(totalMinorUnits) / 100 : order.amountUsd;
+  const totals = data?.details?.totals;
+  const amountUsd = totals?.total ? Number(totals.total) / 100 : order.amountUsd;
+  // Paddle's own seller earnings (total minus tax minus Paddle's fee) — the base for affiliate
+  // commission. May be absent on some payloads; then the commission estimates net from gross.
+  const netUsd = totals?.earnings ? Number(totals.earnings) / 100 : undefined;
 
-  await markOrderPaid(order, amountUsd);
+  await markOrderPaid(order, amountUsd, netUsd);
+  // Remember the Paddle transaction id so a later refund/chargeback (adjustment webhook) can map back.
+  if (data?.id) {
+    await prisma.order.update({ where: { id: order.id }, data: { paddleTransactionId: data.id } });
+  }
 
   return NextResponse.json({ ok: true, note: "matched and upgraded" });
 }

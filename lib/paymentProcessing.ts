@@ -6,9 +6,12 @@ import { trackEvent } from "./analytics";
 import { grantExtraAiReads } from "./aiQuota";
 import { sendMetaPurchaseEvent } from "./metaCapi";
 import { sendGa4PurchaseEvent } from "./ga4";
+import { recordAffiliateCommission } from "./affiliate";
 
-/** Shared by the Wise webhook handler and the admin manual-match action. */
-export async function markOrderPaid(order: Order, amountUsd: number) {
+/** Shared by the Wise/Paddle webhook handlers and the admin manual-match action. `netUsd` is the
+ * seller's earnings after processor fee + tax (Paddle supplies it); callers that can't pass it let
+ * the affiliate commission estimate net from gross. */
+export async function markOrderPaid(order: Order, amountUsd: number, netUsd?: number) {
   const paidAt = new Date();
 
   // Atomically claim the "not yet paid → paid" transition first. Lemon Squeezy (and Wise,
@@ -22,6 +25,10 @@ export async function markOrderPaid(order: Order, amountUsd: number) {
     data: { status: "paid", paidAt, paidAmountUsd: amountUsd },
   });
   if (claimed.count === 0) return;
+
+  // Credit the referring partner, if this buyer was referred by one (any product kind). Idempotent
+  // per order; a no-op for unattributed buyers.
+  await recordAffiliateCommission(order, amountUsd, netUsd);
 
   if (order.kind === "ai_overage" || order.kind === "ai_single") {
     await grantExtraAiReads(order.userId, 1);

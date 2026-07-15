@@ -11,9 +11,21 @@ import ManualGrantPanel from "./admin/ManualGrantPanel";
 import MastersPanel from "./admin/MastersPanel";
 import MasterPayoutsPanel from "./admin/MasterPayoutsPanel";
 import MasterActivityPanel from "./admin/MasterActivityPanel";
+import AffiliatePanel from "./admin/AffiliatePanel";
 import FunnelPanel from "./admin/FunnelPanel";
 
-type ViewKey = "overview" | "users" | "creators" | "orders" | "unmatched" | "manual" | "masters" | "masterPayouts" | "masterActivity" | "funnel";
+type ViewKey =
+  | "overview"
+  | "users"
+  | "creators"
+  | "orders"
+  | "unmatched"
+  | "manual"
+  | "masters"
+  | "masterPayouts"
+  | "masterActivity"
+  | "affiliate"
+  | "funnel";
 
 interface NavItem {
   key: ViewKey;
@@ -49,6 +61,10 @@ const NAV: NavSection[] = [
       { key: "masterPayouts", label: "达人打款" },
       { key: "masterActivity", label: "达人动态" },
     ],
+  },
+  {
+    title: "达人推广",
+    items: [{ key: "affiliate", label: "佣金打款" }],
   },
   {
     title: "数据分析",
@@ -131,6 +147,7 @@ export default function AdminDashboard() {
         {view === "masters" && <MastersPanel />}
         {view === "masterPayouts" && <MasterPayoutsPanel />}
         {view === "masterActivity" && <MasterActivityPanel />}
+        {view === "affiliate" && <AffiliatePanel />}
         {view === "funnel" && <FunnelPanel />}
       </main>
     </section>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { pixelTrack } from "@/lib/pixel";
 import { REF_STORAGE_KEY } from "@/lib/referral";
+import { VIA_STORAGE_KEY } from "@/lib/affiliate";
 
 export default function AccountPage() {
   const { user, quota, loading, refresh, logout } = useAuth();
@@ -83,10 +84,14 @@ export default function AccountPage() {
         mode === "register" && typeof window !== "undefined"
           ? window.localStorage.getItem(REF_STORAGE_KEY) || undefined
           : undefined;
+      const viaCode =
+        mode === "register" && typeof window !== "undefined"
+          ? window.localStorage.getItem(VIA_STORAGE_KEY) || undefined
+          : undefined;
       const res = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, referralCode }),
+        body: JSON.stringify({ email, password, referralCode, viaCode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -323,6 +328,15 @@ export default function AccountPage() {
           </button>
           {cancelMsg && <p className="mt-2 text-xs text-gold-bright">{cancelMsg}</p>}
         </div>
+      )}
+
+      {user.isPartner && (
+        <Link
+          href="/partner"
+          className="mt-6 rounded-full border border-gold-dim px-7 py-3 text-center text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
+        >
+          Your Partner Dashboard
+        </Link>
       )}
 
       {user.isMaster && (

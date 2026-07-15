@@ -7,6 +7,7 @@ import { trackEvent, getAnonId } from "@/lib/analytics";
 import { clientIpFrom } from "@/lib/adminThrottle";
 import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
 import { ensureReferralCode, attributeReferral } from "@/lib/referral";
+import { attributeAffiliate } from "@/lib/affiliate";
 
 // Cap account creation per-IP so the users table (and each bcrypt hash's CPU cost) can't be
 // flooded by a script. 10 signups per hour is generous for shared/NAT IPs but stops abuse.
@@ -42,6 +43,9 @@ export async function POST(req: NextRequest) {
   const referralCode = typeof body?.referralCode === "string" ? body.referralCode : undefined;
   const user = await ensureReferralCode(created);
   await attributeReferral(user, referralCode);
+  // Also record a creator-affiliate referral (?via=), if any — this drives cash commission, separate
+  // from the friend-referral credits above.
+  await attributeAffiliate(user, typeof body?.viaCode === "string" ? body.viaCode : undefined);
 
   await setSessionCookie(user.id);
   await trackEvent("signup", { anonId: await getAnonId(), userId: user.id, props: referralCode ? { referred: true } : undefined });

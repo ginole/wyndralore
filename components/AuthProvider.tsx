@@ -15,6 +15,8 @@ export interface SessionUser {
   autoRenew: boolean;
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
+  isPartner: boolean;
+  affiliateCode: string | null;
 }
 
 export interface QuotaStatus {

@@ -58,6 +58,21 @@ model User {
   currentPeriodEnd   DateTime? // Paddle current_billing_period.ends_at
   autoRenew          Boolean   @default(false)
 
+  // Creator affiliate program (distinct from the friend-referral loop above, which pays spread
+  // credits — this pays cash commission). `affiliateCode` is the PARTNER's own code, embedded in
+  // their ?via= link. The customer-side fields record who referred THIS account and anchor the two
+  // windows: qualification (must make a first purchase within 60d of first touch) and recurring
+  // (subsequent purchases earn 20% for 6 months after the first paid purchase).
+  affiliateCode         String?   @unique // partner's referral code (assigned when they're onboarded)
+  affiliatePayoutMethod String? // paypal | wise
+  affiliatePayoutHandle String?
+  affiliateStatus       String    @default("active") // active | paused (auto-paused at 3 strikes)
+  affiliateStrikes      Int       @default(0)
+  attributedCreatorId   String? // customer side: which partner (User.id) referred this account (first-touch, locked)
+  attributedAt          DateTime? // first-touch time — start of the 60-day qualification window
+  affiliateFirstPaidAt  DateTime? // first commissionable purchase — anchors the 6-month recurring window
+  affiliateBlacklisted  Boolean   @default(false) // serial refunder: their purchases stop earning commission
+
   createdAt      DateTime        @default(now())
   orders         Order[]
   journalEntries JournalEntry[]
@@ -100,6 +115,7 @@ model Order {
   paidAt        DateTime?
   paidAmountUsd Float?
   affiliateId   String? // Lemon Squeezy affiliate/influencer id, passed through custom_data (AI-reading PRD §3)
+  paddleTransactionId String? // Paddle txn_... id, stored on payment so a later refund/chargeback (adjustment webhook) can map back to this order
 
   webhookEvents WiseWebhookEvent[]
 
@@ -262,6 +278,34 @@ model LedgerEntry {
   createdAt   DateTime      @default(now())
 
   @@index([masterId, status])
+}
+
+// One commission a partner earned for one order placed by a customer they referred. Moves through a
+// held -> available -> paid flow (or reversed on refund/chargeback). netUsd is Paddle's own seller
+// earnings for the order (total minus tax minus Paddle fee); commissionUsd = rate * netUsd. Refers to
+// users/orders by plain id (no Prisma relations) to avoid piling more back-relations onto User.
+model CreatorCommission {
+  id            String    @id @default(cuid())
+  creatorId     String // the partner (User.id) who gets paid
+  customerId    String // the referred buyer (User.id)
+  orderId       String    @unique // one commission per order
+  orderCode     String
+  grossUsd      Float // order total the buyer paid (tax-inclusive)
+  feeUsd        Float // Paddle fee + tax carved out
+  netUsd        Float // seller earnings the commission is a percentage of
+  tier          String // first | recurring
+  rate          Float // 0.5 | 0.2
+  commissionUsd Float
+  status        String    @default("held") // held | available | paid | reversed
+  heldUntil     DateTime // paidAt + 30 days
+  availableAt   DateTime?
+  paidAt        DateTime?
+  reversedAt    DateTime?
+  payoutBatchId String?
+  createdAt     DateTime  @default(now())
+
+  @@index([creatorId, status])
+  @@index([customerId])
 }
 
 model WiseWebhookEvent {

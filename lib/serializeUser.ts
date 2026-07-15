@@ -22,5 +22,9 @@ export function serializeUser(user: User, isMaster: boolean = false) {
     autoRenew: user.autoRenew,
     subscriptionStatus: user.subscriptionStatus,
     currentPeriodEnd: user.currentPeriodEnd,
+    // Creator affiliate partner: whether this account has a referral link + code, so /account can
+    // surface a link to their partner dashboard (same pattern as isMaster).
+    isPartner: Boolean(user.affiliateCode),
+    affiliateCode: user.affiliateCode,
   };
 }

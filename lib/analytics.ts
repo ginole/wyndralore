@@ -17,7 +17,9 @@ export type AnalyticsEventName =
   | "ai_deep_reading_generated"
   | "creator_invite_sent"
   | "admin_manual_grant"
-  | "master_dashboard_viewed";
+  | "master_dashboard_viewed"
+  | "affiliate_withdraw_requested"
+  | "affiliate_payout_sent";
 
 /** Server-side event recording. Never throws into the caller — analytics must not break UX. */
 export async function trackEvent(
