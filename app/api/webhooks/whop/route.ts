@@ -15,17 +15,17 @@ import {
 // Replaces the Paddle webhook after Paddle rejected the domain on category grounds; markOrderPaid()
 // is reused untouched, as it was across the LS → Paddle move.
 //
-// ⚠️ Event naming is genuinely inconsistent, so every comparison here goes through eventKey().
-// We register with underscores (`payment_succeeded`), and Whop stores/delivers a MIX: reading back
-// our own registration showed `payment.succeeded` and `dispute.created` normalised to dots, while
-// `membership_went_valid` and `membership_went_invalid` stayed underscored. Matching only one form
-// would silently drop the other family — the handler would just never fire, with no error anywhere.
-// eventKey() folds dots to underscores so both forms hit the same branch.
+// The webhook is registered with **api_version "v1"** on purpose (see lib/whop.ts). Whop's default
+// is v2, which is a different protocol entirely: it names the event field `action`, and it
+// "authenticates" by posting the shared secret back to you in plain text in a `webhook-secret`
+// header — no HMAC, so no body integrity and no replay protection. v1 is the Standard-Webhooks-shaped
+// one (`type` field, signed `webhook-signature`), which is both safer and what the official SDK's
+// types describe. v1 also accepts membership.activated/deactivated, which v2 rejects.
 //
-// Also note `membership_activated` / `membership_deactivated` pass the API's own name validation but
-// are then rejected as "not a valid event" on create, so they are NOT subscribed. went_valid /
-// went_invalid cover the same ground: went_valid → applyMembershipUpdate, which falls back to
-// linkMembershipToUser when the membership isn't on a user yet.
+// Event names arrive dotted (`payment.succeeded`); eventKey() folds them to underscores so the
+// branches read like the names used at registration. Keep it: the two shapes are genuinely mixed
+// across Whop's own surfaces (its `testable_events` list has `payment.succeeded` and
+// `membership_went_valid` side by side), and matching only one form fails silently.
 const eventKey = (type: string | undefined): string => (type ?? "").replace(/\./g, "_");
 //
 // NOTE: field paths below come from the official @whop/sdk TypeScript types (v0.0.40), not from
@@ -76,30 +76,6 @@ export async function POST(req: NextRequest) {
       signature: req.headers.get("webhook-signature"),
     })
   ) {
-    // TEMPORARY DIAGNOSTIC — remove once the first delivery verifies.
-    // Whop's real signatures are being rejected even though our implementation is byte-identical to
-    // the reference `standardwebhooks` signer (cross-tested) and the key derivation is confirmed by
-    // that library's own decoder. `vercel logs` does not reliably surface console output here, so
-    // console.warn is useless for this — persist the actual request instead, so every remaining
-    // hypothesis (header names, timestamp unit, body encoding, wrong secret) can be tested offline
-    // against one real delivery rather than costing another test purchase each.
-    // Records no key material: the signature is a derived value, and the body is our own payment data.
-    await prisma.analyticsEvent
-      .create({
-        data: {
-          name: "whop_webhook_debug",
-          props: JSON.stringify({
-            headers: Object.fromEntries([...req.headers.entries()].filter(([k]) => !/^authorization|cookie/i.test(k))),
-            bodyLength: rawBody.length,
-            body: rawBody.slice(0, 3000),
-            serverNowSeconds: Math.floor(Date.now() / 1000),
-            secretPresent: !!process.env.WHOP_WEBHOOK_SECRET,
-            secretPrefix: (process.env.WHOP_WEBHOOK_SECRET ?? "").slice(0, 3),
-            secretLength: (process.env.WHOP_WEBHOOK_SECRET ?? "").length,
-          }),
-        },
-      })
-      .catch(() => {});
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 

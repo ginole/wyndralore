@@ -117,19 +117,20 @@ export async function cancelWhopMembership(membershipId: string): Promise<boolea
 const REPLAY_TOLERANCE_SECONDS = 5 * 60;
 
 /**
- * Verifies a Whop webhook. Whop follows the Standard Webhooks spec, which is NOT Paddle's scheme:
- *   • headers: `webhook-id`, `webhook-timestamp` (unix seconds), `webhook-signature`
+ * Verifies a Whop webhook (api_version **v1** — see registerWebhook notes; v2 is a different,
+ * weaker scheme). Format follows Standard Webhooks:
+ *   • headers: `webhook-id`, `webhook-timestamp` (unix SECONDS), `webhook-signature`
  *   • signature header holds one or more space-separated `v1,<base64>` entries (secrets can be
  *     rotated, so several may be valid at once) — accept if ANY matches.
- *   • signed content is `${id}.${timestamp}.${rawBody}`, HMAC-SHA256 with the secret's base64-DECODED
- *     bytes, compared as base64.
+ *   • signed content is `${id}.${timestamp}.${rawBody}`, HMAC-SHA256, compared as base64.
  *
- * ⚠️ Whop issues the secret as **`ws_<base64>`**, NOT the spec's `whsec_<base64>`. That matters: the
- * reference `standardwebhooks` library only strips `whsec_`, so handing it Whop's key makes it
- * base64-decode the literal "ws_…" — and `_` isn't in the base64 alphabet, so you get either a throw
- * or (in Node's lenient decoder) a silently wrong key and a 100% signature-failure rate. Verified by
- * decoding a real key: strip `ws_` → the remaining 64 chars are clean base64 → a 48-byte key;
- * decoding the whole string yields 50 bytes of garbage. Both prefixes are stripped here.
+ * ⚠️ **THE KEY IS THE RAW SECRET STRING — do NOT base64-decode it, do NOT strip the `ws_` prefix.**
+ * Whop's docs say to use the "base64-decoded secret" and that is simply wrong; so is the reference
+ * `standardwebhooks` library, which always base64-decodes (and would therefore fail against Whop
+ * too). Established by capturing a real delivery and brute-forcing every derivation against its
+ * actual signature: only `Buffer.from(secret, "utf8")` — the whole `ws_…` string, prefix included —
+ * reproduces it. Following the documentation cost four rounds of 401s that failed silently, since a
+ * rejected webhook is indistinguishable from one that never arrived.
  *
  * Fails closed in production when the secret is unset, matching verifyPaddleSignature.
  */
@@ -169,7 +170,7 @@ export function verifyWhopSignature(
 
   // Sign with the timestamp exactly as sent — the signer used its own string, so normalising it
   // here would change the signed content and break the comparison.
-  const key = Buffer.from(secret.replace(/^(whsec_|ws_)/, ""), "base64");
+  const key = Buffer.from(secret, "utf8");
   const expected = Buffer.from(
     crypto.createHmac("sha256", key).update(`${id}.${timestamp}.${rawBody}`).digest("base64"),
     "utf8"
