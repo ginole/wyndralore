@@ -144,22 +144,48 @@ export function verifyWhopSignature(
     return true;
   }
   const { id, timestamp, signature } = headers;
-  if (!id || !timestamp || !signature) return false;
+  if (!id || !timestamp || !signature) {
+    console.warn(
+      `[whop] signature check failed: missing header(s) — id:${!!id} timestamp:${!!timestamp} signature:${!!signature}`
+    );
+    return false;
+  }
 
   // Reject stale deliveries so a captured request can't be replayed indefinitely.
-  const sentAt = Number(timestamp);
-  if (!Number.isFinite(sentAt)) return false;
-  if (Math.abs(Date.now() / 1000 - sentAt) > REPLAY_TOLERANCE_SECONDS) return false;
+  // Whop's timestamp header unit is not documented and a wrong guess here rejects every delivery
+  // with no clue why (it did — four live 401s). Accept seconds or milliseconds by magnitude rather
+  // than assuming: anything past ~year 33658 in seconds is really milliseconds.
+  const sentAtRaw = Number(timestamp);
+  if (!Number.isFinite(sentAtRaw)) {
+    console.warn("[whop] signature check failed: webhook-timestamp is not a number");
+    return false;
+  }
+  const sentAtSeconds = sentAtRaw > 1e12 ? Math.floor(sentAtRaw / 1000) : sentAtRaw;
+  const skew = Math.abs(Date.now() / 1000 - sentAtSeconds);
+  if (skew > REPLAY_TOLERANCE_SECONDS) {
+    console.warn(`[whop] signature check failed: timestamp ${skew.toFixed(0)}s outside the ${REPLAY_TOLERANCE_SECONDS}s replay window`);
+    return false;
+  }
 
-  const keyBytes = Buffer.from(secret.replace(/^(whsec_|ws_)/, ""), "base64");
-  const expected = crypto.createHmac("sha256", keyBytes).update(`${id}.${timestamp}.${rawBody}`).digest("base64");
-  const expectedBuf = Buffer.from(expected, "utf8");
+  // Sign with the timestamp exactly as sent — the signer used its own string, so normalising it
+  // here would change the signed content and break the comparison.
+  const key = Buffer.from(secret.replace(/^(whsec_|ws_)/, ""), "base64");
+  const expected = Buffer.from(
+    crypto.createHmac("sha256", key).update(`${id}.${timestamp}.${rawBody}`).digest("base64"),
+    "utf8"
+  );
 
-  return signature.split(" ").some((entry) => {
-    const [version, value] = entry.split(",");
+  const versions = signature.split(" ").map((entry) => entry.split(","));
+  const ok = versions.some(([version, value]) => {
     if (version !== "v1" || !value) return false;
     const givenBuf = Buffer.from(value, "utf8");
-    if (givenBuf.length !== expectedBuf.length) return false;
-    return crypto.timingSafeEqual(expectedBuf, givenBuf);
+    return givenBuf.length === expected.length && crypto.timingSafeEqual(expected, givenBuf);
   });
+  if (!ok) {
+    console.warn(
+      `[whop] signature check failed: no v1 entry matched (header had ${versions.length} entr(ies): ` +
+        `${versions.map(([v]) => v).join("|")}; key ${key.length}B; body ${rawBody.length}B)`
+    );
+  }
+  return ok;
 }
