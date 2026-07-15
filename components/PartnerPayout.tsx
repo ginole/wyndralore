@@ -19,6 +19,7 @@ export default function PartnerPayout({ netAvailableUsd, requestedUsd, minPayout
   const [editing, setEditing] = useState(!payoutMethod);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [justRequested, setJustRequested] = useState(false);
 
   async function saveMethod(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +55,8 @@ export default function PartnerPayout({ netAvailableUsd, requestedUsd, minPayout
         setMsg({ type: "error", text: data.error ?? "Could not request payout." });
         return;
       }
+      setJustRequested(true); // lock the button instantly, don't wait for a page refresh
+      router.refresh(); // re-fetch the server data so balances/status update in place
       setMsg({ type: "ok", text: "Payout requested — we'll send it to your account shortly." });
     } catch {
       setMsg({ type: "error", text: "Network error — please try again." });
@@ -65,8 +68,10 @@ export default function PartnerPayout({ netAvailableUsd, requestedUsd, minPayout
   if (paused) return null;
 
   // Locked while a payout is already pending — one request at a time until the admin settles it, and
-  // changing the payout method can't re-open it.
-  const canWithdraw = netAvailableUsd >= minPayoutUsd && !!payoutMethod && !editing && requestedUsd === 0;
+  // changing the payout method can't re-open it. `justRequested` covers the moment right after a
+  // click, before the refreshed server data (requestedUsd) has arrived.
+  const pending = requestedUsd > 0 || justRequested;
+  const canWithdraw = netAvailableUsd >= minPayoutUsd && !!payoutMethod && !editing && !pending;
 
   return (
     <div className="mt-6 rounded-2xl border border-gold-dim bg-ink-raised/60 p-5">
@@ -109,7 +114,7 @@ export default function PartnerPayout({ netAvailableUsd, requestedUsd, minPayout
               </button>
             </p>
           </div>
-          {requestedUsd > 0 ? (
+          {pending ? (
             <span className="rounded-full border border-gold-dim px-6 py-3 text-xs uppercase tracking-[0.2em] text-gold-dim">
               Payout processing
             </span>
@@ -130,7 +135,7 @@ export default function PartnerPayout({ netAvailableUsd, requestedUsd, minPayout
           ${requestedUsd.toFixed(2)} payout requested — we&apos;re processing it. You&apos;ll get it in your account soon.
         </p>
       )}
-      {!editing && requestedUsd === 0 && netAvailableUsd < minPayoutUsd && (
+      {!editing && !pending && netAvailableUsd < minPayoutUsd && (
         <p className="mt-3 text-xs text-moon-dim/70">Minimum payout is ${minPayoutUsd}. Keep sharing your link!</p>
       )}
       {msg && <p className={`mt-3 text-sm ${msg.type === "error" ? "text-red-400" : "text-gold"}`}>{msg.text}</p>}
