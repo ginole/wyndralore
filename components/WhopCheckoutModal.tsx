@@ -69,6 +69,12 @@ export default function WhopCheckoutModal({
           theme="dark"
           themeOptions={{ accentColor: "#e4c894", backgroundColor: "#12162a", borderRadius: 14 }}
           {...(email ? { prefill: { email } } : {})}
+          // The embed navigates the top frame to the session's redirect_url when it finishes unless
+          // told not to. That fights the whole point of hosting it in a modal, and it silently kills
+          // whatever onComplete started — AiReadingPanel's quota poll would be cut off mid-flight by
+          // the navigation, landing the buyer on a page that reads their pre-purchase quota back to
+          // them. Own the post-purchase step here instead; each caller decides in onComplete.
+          skipRedirect
           onComplete={() => onComplete?.()}
         />
       </div>

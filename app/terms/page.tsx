@@ -47,7 +47,7 @@ export default function TermsPage() {
             the free tier; we&apos;ll email you before it expires.
           </p>
           <p className="mt-2">
-            Card payments are processed by our payment provider, Paddle, which acts as the Merchant of Record for
+            Card payments are processed by our payment provider, Whop, which acts as the Merchant of Record for
             those transactions. We also accept manual bank transfer through Wise: to pay this way, include your order
             reference exactly as shown in your transfer. Overpayments are accepted and the difference is not refundable;
             payments below the plan amount will not activate Premium until the balance is settled. If a payment cannot be
@@ -65,7 +65,7 @@ export default function TermsPage() {
             consumer law — once delivery has begun.
           </p>
           <p className="mt-2">
-            Where a card payment is handled by Paddle as Merchant of Record, Paddle&apos;s own refund and
+            Where a card payment is handled by Whop as Merchant of Record, Whop&apos;s own refund and
             dispute policies also apply. If something has genuinely gone wrong with your order, contact us at
             hello@wyndralore.com and we&apos;ll make it right.
           </p>

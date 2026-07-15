@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 
-// 手动补单：当 Lemon Squeezy 的支付 webhook 偶尔掉单（用户已付款但额度没到账）时，管理员在此
-// 输入买家邮箱，直接为其补发 1 次 AI 深度解读额度。每次提交 +1，结果会回显当前剩余额度供核对。
+// 手动补单：当支付 webhook 掉单（用户已付款但额度没到账）时，管理员在此输入买家邮箱，直接为其
+// 补发 1 次 AI 深度解读额度。每次提交 +1，结果会回显当前剩余额度供核对。
+//
+// 这不是假想场景：2026-07-15 迁移到 Whop 时，webhook 因签名校验问题连续 401，四笔真实付款全部
+// 停在 pending 未开通（见 lib/whop.ts 里关于 Whop 密钥格式的说明）。诊断方法：订单卡在 pending
+// 就说明是 webhook 出了问题，而不是别的环节。
 export default function ManualGrantPanel() {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -40,7 +44,7 @@ export default function ManualGrantPanel() {
     <div>
       <h2 className="font-display text-2xl text-moon">手动补单</h2>
       <p className="mt-1 text-sm text-moon-dim">
-        用于 Lemon Squeezy webhook 偶尔掉单时的人工兜底：输入买家邮箱，为其补发 1 次 AI 深度解读额度。
+        用于支付 webhook 掉单时的人工兜底：输入买家邮箱，为其补发 1 次 AI 深度解读额度。
       </p>
 
       <div className="mt-6 rounded-2xl border border-gold-dim bg-ink-raised/60 p-6">

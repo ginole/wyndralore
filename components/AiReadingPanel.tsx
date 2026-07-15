@@ -27,9 +27,14 @@ interface AiReadingPanelProps {
   isPremium: boolean;
   spreadSlug: string;
   onDeepReadingComplete?: (text: string) => void;
-  /** Called right before checkout so the caller can stash the current reading for restoration
-   * on return (see the `?resume=1` handling in ReadingExperience) — otherwise the buyer would
-   * land back on a blank page and have to redraw from scratch after paying. */
+  /** Called right before checkout so the caller can stash the current reading for restoration on
+   * return (see the `?resume=1` handling in ReadingExperience) — otherwise the buyer would land back
+   * on a blank page and have to redraw from scratch after paying.
+   *
+   * Now a safety net rather than the main path: checkout runs in a modal with skipRedirect, so the
+   * page normally never unloads. It still earns its place — a 3-D Secure challenge or the raw
+   * hosted-checkout URL can navigate the top frame, and the session's redirect_url points back here
+   * with ?resume=1 for exactly that case. Cheap to keep, and losing a paid reading is expensive. */
   onBeforePurchase?: () => void;
 }
 

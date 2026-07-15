@@ -66,9 +66,11 @@ export default function RefundsPage() {
         <div>
           <h2 className="font-display text-xl text-moon">4. Who processes your payment</h2>
           <p className="mt-2">
-            Card payments are processed by our payment provider, Paddle, which acts as the Merchant of Record for those
-            transactions. Paddle&apos;s own refund, chargeback, and dispute policies also apply to your purchase, and
-            Paddle may contact you about billing matters.
+            Card payments are processed by our payment provider, Whop, which acts as the Merchant of Record for those
+            transactions. Whop&apos;s own refund, chargeback, and dispute policies also apply to your purchase, and
+            Whop may contact you about billing matters. Your card or bank statement will show{" "}
+            <strong className="text-moon">WHOP*WYNDRALORE</strong> — that is us; please check for it before reporting a
+            charge you don&apos;t recognise.
           </p>
         </div>
 

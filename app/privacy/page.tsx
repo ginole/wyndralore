@@ -35,7 +35,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong className="text-moon">Payment records:</strong> order details and the payment confirmations we
-              receive from our payment processors (Lemon Squeezy and, for bank transfers, Wise), kept for accounting
+              receive from our payment provider (Whop, and Wise for any bank transfer), kept for accounting
               and support. We never see or store your full card number.
             </li>
             <li>
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
           <h2 className="font-display text-xl text-moon">Who we share data with</h2>
           <p className="mt-2">We rely on a small set of trusted providers, each processing only what it needs:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li><strong className="text-moon">Lemon Squeezy &amp; Wise</strong> — payment processing.</li>
+            <li><strong className="text-moon">Whop</strong> — card payment processing (Merchant of Record); <strong className="text-moon">Wise</strong> — bank transfers.</li>
             <li><strong className="text-moon">Anthropic</strong> — generating AI readings from your cards and question.</li>
             <li><strong className="text-moon">Resend</strong> — sending transactional email (confirmations, password resets).</li>
             <li><strong className="text-moon">Google</strong> — analytics (Google Analytics) and advertising (AdSense).</li>
