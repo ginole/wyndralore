@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const SITE_URL = "https://www.wyndralore.com";
+const SITE_URL = "https://wyndralore.com";
 
 const STATUS_LABEL: Record<string, string> = {
   held: "In 30-day hold",
