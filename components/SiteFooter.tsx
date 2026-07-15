@@ -22,6 +22,9 @@ export default function SiteFooter() {
         <Link href="/privacy" className="transition-colors hover:text-gold">
           Privacy
         </Link>
+        <Link href="/refunds" className="transition-colors hover:text-gold">
+          Refunds
+        </Link>
         <a href="mailto:hello@wyndralore.com" className="transition-colors hover:text-gold">
           Contact Us
         </a>
