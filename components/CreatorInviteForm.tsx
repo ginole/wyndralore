@@ -44,9 +44,15 @@ export default function CreatorInviteForm({ onSuccess }: { onSuccess?: () => voi
     <div className="rounded-2xl border border-gold-dim bg-ink-raised/60 p-6">
       <h3 className="font-display text-lg text-gold-bright">Creator Outreach</h3>
       <p className="mt-1 text-xs text-moon-dim">
-        Grants a free 1-month Premium membership and emails the partnership invite. Commission is handled by Whop:
-        the invite points them at our Whop page to grab their own link, which earns 30% of every payment for as long
-        as the person they referred keeps paying — and Whop pays them directly, so there is nothing to settle by hand.
+        Grants a free 1-month Premium membership and emails the partnership invite. Commission is Whop&apos;s job:
+        she makes a free Whop account, then shares <span className="text-moon">wyndralore.com/?a=her-whop-username</span>
+        and Whop pays her 30% of every payment, automatically, for as long as her referral keeps paying. You collect no
+        username and settle nothing by hand — the invite email tells her the format.
+      </p>
+      <p className="mt-2 text-xs text-moon-dim/70">
+        The email also tells her <span className="text-moon-dim">not</span> to share a whop.com link. Those land her
+        audience on a bare product card and ask for money before anyone has drawn a card — that traffic bounces and she
+        earns nothing, which is how a creator decides we&apos;re not worth promoting.
       </p>
       <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-2">

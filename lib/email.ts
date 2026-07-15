@@ -116,9 +116,10 @@ export function creatorInviteEmail(email: string, affiliateLink: string, actionL
             ${benefit(
               "2",
               "Earn 30% — every month, not just once",
-              `Most affiliate deals pay you once and forget you. Ours pays you <strong style="color: #f4f1ea;">30% of every payment</strong>, for as long as the person you referred stays subscribed. Ten people who stick around is income that arrives whether or not you posted that week.<br/>
-              <a href="${affiliateLink}" style="display: inline-block; margin: 8px 0 6px; color: #e4c894; word-break: break-all;">${affiliateLink}</a><br/>
-              Grab your link there, share it however your audience finds you best. Payments are handled and paid out by Whop directly — no invoices, and you never have to chase us for money.`,
+              `Most affiliate deals pay you once and forget you. Ours pays you <strong style="color: #f4f1ea;">30% of every payment</strong>, for as long as the person you referred stays subscribed. Ten people who stick around is income that arrives whether or not you posted that week. Whop tracks it and pays you directly — no invoices, and you never have to chase us.<br/><br/>
+              Two steps: create a free account at <a href="${affiliateLink}" style="color: #e4c894;">${affiliateLink}</a>, then share this link —<br/>
+              <span style="display: inline-block; margin: 8px 0 6px; color: #e4c894; word-break: break-all;">wyndralore.com/?a=<strong style="color: #f4f1ea;">your-whop-username</strong></span><br/>
+              <strong style="color: #f4f1ea;">Use that link, not a whop.com one.</strong> A whop.com link drops your audience on a product card and asks them for money before they've drawn a single card — that traffic bounces and you earn nothing. Ours lands them on the site so they read first. Same 30%, tracked the same, it just converts.`,
             )}
           </div>
 

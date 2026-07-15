@@ -64,9 +64,20 @@ export default function AffiliatePanel() {
   return (
     <div>
       <h2 className="font-display text-2xl text-moon">达人佣金 · 打款与风控</h2>
-      <p className="mt-1 text-sm text-moon-dim">
-        Partners earn 50% of a referred customer&apos;s first purchase, then 20% for 6 months. Commissions hold 30
-        days, then become withdrawable ($30 min). Pay them manually via PayPal/Wise, then click Mark Paid.
+      <div className="mt-2 rounded-xl border border-gold-dim/50 bg-ink/40 p-3 text-xs text-moon-dim">
+        <strong className="text-gold-bright">已停用 —— 佣金现在由 Whop 处理。</strong>
+        <br />
+        达人分享 <span className="text-moon">wyndralore.com/?a=她的Whop用户名</span>，Whop 自动归因、按每一笔付款付她
+        30%（只要人还在订阅就一直付），并直接打款给她。**你不需要手动打任何一笔款。**
+        <br />
+        下面这套是我们自建的引擎，只是休眠、没有删除（`CREATOR_AFFILIATE_ENABLED`）。切换时存量达人为 0，所以没有历史数据要迁移；
+        面板会一直是空的。若 Whop 那条路走不通（比如达人不愿注册 Whop 账号），把 flag 翻回 true 即可恢复。
+      </div>
+      <p className="mt-3 text-sm text-moon-dim/60">
+        <span className="line-through">
+          Partners earn 50% of a referred customer&apos;s first purchase, then 20% for 6 months. Commissions hold 30
+          days, then become withdrawable ($30 min). Pay them manually via PayPal/Wise, then click Mark Paid.
+        </span>
       </p>
 
       {/* Blacklist a serial-refunding customer */}
