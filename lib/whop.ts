@@ -122,7 +122,15 @@ const REPLAY_TOLERANCE_SECONDS = 5 * 60;
  *   • signature header holds one or more space-separated `v1,<base64>` entries (secrets can be
  *     rotated, so several may be valid at once) — accept if ANY matches.
  *   • signed content is `${id}.${timestamp}.${rawBody}`, HMAC-SHA256 with the secret's base64-DECODED
- *     bytes (the secret is issued as `whsec_<base64>`), compared as base64.
+ *     bytes, compared as base64.
+ *
+ * ⚠️ Whop issues the secret as **`ws_<base64>`**, NOT the spec's `whsec_<base64>`. That matters: the
+ * reference `standardwebhooks` library only strips `whsec_`, so handing it Whop's key makes it
+ * base64-decode the literal "ws_…" — and `_` isn't in the base64 alphabet, so you get either a throw
+ * or (in Node's lenient decoder) a silently wrong key and a 100% signature-failure rate. Verified by
+ * decoding a real key: strip `ws_` → the remaining 64 chars are clean base64 → a 48-byte key;
+ * decoding the whole string yields 50 bytes of garbage. Both prefixes are stripped here.
+ *
  * Fails closed in production when the secret is unset, matching verifyPaddleSignature.
  */
 export function verifyWhopSignature(
@@ -143,7 +151,7 @@ export function verifyWhopSignature(
   if (!Number.isFinite(sentAt)) return false;
   if (Math.abs(Date.now() / 1000 - sentAt) > REPLAY_TOLERANCE_SECONDS) return false;
 
-  const keyBytes = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
+  const keyBytes = Buffer.from(secret.replace(/^(whsec_|ws_)/, ""), "base64");
   const expected = crypto.createHmac("sha256", keyBytes).update(`${id}.${timestamp}.${rawBody}`).digest("base64");
   const expectedBuf = Buffer.from(expected, "utf8");
 

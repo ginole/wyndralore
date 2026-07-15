@@ -15,9 +15,18 @@ import {
 // Replaces the Paddle webhook after Paddle rejected the domain on category grounds; markOrderPaid()
 // is reused untouched, as it was across the LS → Paddle move.
 //
-// ⚠️ Event names differ by direction: we REGISTER webhooks with underscores (`payment_succeeded`),
-// but the delivered payload's `type` uses dots (`payment.succeeded`). These constants are the
-// payload form — see lib/whop.ts and the Whop notes in memory.
+// ⚠️ Event naming is genuinely inconsistent, so every comparison here goes through eventKey().
+// We register with underscores (`payment_succeeded`), and Whop stores/delivers a MIX: reading back
+// our own registration showed `payment.succeeded` and `dispute.created` normalised to dots, while
+// `membership_went_valid` and `membership_went_invalid` stayed underscored. Matching only one form
+// would silently drop the other family — the handler would just never fire, with no error anywhere.
+// eventKey() folds dots to underscores so both forms hit the same branch.
+//
+// Also note `membership_activated` / `membership_deactivated` pass the API's own name validation but
+// are then rejected as "not a valid event" on create, so they are NOT subscribed. went_valid /
+// went_invalid cover the same ground: went_valid → applyMembershipUpdate, which falls back to
+// linkMembershipToUser when the membership isn't on a user yet.
+const eventKey = (type: string | undefined): string => (type ?? "").replace(/\./g, "_");
 //
 // NOTE: field paths below come from the official @whop/sdk TypeScript types (v0.0.40), not from
 // prose docs, so they are firmer than the Paddle route's original guesses were. The ONE thing the
@@ -77,18 +86,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, note: "invalid json, ignored" });
   }
 
-  const eventType = payload.type;
+  const eventType = eventKey(payload.type);
 
   // Auto-renew membership lifecycle (see lib/subscription.ts).
-  if (eventType === "membership.activated") {
+  if (eventType === "membership_activated") {
     await linkMembershipToUser(payload.data as WhopMembershipData);
     return NextResponse.json({ ok: true, note: "membership linked" });
   }
-  if (eventType === "membership.cancel_at_period_end_changed" || eventType === "membership.went_valid") {
+  if (eventType === "membership_cancel_at_period_end_changed" || eventType === "membership_went_valid") {
     await applyMembershipUpdate(payload.data as WhopMembershipData);
     return NextResponse.json({ ok: true, note: "membership updated" });
   }
-  if (eventType === "membership.deactivated" || eventType === "membership.went_invalid") {
+  if (eventType === "membership_deactivated" || eventType === "membership_went_invalid") {
     await markMembershipCanceled(payload.data as WhopMembershipData);
     return NextResponse.json({ ok: true, note: "membership canceled" });
   }
@@ -96,7 +105,7 @@ export async function POST(req: NextRequest) {
   // Refund / chargeback → claw back the partner's commission for that order and mark it refunded.
   // Whop delivers the Payment object on refund.created/dispute.created, so the payment id maps back
   // to the order we stored it on at purchase time.
-  if (eventType === "refund.created" || eventType === "dispute.created") {
+  if (eventType === "refund_created" || eventType === "dispute_created") {
     const data = payload.data as WhopPaymentData;
     const paymentId = data?.id;
     if (paymentId) {
@@ -112,7 +121,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, note: "refund/dispute processed" });
   }
 
-  if (eventType !== "payment.succeeded") {
+  if (eventType !== "payment_succeeded") {
     return NextResponse.json({ ok: true, note: `ignored event ${eventType}` });
   }
 
