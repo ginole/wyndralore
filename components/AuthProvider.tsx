@@ -12,6 +12,9 @@ export interface SessionUser {
   referralCode: string | null;
   premiumSpreadCredits: number;
   isMaster: boolean;
+  autoRenew: boolean;
+  subscriptionStatus: string | null;
+  currentPeriodEnd: string | null;
 }
 
 export interface QuotaStatus {

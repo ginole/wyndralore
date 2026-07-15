@@ -37,9 +37,9 @@ type DeepState = "idle" | "loading" | "streaming" | "done" | "paywall" | "error"
 
 const COPY = {
   en: {
-    brand: "AI-Powered Personal Insight Engine",
+    brand: "A Tarot-Attuned Reading Engine",
     tagline:
-      "Centuries of tarot symbolism, read without a stranger's bias or judgment. Your AI reading traces the energy between these cards and surfaces what your own thinking has been circling around.",
+      "Not a generic chatbot guessing at your spread. This engine is tuned to tarot alone — steeped in the centuries-old meaning of the very cards you drew, and reading them in the exact positions before you, against your own question. No stranger's bias, no judgment: just the quiet pattern your cards are tracing, finally put into words.",
     reveal: "Reveal My Deep Reading",
     generating: "Reading the energy between your cards…",
     notSavedHint:

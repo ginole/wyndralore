@@ -16,6 +16,8 @@ export default function AccountPage() {
   const [submitting, setSubmitting] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelMsg, setCancelMsg] = useState<string | null>(null);
 
   const inviteLink =
     user?.referralCode && typeof window !== "undefined" ? `${window.location.origin}/?ref=${user.referralCode}` : "";
@@ -28,6 +30,26 @@ export default function AccountPage() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       /* clipboard blocked — user can select the link text manually */
+    }
+  }
+
+  async function handleCancelSubscription() {
+    if (typeof window !== "undefined" && !window.confirm("Cancel auto-renewal? You'll keep full access until the end of your current period.")) return;
+    setCanceling(true);
+    setCancelMsg(null);
+    try {
+      const res = await fetch("/api/subscription/cancel", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setCancelMsg(data.error ?? "Could not cancel — please try again.");
+        return;
+      }
+      await refresh();
+      setCancelMsg("Auto-renewal canceled — you keep access until your current period ends.");
+    } catch {
+      setCancelMsg("Could not cancel — please try again.");
+    } finally {
+      setCanceling(false);
     }
   }
 
@@ -282,6 +304,26 @@ export default function AccountPage() {
           <p className="mt-4 text-xs text-moon-dim/70">Preparing your invite link…</p>
         )}
       </div>
+
+      {user.autoRenew && (
+        <div className="mt-6 rounded-2xl border border-ink-line bg-ink-raised/40 p-5 text-left">
+          <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">Auto-renewal on</p>
+          <p className="mt-2 text-sm leading-relaxed text-moon-dim">
+            Your {user.plan} plan renews automatically
+            {user.currentPeriodEnd ? ` on ${new Date(user.currentPeriodEnd).toLocaleDateString()}` : ""}. You&apos;re
+            in control — cancel anytime and keep full access until then.
+          </p>
+          <button
+            type="button"
+            onClick={handleCancelSubscription}
+            disabled={canceling}
+            className="mt-3 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon disabled:opacity-60"
+          >
+            {canceling ? "Canceling…" : "Cancel auto-renewal"}
+          </button>
+          {cancelMsg && <p className="mt-2 text-xs text-gold-bright">{cancelMsg}</p>}
+        </div>
+      )}
 
       {user.isMaster && (
         <Link

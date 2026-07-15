@@ -50,6 +50,14 @@ model User {
   referredByCode       String?
   referralRewarded     Boolean @default(false)
 
+  // Auto-renewing Paddle subscription (the "Subscribe & save" pricing option). At most one active
+  // subscription per user. While active, planExpiresAt is kept aligned to the Paddle billing
+  // period; cancelling just flips autoRenew off and access lapses naturally at currentPeriodEnd.
+  subscriptionId     String?   @unique // Paddle sub_... id
+  subscriptionStatus String? // active | canceled | past_due | paused | trialing
+  currentPeriodEnd   DateTime? // Paddle current_billing_period.ends_at
+  autoRenew          Boolean   @default(false)
+
   createdAt      DateTime        @default(now())
   orders         Order[]
   journalEntries JournalEntry[]

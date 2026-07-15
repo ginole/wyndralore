@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { PLANS, PlanId } from "@/lib/pricing";
+import { PLANS, PlanId, BillingMode, planOption } from "@/lib/pricing";
 import { pixelTrack } from "@/lib/pixel";
 import { ensurePaddleReady } from "@/lib/paddleClient";
 
@@ -12,8 +12,14 @@ const PLAN_ORDER: PlanId[] = ["monthly", "yearly", "lifetime"];
 export default function PricingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [mode, setMode] = useState<BillingMode>("sub");
   const [pending, setPending] = useState<PlanId | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Lifetime is one-time only; every other plan follows the toggle.
+  function modeFor(plan: PlanId): BillingMode {
+    return plan === "lifetime" ? "onetime" : mode;
+  }
 
   async function handleSelectPlan(plan: PlanId) {
     setError(null);
@@ -22,12 +28,13 @@ export default function PricingPage() {
       router.push("/account");
       return;
     }
+    const billingMode = modeFor(plan);
     setPending(plan);
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, billingMode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -35,12 +42,11 @@ export default function PricingPage() {
         return;
       }
       // FB ad conversion signal — user committed to a plan and reached checkout.
-      pixelTrack("InitiateCheckout", { value: PLANS[plan].amountUsd, currency: "USD", content_name: plan });
+      pixelTrack("InitiateCheckout", { value: planOption(plan, billingMode).amountUsd, currency: "USD", content_name: plan });
       const paddle = await ensurePaddleReady();
       paddle.Checkout.open({
         items: [{ priceId: data.priceId, quantity: 1 }],
         customData: { orderCode: data.order.code },
-        discountId: data.discountId,
         settings: { successUrl: "https://wyndralore.com/account" },
       });
     } catch {
@@ -55,15 +61,41 @@ export default function PricingPage() {
       <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">Wyndralore Premium</p>
       <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">Read without limits</h1>
       <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-moon-dim">
-        No sneaky auto-renewals. You&apos;re always in control — every plan is a one-time payment, and nothing
-        renews without you coming back to pay again.
+        You choose how to pay. Subscribe and save — cancel anytime, no lock-in — or pay once with no auto-renewal
+        at all. Whatever you pick is spelled out plainly, never a hidden charge.
       </p>
+
+      {/* Billing toggle — affects Monthly & Yearly; Lifetime is always one-time. */}
+      <div className="mx-auto mt-10 inline-flex rounded-full border border-gold-dim bg-ink-raised/50 p-1 text-xs uppercase tracking-[0.15em]">
+        <button
+          type="button"
+          onClick={() => setMode("sub")}
+          className={`rounded-full px-5 py-2 transition-colors ${mode === "sub" ? "bg-gold text-ink" : "text-moon-dim hover:text-moon"}`}
+        >
+          Subscribe &amp; save
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("onetime")}
+          className={`rounded-full px-5 py-2 transition-colors ${mode === "onetime" ? "bg-gold text-ink" : "text-moon-dim hover:text-moon"}`}
+        >
+          One-time
+        </button>
+      </div>
 
       {error && <p className="mt-6 text-sm text-red-400">{error}</p>}
 
-      <div className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
         {PLAN_ORDER.map((id) => {
           const plan = PLANS[id];
+          const shownMode = modeFor(id);
+          const option = planOption(id, shownMode);
+          const footnote =
+            id === "lifetime"
+              ? "One-time payment · yours forever"
+              : shownMode === "sub"
+                ? `Renews at ${option.priceLabel}${option.cadence} · cancel anytime`
+                : "One-time payment · never auto-charged";
           return (
             <div
               key={id}
@@ -80,8 +112,8 @@ export default function PricingPage() {
               )}
               <h2 className="font-display text-2xl text-moon">{plan.label}</h2>
               <p className="mt-4">
-                <span className="font-display text-4xl text-gold-bright">{plan.priceLabel}</span>
-                <span className="ml-2 text-sm text-moon-dim">{plan.cadence}</span>
+                <span className="font-display text-4xl text-gold-bright">{option.priceLabel}</span>
+                <span className="ml-2 text-sm text-moon-dim">{option.cadence}</span>
               </p>
               <ul className="mt-6 flex flex-1 flex-col gap-2 text-sm text-moon-dim">
                 {plan.perks.map((perk) => (
@@ -102,14 +134,15 @@ export default function PricingPage() {
               >
                 {pending === id ? "Please wait…" : "Get Premium"}
               </button>
-              <p className="mt-3 text-center text-[11px] text-moon-dim/70">One-time payment. No auto-renewal.</p>
+              <p className="mt-3 text-center text-[11px] text-moon-dim/70">{footnote}</p>
             </div>
           );
         })}
       </div>
 
       <p className="mx-auto mt-8 max-w-lg text-[11px] leading-relaxed text-moon-dim/60">
-        Digital goods, delivered instantly — all sales final. By purchasing you agree to immediate delivery and waive
+        Digital goods, delivered instantly — all sales final. Subscriptions renew automatically until you cancel,
+        which you can do anytime from your account. By purchasing you agree to immediate delivery and waive
         any right of withdrawal. See our{" "}
         <a href="/terms" className="underline decoration-gold-dim underline-offset-2 hover:text-moon-dim">
           Terms

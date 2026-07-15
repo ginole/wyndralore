@@ -39,12 +39,15 @@ export default function TermsPage() {
         <div>
           <h2 className="font-display text-xl text-moon">3. Premium plans, add-ons, and payment</h2>
           <p className="mt-2">
-            Premium plans and one-off purchases (such as a single AI deep reading) are one-time payments — there is no
-            automatic renewal. A Premium plan simply ends when its term is up, and your account returns to the free tier.
-            We&apos;ll email you before a plan expires so you can choose to renew.
+            Premium is available two ways: as an auto-renewing subscription, or as a one-time payment that never renews.
+            One-off add-ons (such as a single AI deep reading) are always one-time payments. If you choose a subscription,
+            we bill your plan automatically at the start of each billing period until you cancel. You can cancel anytime
+            from your account page — cancelling stops all future charges, and you keep Premium access until the end of the
+            period you have already paid for. A one-time plan simply ends when its term is up and your account returns to
+            the free tier; we&apos;ll email you before it expires.
           </p>
           <p className="mt-2">
-            Card payments are processed by our payment provider, Lemon Squeezy, which acts as the Merchant of Record for
+            Card payments are processed by our payment provider, Paddle, which acts as the Merchant of Record for
             those transactions. We also accept manual bank transfer through Wise: to pay this way, include your order
             reference exactly as shown in your transfer. Overpayments are accepted and the difference is not refundable;
             payments below the plan amount will not activate Premium until the balance is settled. If a payment cannot be
@@ -62,7 +65,7 @@ export default function TermsPage() {
             consumer law — once delivery has begun.
           </p>
           <p className="mt-2">
-            Where a card payment is handled by Lemon Squeezy as Merchant of Record, Lemon Squeezy&apos;s own refund and
+            Where a card payment is handled by Paddle as Merchant of Record, Paddle&apos;s own refund and
             dispute policies also apply. If something has genuinely gone wrong with your order, contact us at
             hello@wyndralore.com and we&apos;ll make it right.
           </p>

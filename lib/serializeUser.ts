@@ -17,5 +17,10 @@ export function serializeUser(user: User, isMaster: boolean = false) {
     // link to /masters/dashboard. Callers that don't pass it (login/register) default to false;
     // harmless since AuthProvider re-fetches /api/auth/me (which does pass it) right after.
     isMaster,
+    // Auto-renew subscription state, so /account can show a "cancel auto-renewal" control and the
+    // renewal date. The Paddle subscriptionId itself stays server-only.
+    autoRenew: user.autoRenew,
+    subscriptionStatus: user.subscriptionStatus,
+    currentPeriodEnd: user.currentPeriodEnd,
   };
 }

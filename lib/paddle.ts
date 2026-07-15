@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { PlanId } from "./pricing";
+import { PlanId, BillingMode } from "./pricing";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -17,33 +17,35 @@ const PRICE_ENV: Record<PlanId | AiReadCheckoutKind, string> = {
   ai_overage: "PADDLE_PRICE_AI_OVERAGE",
 };
 
-/** The Paddle Price id for a membership plan or AI-read kind — set up in lib/masters.ts-style env vars. */
-export function priceIdFor(planOrKind: PlanId | AiReadCheckoutKind): string {
+// The auto-renewing (subscription) prices — only monthly/yearly have one. lifetime + AI reads are
+// always one-time, so they have no entry here and fall through to the one-time PRICE_ENV.
+const SUB_PRICE_ENV: Partial<Record<PlanId, string>> = {
+  monthly: "PADDLE_PRICE_MONTHLY_SUB",
+  yearly: "PADDLE_PRICE_YEARLY_SUB",
+};
+
+/** The Paddle Price id for a membership plan (in the given billing mode) or AI-read kind. Defaults
+ * to the one-time price; only monthly/yearly + "sub" resolve to a recurring subscription price. */
+export function priceIdFor(planOrKind: PlanId | AiReadCheckoutKind, billingMode: BillingMode = "onetime"): string {
+  if (billingMode === "sub" && (planOrKind === "monthly" || planOrKind === "yearly")) {
+    return requireEnv(SUB_PRICE_ENV[planOrKind]!);
+  }
   return requireEnv(PRICE_ENV[planOrKind]);
 }
 
-const FIRST_TIME_DISCOUNT_ENV: Partial<Record<PlanId, string>> = {
-  monthly: "PADDLE_DISCOUNT_FIRSTMONTH",
-  yearly: "PADDLE_DISCOUNT_FIRSTYEAR",
-};
-
-/** The first-purchase discount id for a plan, if one exists (lifetime never discounts). Eligibility
- * (has this buyer ever paid before?) is decided by the caller via isFirstTimeBuyer — this just
- * resolves which discount env var applies once the caller has already decided to offer one. */
-export function firstTimeDiscountIdFor(plan: PlanId): string | undefined {
-  const envName = FIRST_TIME_DISCOUNT_ENV[plan];
-  return envName ? process.env[envName] || undefined : undefined;
-}
-
 /**
- * The Price id we expect a paid transaction to actually be for, based on what we created the
- * checkout with — same anti-fraud purpose as expectedVariantIdForOrder in lib/lemonsqueezy.ts: a
- * $1.99 add-on checkout's custom_data.orderCode could otherwise be pointed at a $79 lifetime
- * order and get it credited for free.
+ * The Price id(s) we accept for a paid transaction, based on what the order is for — same anti-fraud
+ * purpose as expectedVariantIdForOrder in lib/lemonsqueezy.ts: a $1.99 add-on checkout's
+ * custom_data.orderCode could otherwise be pointed at a $129 lifetime order and get it credited for
+ * free. Returns BOTH the one-time and subscription price for a membership plan, because the order
+ * itself doesn't record which billing mode the buyer picked — either legitimate price must pass.
  */
-export function expectedPriceIdForOrder(order: { kind: string; plan: string }): string {
-  if (order.kind === "ai_single" || order.kind === "ai_overage") return priceIdFor(order.kind);
-  return priceIdFor(order.plan as PlanId);
+export function expectedPriceIdsForOrder(order: { kind: string; plan: string }): string[] {
+  if (order.kind === "ai_single" || order.kind === "ai_overage") return [priceIdFor(order.kind)];
+  const plan = order.plan as PlanId;
+  const ids = [priceIdFor(plan, "onetime")];
+  if (plan === "monthly" || plan === "yearly") ids.push(priceIdFor(plan, "sub"));
+  return ids;
 }
 
 /**
