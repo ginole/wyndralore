@@ -52,8 +52,18 @@ export default async function MasterDashboardPage() {
     );
   }
 
-  // Lets the admin see "which master checked her dashboard, and when" (admin's own log panel).
-  await trackEvent("master_dashboard_viewed", { userId: user.id, props: { masterId: master.id, masterHandle: master.handle } });
+  // Lets the admin see "which master checked her dashboard, and when" — but log at most ONCE per day
+  // per master so repeated visits don't flood the activity log (the admin only cares that she looked
+  // that day, not how many times).
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const loggedToday = await prisma.analyticsEvent.findFirst({
+    where: { name: "master_dashboard_viewed", userId: user.id, createdAt: { gte: startOfDay } },
+    select: { id: true },
+  });
+  if (!loggedToday) {
+    await trackEvent("master_dashboard_viewed", { userId: user.id, props: { masterId: master.id, masterHandle: master.handle } });
+  }
 
   const [orders, balances] = await Promise.all([
     prisma.masterOrder.findMany({ where: { masterId: master.id }, orderBy: { createdAt: "desc" }, take: 50 }),

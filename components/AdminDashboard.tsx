@@ -12,6 +12,7 @@ import MastersPanel from "./admin/MastersPanel";
 import MasterPayoutsPanel from "./admin/MasterPayoutsPanel";
 import MasterActivityPanel from "./admin/MasterActivityPanel";
 import AffiliatePanel from "./admin/AffiliatePanel";
+import AffiliateLedgerPanel from "./admin/AffiliateLedgerPanel";
 import FunnelPanel from "./admin/FunnelPanel";
 
 type ViewKey =
@@ -21,6 +22,7 @@ type ViewKey =
   | "orders"
   | "unmatched"
   | "manual"
+  | "affiliateLedger"
   | "masters"
   | "masterPayouts"
   | "masterActivity"
@@ -52,6 +54,7 @@ const NAV: NavSection[] = [
       { key: "orders", label: "全部订单" },
       { key: "unmatched", label: "未匹配收款" },
       { key: "manual", label: "手动补单" },
+      { key: "affiliateLedger", label: "佣金流水" },
     ],
   },
   {
@@ -144,6 +147,7 @@ export default function AdminDashboard() {
         {view === "orders" && <OrdersPanel />}
         {view === "unmatched" && <UnmatchedPanel />}
         {view === "manual" && <ManualGrantPanel />}
+        {view === "affiliateLedger" && <AffiliateLedgerPanel />}
         {view === "masters" && <MastersPanel />}
         {view === "masterPayouts" && <MasterPayoutsPanel />}
         {view === "masterActivity" && <MasterActivityPanel />}
