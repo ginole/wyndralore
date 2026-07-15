@@ -41,11 +41,19 @@ export async function markOrderPaid(order: Order, amountUsd: number) {
   // Plan purchase/renewal — also (re)anchors the AI deep-read quota cycle to this payment,
   // since Lemon Squeezy plans are one-time purchases with no billing-cycle object of their own
   // (see lib/aiQuota.ts).
+  // Don't shorten an expiry that a concurrent subscription.created may have already set to the exact
+  // Paddle billing-period end (which is a little later than our +30/+365 approximation). Keep
+  // whichever is later; a null (lifetime) always wins since it means "never expires".
+  const computedExpiry = planExpiryFrom(order.plan as PlanId, paidAt);
+  const existing = await prisma.user.findUnique({ where: { id: order.userId }, select: { planExpiresAt: true } });
+  const planExpiresAt =
+    computedExpiry && existing?.planExpiresAt && existing.planExpiresAt > computedExpiry ? existing.planExpiresAt : computedExpiry;
+
   const user = await prisma.user.update({
     where: { id: order.userId },
     data: {
       plan: order.plan,
-      planExpiresAt: planExpiryFrom(order.plan as PlanId, paidAt),
+      planExpiresAt,
       aiQuotaCycleStart: paidAt,
       aiDeepReadsUsed: 0,
     },

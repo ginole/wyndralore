@@ -24,6 +24,7 @@ export async function cancelPaddleSubscription(subscriptionId: string): Promise<
 export interface PaddleSubscriptionData {
   id?: string;
   status?: string;
+  scheduled_change?: { action?: string; effective_at?: string } | null;
   custom_data?: { orderCode?: string } | null;
   current_billing_period?: { starts_at?: string; ends_at?: string } | null;
   items?: { price?: { id?: string } }[];
@@ -77,11 +78,16 @@ export async function applySubscriptionUpdate(data: PaddleSubscriptionData): Pro
   }
   const periodEnd = periodEndOf(data);
   const renewed = !!periodEnd && !!user.currentPeriodEnd && periodEnd.getTime() > user.currentPeriodEnd.getTime();
-  const active = data.status === "active" || data.status === "trialing";
+  // A subscription scheduled to cancel stays "active" in Paddle until the period actually ends, but
+  // it will NOT renew — so autoRenew must go false the moment a cancel is scheduled. Without this,
+  // the subscription.updated that Paddle fires in response to our own cancel would immediately flip
+  // auto-renew back on and undo the cancellation from the user's point of view.
+  const scheduledCancel = data.scheduled_change?.action === "cancel";
+  const active = (data.status === "active" || data.status === "trialing") && !scheduledCancel;
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      subscriptionStatus: data.status ?? user.subscriptionStatus,
+      subscriptionStatus: scheduledCancel ? "canceled" : data.status ?? user.subscriptionStatus,
       autoRenew: active,
       ...(periodEnd ? { currentPeriodEnd: periodEnd, planExpiresAt: periodEnd } : {}),
       ...(renewed ? { aiQuotaCycleStart: new Date(), aiDeepReadsUsed: 0 } : {}),
