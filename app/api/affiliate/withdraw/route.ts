@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { requestPartnerPayout, AFFILIATE_MIN_PAYOUT_USD } from "@/lib/affiliate";
 import { sendEmail, masterWithdrawalRequestedEmail } from "@/lib/email";
-import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
 import { trackEvent } from "@/lib/analytics";
 
 const ADMIN_EMAIL = "gino.c138@gmail.com";
@@ -17,12 +16,9 @@ export async function POST() {
     return NextResponse.json({ error: "Set a payout method first." }, { status: 400 });
   }
 
-  // Secondary guard; the real spam-stop is that requestPartnerPayout consumes the available balance.
-  const rl = await checkRateLimit("affiliate_withdraw", user.id, 3, 60 * 60 * 1000);
-  if (!rl.allowed) return rateLimitedResponse(rl.retryAfterSeconds);
-
-  // Atomically move the withdrawable balance to "requested" so a repeat click has nothing left to
-  // request (and sends no second email). Returns 0 if below the minimum or already requested.
+  // Atomically move the withdrawable balance to "requested" — a repeat click then finds nothing to
+  // request and sends no second email. This (not a rate limit) is the real one-request-at-a-time
+  // guard: the balance stays "requested" until the admin pays it out.
   const amount = await requestPartnerPayout(user.id);
   if (amount <= 0) {
     return NextResponse.json(

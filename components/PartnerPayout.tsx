@@ -64,7 +64,9 @@ export default function PartnerPayout({ netAvailableUsd, requestedUsd, minPayout
 
   if (paused) return null;
 
-  const canWithdraw = netAvailableUsd >= minPayoutUsd && !!payoutMethod && !editing;
+  // Locked while a payout is already pending — one request at a time until the admin settles it, and
+  // changing the payout method can't re-open it.
+  const canWithdraw = netAvailableUsd >= minPayoutUsd && !!payoutMethod && !editing && requestedUsd === 0;
 
   return (
     <div className="mt-6 rounded-2xl border border-gold-dim bg-ink-raised/60 p-5">
@@ -107,14 +109,20 @@ export default function PartnerPayout({ netAvailableUsd, requestedUsd, minPayout
               </button>
             </p>
           </div>
-          <button
-            type="button"
-            onClick={requestWithdraw}
-            disabled={!canWithdraw || busy}
-            className="rounded-full bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.2em] text-ink disabled:opacity-50"
-          >
-            {busy ? "Requesting…" : `Request payout ($${netAvailableUsd.toFixed(2)})`}
-          </button>
+          {requestedUsd > 0 ? (
+            <span className="rounded-full border border-gold-dim px-6 py-3 text-xs uppercase tracking-[0.2em] text-gold-dim">
+              Payout processing
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={requestWithdraw}
+              disabled={!canWithdraw || busy}
+              className="rounded-full bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.2em] text-ink disabled:opacity-50"
+            >
+              {busy ? "Requesting…" : `Request payout ($${netAvailableUsd.toFixed(2)})`}
+            </button>
+          )}
         </div>
       )}
       {!editing && requestedUsd > 0 && (
