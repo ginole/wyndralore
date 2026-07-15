@@ -41,9 +41,12 @@ export async function POST(req: NextRequest) {
       });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { plan, billingMode } });
 
-      // The session is what carries our orderCode through Whop's checkout and back on the webhook.
+      // The session carries our orderCode through Whop's checkout and back on the webhook, and — when
+      // the buyer arrived on a creator's ?a= link — the creator's Whop username, which is how Whop
+      // knows to pay her. A bad code never blocks the sale (see createCheckoutSession).
       const planId = planIdFor(plan, billingMode);
-      const sessionId = await createCheckoutSession(planId, order.code, `${SITE_URL}/account`);
+      const whopAffiliate = typeof body?.whopAffiliate === "string" ? body.whopAffiliate.trim() : undefined;
+      const sessionId = await createCheckoutSession(planId, order.code, `${SITE_URL}/account`, whopAffiliate || undefined);
       return NextResponse.json({ order, planId, sessionId }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";

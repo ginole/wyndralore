@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { verifyWhopSignature, expectedPlanIdsForOrder } from "@/lib/whop";
 import { markOrderPaid } from "@/lib/paymentProcessing";
 import { reverseAffiliateCommission, recordAffiliateCommission } from "@/lib/affiliate";
+import { creditOrphanedWhopPayment } from "@/lib/whopOrphanPayment";
 import {
   linkMembershipToUser,
   applyMembershipUpdate,
@@ -41,6 +42,7 @@ interface WhopPaymentData {
   metadata?: { orderCode?: string } | null;
   plan?: { id?: string } | null;
   membership?: { id?: string } | null;
+  user?: { email?: string | null } | null;
   total?: number | null;
   usd_total?: number | null;
   amount_after_fees?: number | null;
@@ -127,9 +129,27 @@ export async function POST(req: NextRequest) {
 
   const data = payload.data as WhopPaymentData;
   const orderCode = data?.metadata?.orderCode;
+
+  // No orderCode means the buyer never went through our checkout — they bought directly on Whop,
+  // where plans stay publicly purchasable whatever their visibility is set to. Rare, but "we took
+  // the money and granted nothing" is not an acceptable resting state, so match them by their Whop
+  // account's email and credit it. See lib/whopOrphanPayment.ts.
   if (!orderCode) {
-    console.warn("[whop] payment.succeeded missing metadata.orderCode");
-    return NextResponse.json({ ok: true, note: "no orderCode in metadata" });
+    if (data?.status !== "paid" || !data?.id || !data?.plan?.id || !data?.user?.email) {
+      console.warn(
+        `[whop] payment ${data?.id} has no orderCode and cannot be matched ` +
+          `(status=${data?.status}, plan=${data?.plan?.id}, hasEmail=${!!data?.user?.email})`
+      );
+      return NextResponse.json({ ok: true, note: "no orderCode and not matchable" });
+    }
+    const note = await creditOrphanedWhopPayment({
+      paymentId: data.id,
+      whopPlanId: data.plan.id,
+      email: data.user.email,
+      amountUsd: data.usd_total ?? data.total ?? 0,
+      netUsd: data.amount_after_fees ?? undefined,
+    });
+    return NextResponse.json({ ok: true, note: `orphaned payment: ${note}` });
   }
 
   const order = await prisma.order.findUnique({ where: { code: orderCode } });

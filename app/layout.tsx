@@ -8,6 +8,8 @@ import { AuthProvider } from "@/components/AuthProvider";
 import VisitTracker from "@/components/VisitTracker";
 import ReferralCapture from "@/components/ReferralCapture";
 import AffiliateCapture from "@/components/AffiliateCapture";
+import WhopAffiliateCapture from "@/components/WhopAffiliateCapture";
+import { CREATOR_AFFILIATE_ENABLED } from "@/lib/featureFlags";
 import MetaPixel from "@/components/MetaPixel";
 import AdSenseScript from "@/components/AdSenseScript";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
@@ -72,7 +74,12 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <VisitTracker />
             <ReferralCapture />
-            <AffiliateCapture />
+            {/* Three separate loops, easy to confuse:
+                • ReferralCapture — ?ref=, friend invites → spread credits. Ours, live.
+                • AffiliateCapture — ?via=, our own cash commission engine. Retired, see featureFlags.
+                • WhopAffiliateCapture — ?a=<whop-username>, creator commission paid by Whop. Live. */}
+            {CREATOR_AFFILIATE_ENABLED && <AffiliateCapture />}
+            <WhopAffiliateCapture />
             <MetaPixel />
             <AdSenseScript />
             <GoogleAnalytics />

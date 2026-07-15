@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { CREATOR_AFFILIATE_ENABLED } from "@/lib/featureFlags";
 
 export async function POST(req: NextRequest) {
+  // Retired — see lib/featureFlags.ts. Whop holds creators' payout details now.
+  if (!CREATOR_AFFILIATE_ENABLED) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const user = await getCurrentUser();
   if (!user || !user.affiliateCode) return NextResponse.json({ error: "Not a partner." }, { status: 403 });
 

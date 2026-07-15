@@ -42,6 +42,29 @@ export function paymentConfirmationEmail(planLabel: string, orderCode: string): 
   };
 }
 
+/**
+ * For someone who bought on Whop rather than on our site, so there was no Wyndralore account to
+ * credit and we made one for them. They have paid and cannot log in until they follow this link, so
+ * it leads with that rather than with a greeting. See lib/whopOrphanPayment.ts.
+ */
+export function whopOrphanClaimEmail(purchaseLabel: string, claimLink: string): { subject: string; html: string } {
+  return {
+    subject: "Set your password to open your Wyndralore purchase",
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Your ${purchaseLabel} is waiting</h1>
+        <p>Thank you — your payment went through, and we've set up your Wyndralore account at this email address.</p>
+        <p>There's one step left: choose a password, and everything you bought is unlocked.</p>
+        <p style="margin: 24px 0;">
+          <a href="${claimLink}" style="background: #0b0e1a; color: #e4c894; padding: 13px 30px; border-radius: 999px; text-decoration: none; font-size: 14px;">Set my password</a>
+        </p>
+        <p style="font-size: 13px; color: #6b6b6b;">This link is good for 7 days. If it expires, use “Forgot password” on the sign-in page with this email — your purchase stays attached to the account either way.</p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
 export function aiReadPurchaseEmail(): { subject: string; html: string } {
   return {
     subject: "Your AI deep reading is unlocked",
@@ -92,10 +115,10 @@ export function creatorInviteEmail(email: string, affiliateLink: string, actionL
             )}
             ${benefit(
               "2",
-              "Earn 50% cash commission",
-              `Here is your exclusive invitation to our 50% cash commission affiliate program:<br/>
+              "Earn 30% — every month, not just once",
+              `Most affiliate deals pay you once and forget you. Ours pays you <strong style="color: #f4f1ea;">30% of every payment</strong>, for as long as the person you referred stays subscribed. Ten people who stick around is income that arrives whether or not you posted that week.<br/>
               <a href="${affiliateLink}" style="display: inline-block; margin: 8px 0 6px; color: #e4c894; word-break: break-all;">${affiliateLink}</a><br/>
-              Share your unique referral link however your audience finds you best, and start earning instantly.`,
+              Grab your link there, share it however your audience finds you best. Payments are handled and paid out by Whop directly — no invoices, and you never have to chase us for money.`,
             )}
           </div>
 

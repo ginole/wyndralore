@@ -42,9 +42,11 @@ export async function POST(req: NextRequest) {
       });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { kind } });
 
-      // The session is what carries our orderCode through Whop's checkout and back on the webhook.
+      // The session carries our orderCode through Whop's checkout and back on the webhook, plus the
+      // creator's Whop username when the buyer came in on a ?a= link, so Whop can pay her.
       const planId = planIdFor(kind);
-      const sessionId = await createCheckoutSession(planId, order.code, redirectUrl);
+      const whopAffiliate = typeof body?.whopAffiliate === "string" ? body.whopAffiliate.trim() : undefined;
+      const sessionId = await createCheckoutSession(planId, order.code, redirectUrl, whopAffiliate || undefined);
       return NextResponse.json({ order, planId, sessionId, redirectUrl }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";

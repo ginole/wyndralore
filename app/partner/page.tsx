@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getAffiliateBalances, AFFILIATE_MIN_PAYOUT_USD, RECURRING_WINDOW_MONTHS } from "@/lib/affiliate";
+import { CREATOR_AFFILIATE_ENABLED } from "@/lib/featureFlags";
 import PartnerPayout from "@/components/PartnerPayout";
 
 export const metadata: Metadata = {
@@ -37,6 +39,10 @@ function Centered({ title, children }: { title: string; children?: React.ReactNo
 }
 
 export default async function PartnerDashboardPage() {
+  // Retired in favour of Whop's native affiliate program — see lib/featureFlags.ts. Everything below
+  // still works; flipping the flag brings the dashboard back.
+  if (!CREATOR_AFFILIATE_ENABLED) notFound();
+
   const user = await getCurrentUser();
   if (!user) return <Centered title="Sign in required" />;
   if (!user.affiliateCode) {

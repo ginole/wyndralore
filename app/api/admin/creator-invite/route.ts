@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { isValidEmail } from "@/lib/password";
 import { grantCreatorPremium } from "@/lib/creatorGrant";
 import { ensureAffiliateCode } from "@/lib/affiliate";
+import { CREATOR_AFFILIATE_ENABLED, WHOP_STORE_URL } from "@/lib/featureFlags";
 import { sendEmail, creatorInviteEmail } from "@/lib/email";
 import { trackEvent } from "@/lib/analytics";
 
@@ -21,11 +22,18 @@ export async function POST(req: NextRequest) {
 
   const { userId, planGranted, wasNewAccount, actionLink } = await grantCreatorPremium(email, req.nextUrl.origin);
 
-  // Assign the creator their own affiliate code (if they don't have one) and build their referral
-  // link — we generate this ourselves now (no more manual Lemon Squeezy link to paste).
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-  const withCode = await ensureAffiliateCode(user);
-  const viaLink = `${req.nextUrl.origin}/?via=${withCode.affiliateCode}`;
+  // Commission is Whop's job now (see lib/featureFlags.ts), so the invite points the creator at our
+  // Whop store to grab their own link rather than handing them one of ours.
+  //
+  // Deliberately do NOT assign an affiliateCode while the flag is off. It isn't merely useless: a
+  // code sets `isPartner`, which renders a "Your Partner Dashboard" button on /account pointing at
+  // /partner — which now 404s. Every creator we invited would get a broken link.
+  let viaLink = WHOP_STORE_URL;
+  if (CREATOR_AFFILIATE_ENABLED) {
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const withCode = await ensureAffiliateCode(user);
+    viaLink = `${req.nextUrl.origin}/?via=${withCode.affiliateCode}`;
+  }
 
   const { subject, html } = creatorInviteEmail(email, viaLink, actionLink);
   const result = await sendEmail({ to: email, subject, html });

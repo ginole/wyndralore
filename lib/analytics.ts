@@ -19,7 +19,11 @@ export type AnalyticsEventName =
   | "admin_manual_grant"
   | "master_dashboard_viewed"
   | "affiliate_withdraw_requested"
-  | "affiliate_payout_sent";
+  | "affiliate_payout_sent"
+  // Someone paid on Whop directly instead of through our checkout, so we matched them by email
+  // (see lib/whopOrphanPayment.ts). Expected to be near-zero — if it isn't, people are finding the
+  // Whop product pages and buying without ever seeing the site, which is worth knowing.
+  | "whop_orphan_payment_credited";
 
 /** Server-side event recording. Never throws into the caller — analytics must not break UX. */
 export async function trackEvent(

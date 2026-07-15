@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Theme } from "@/lib/types";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "@/components/WhopCheckoutModal";
+import { storedWhopAffiliate } from "@/components/WhopAffiliateCapture";
 
 interface ReadingCard {
   position: string;
@@ -210,7 +211,7 @@ export default function AiReadingPanel({
       const res = await fetch("/api/ai-reading/purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, spreadSlug }),
+        body: JSON.stringify({ kind, spreadSlug, whopAffiliate: storedWhopAffiliate() }),
       });
       const data = await res.json().catch(() => null);
       if (data?.planId && data?.sessionId) {

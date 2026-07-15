@@ -74,27 +74,74 @@ export function expectedPlanIdsForOrder(order: { kind: string; plan: string }): 
 export async function createCheckoutSession(
   planId: string,
   orderCode: string,
-  redirectUrl?: string
+  redirectUrl?: string,
+  affiliateCode?: string
 ): Promise<string> {
-  const res = await fetch(`${whopApiBase()}/v1/checkout_configurations`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${requireEnv("WHOP_API_KEY")}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      plan_id: planId,
-      mode: "payment",
-      metadata: { orderCode },
-      ...(redirectUrl ? { redirect_url: redirectUrl } : {}),
-    }),
-  });
+  const attempt = (withAffiliate: boolean) =>
+    fetch(`${whopApiBase()}/v1/checkout_configurations`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${requireEnv("WHOP_API_KEY")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        plan_id: planId,
+        mode: "payment",
+        metadata: { orderCode },
+        ...(redirectUrl ? { redirect_url: redirectUrl } : {}),
+        ...(withAffiliate && affiliateCode ? { affiliate_code: affiliateCode } : {}),
+      }),
+    });
+
+  let res = await attempt(true);
+
+  // `affiliate_code` must be an existing Whop username, and Whop 400s the whole request if it isn't
+  // ("...is not a valid Whop user"). That code reaches us from a ?a= link a creator typed and shared,
+  // so it is exactly the kind of thing that arrives misspelled — and left unhandled, one creator's
+  // typo would make checkout impossible for everyone who followed her link. Losing the attribution
+  // costs her a commission; losing the sale costs the buyer, us, AND her. Retry without it.
+  if (!res.ok && affiliateCode) {
+    const body = await res.text();
+    if (body.includes("not a valid Whop user")) {
+      console.warn(`[whop] affiliate code "${affiliateCode}" is not a Whop username — checking out without attribution`);
+      res = await attempt(false);
+    } else {
+      throw new Error(`Whop checkout session failed (${res.status}): ${body}`);
+    }
+  }
+
   if (!res.ok) {
     throw new Error(`Whop checkout session failed (${res.status}): ${await res.text()}`);
   }
   const session = (await res.json()) as { id?: string };
   if (!session.id) throw new Error("Whop checkout session returned no id");
   return session.id;
+}
+
+export interface WhopPlanTarget {
+  plan: PlanId | AiReadCheckoutKind;
+  billingMode: BillingMode;
+}
+
+/**
+ * Reverse of planIdFor: which of our products a Whop plan id corresponds to. Needed because a
+ * payment can arrive with no orderCode — Whop's plans stay publicly purchasable at
+ * whop.com/checkout/<plan_id> no matter what visibility is set to (verified: `visible`, `hidden` and
+ * `quick_link` all render a working checkout), so a buyer can pay without ever touching our site and
+ * without a session we created. Rare in practice — nobody buys a tarot membership off a bare product
+ * card having never drawn a card — but "took the money, granted nothing" must never be a state we
+ * can reach.
+ */
+export function planTargetFor(whopPlanId: string): WhopPlanTarget | null {
+  for (const [key, envName] of Object.entries(SUB_PLAN_ENV)) {
+    if (process.env[envName!] === whopPlanId) return { plan: key as PlanId, billingMode: "sub" };
+  }
+  for (const [key, envName] of Object.entries(PLAN_ENV)) {
+    if (process.env[envName!] === whopPlanId) {
+      return { plan: key as PlanId | AiReadCheckoutKind, billingMode: "onetime" };
+    }
+  }
+  return null;
 }
 
 /**

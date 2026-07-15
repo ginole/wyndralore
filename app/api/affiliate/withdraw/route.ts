@@ -3,10 +3,15 @@ import { getCurrentUser } from "@/lib/auth";
 import { requestPartnerPayout, AFFILIATE_MIN_PAYOUT_USD } from "@/lib/affiliate";
 import { sendEmail, masterWithdrawalRequestedEmail } from "@/lib/email";
 import { trackEvent } from "@/lib/analytics";
+import { CREATOR_AFFILIATE_ENABLED } from "@/lib/featureFlags";
 
 const ADMIN_EMAIL = "gino.c138@gmail.com";
 
 export async function POST() {
+  // Retired in favour of Whop's native affiliate program, which pays creators itself — see
+  // lib/featureFlags.ts. Gated here too, not just on /partner: the route is callable directly.
+  if (!CREATOR_AFFILIATE_ENABLED) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const user = await getCurrentUser();
   if (!user || !user.affiliateCode) return NextResponse.json({ error: "Not a partner." }, { status: 403 });
   if (user.affiliateStatus === "paused") {
