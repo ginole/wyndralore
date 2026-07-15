@@ -27,17 +27,25 @@ function detail(e: ActivityEvent): string {
 
 export default function MasterActivityPanel() {
   const [log, setLog] = useState<ActivityEvent[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    const res = await fetch("/api/admin/masters/activity", { cache: "no-store" });
-    if (res.ok) setLog((await res.json()).log);
+  const load = useCallback(async (p: number) => {
+    setLoading(true);
+    const res = await fetch(`/api/admin/masters/activity?page=${p}`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      setLog(data.log ?? []);
+      setHasMore(data.hasMore ?? false);
+      setPage(data.page ?? p);
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    load(0);
   }, [load]);
 
   return (
@@ -76,6 +84,28 @@ export default function MasterActivityPanel() {
           </tbody>
         </table>
       </div>
+
+      {!loading && (log.length > 0 || page > 0) && (
+        <div className="mt-5 flex items-center justify-between text-sm">
+          <button
+            type="button"
+            disabled={page === 0}
+            onClick={() => load(page - 1)}
+            className="rounded-full border border-ink-line px-4 py-2 text-xs uppercase tracking-[0.2em] text-moon-dim hover:text-moon disabled:opacity-40"
+          >
+            ← Newer
+          </button>
+          <span className="text-xs text-moon-dim">Page {page + 1}</span>
+          <button
+            type="button"
+            disabled={!hasMore}
+            onClick={() => load(page + 1)}
+            className="rounded-full border border-ink-line px-4 py-2 text-xs uppercase tracking-[0.2em] text-moon-dim hover:text-moon disabled:opacity-40"
+          >
+            Older →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyPaddleSignature, expectedPriceIdsForOrder } from "@/lib/paddle";
 import { markOrderPaid } from "@/lib/paymentProcessing";
-import { reverseAffiliateCommission } from "@/lib/affiliate";
+import { reverseAffiliateCommission, recordAffiliateCommission } from "@/lib/affiliate";
 import {
   linkSubscriptionToUser,
   applySubscriptionUpdate,
@@ -25,6 +25,7 @@ import {
 interface PaddleTransactionData {
   id?: string;
   status?: string;
+  subscription_id?: string;
   custom_data?: { orderCode?: string } | null;
   items?: { price?: { id?: string } }[];
   details?: { totals?: { total?: string; tax?: string; fee?: string; earnings?: string; currency_code?: string } };
@@ -92,11 +93,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, note: "unmatched order" });
   }
 
-  // Already-paid order = either a duplicate delivery or a subscription renewal billing (the renewal
-  // transaction reuses the original order's custom_data). Either way, don't re-credit — renewals
-  // extend access via subscription.updated, not here.
+  // Already-paid order = a duplicate delivery OR a subscription renewal billing (the renewal reuses
+  // the original order's custom_data). Access is extended via subscription.updated, not here — but a
+  // renewal IS a fresh purchase for AFFILIATE purposes, so record a recurring commission for it,
+  // keyed by the renewal's own txn id (there's no new order). We only do this when the txn differs
+  // from the order's stored initial-payment txn (so a redelivered initial can't double-count); the
+  // commission's unique orderId (= txn id) makes redelivered renewals idempotent too.
   if (order.status === "paid") {
-    return NextResponse.json({ ok: true, note: "already paid, duplicate or renewal" });
+    const txnId = data?.id;
+    const isRenewal =
+      !!data?.subscription_id &&
+      !!txnId &&
+      data?.status === "completed" &&
+      !!order.paddleTransactionId &&
+      order.paddleTransactionId !== txnId;
+    if (isRenewal) {
+      const totals = data?.details?.totals;
+      const gross = totals?.total ? Number(totals.total) / 100 : order.amountUsd;
+      const net = totals?.earnings ? Number(totals.earnings) / 100 : undefined;
+      await recordAffiliateCommission({ id: txnId!, code: txnId!, userId: order.userId }, gross, net);
+      return NextResponse.json({ ok: true, note: "subscription renewal commission recorded" });
+    }
+    return NextResponse.json({ ok: true, note: "already paid, duplicate delivery" });
   }
 
   if (data?.status !== "completed") {
