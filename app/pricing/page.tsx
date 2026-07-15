@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { PLANS, PlanId, BillingMode, planOption } from "@/lib/pricing";
+import { PLANS, PURCHASABLE_PLANS, PlanId, BillingMode, planOption } from "@/lib/pricing";
 import { pixelTrack } from "@/lib/pixel";
 import { ensurePaddleReady } from "@/lib/paddleClient";
-
-const PLAN_ORDER: PlanId[] = ["monthly", "yearly", "lifetime"];
 
 export default function PricingPage() {
   const { user, loading } = useAuth();
@@ -16,9 +14,9 @@ export default function PricingPage() {
   const [pending, setPending] = useState<PlanId | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Lifetime is one-time only; every other plan follows the toggle.
+  // A plan without a subscription price is one-time only; every other plan follows the toggle.
   function modeFor(plan: PlanId): BillingMode {
-    return plan === "lifetime" ? "onetime" : mode;
+    return PLANS[plan].sub ? mode : "onetime";
   }
 
   async function handleSelectPlan(plan: PlanId) {
@@ -65,7 +63,7 @@ export default function PricingPage() {
         at all. Whatever you pick is spelled out plainly, never a hidden charge.
       </p>
 
-      {/* Billing toggle — affects Monthly & Yearly; Lifetime is always one-time. */}
+      {/* Billing toggle — affects any plan that has a subscription price. */}
       <div className="mx-auto mt-10 inline-flex rounded-full border border-gold-dim bg-ink-raised/50 p-1 text-xs uppercase tracking-[0.15em]">
         <button
           type="button"
@@ -85,17 +83,15 @@ export default function PricingPage() {
 
       {error && <p className="mt-6 text-sm text-red-400">{error}</p>}
 
-      <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
-        {PLAN_ORDER.map((id) => {
+      <div className="mx-auto mt-12 grid max-w-2xl grid-cols-1 gap-6 md:grid-cols-2">
+        {PURCHASABLE_PLANS.map((id) => {
           const plan = PLANS[id];
           const shownMode = modeFor(id);
           const option = planOption(id, shownMode);
           const footnote =
-            id === "lifetime"
-              ? "One-time payment · yours forever"
-              : shownMode === "sub"
-                ? `Renews at ${option.priceLabel}${option.cadence} · cancel anytime`
-                : "One-time payment · never auto-charged";
+            shownMode === "sub"
+              ? `Renews at ${option.priceLabel}${option.cadence} · cancel anytime`
+              : "One-time payment · never auto-charged";
           return (
             <div
               key={id}

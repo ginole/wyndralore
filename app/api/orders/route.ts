@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { isPlanId, isBillingMode, planOption, BillingMode } from "@/lib/pricing";
+import { isPlanId, isBillingMode, planOption, PLANS, BillingMode } from "@/lib/pricing";
 import { generateOrderCode } from "@/lib/orderCode";
 import { trackEvent, getAnonId } from "@/lib/analytics";
 import { priceIdFor } from "@/lib/paddle";
@@ -17,11 +17,17 @@ export async function POST(req: NextRequest) {
   if (typeof plan !== "string" || !isPlanId(plan)) {
     return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
   }
+  // A retired tier is still a valid PlanId (existing holders keep it), but it can no longer be
+  // bought — reject here too, not just by hiding the card on /pricing, since this endpoint is
+  // callable directly.
+  if (!PLANS[plan].purchasable) {
+    return NextResponse.json({ error: "That plan is no longer available." }, { status: 400 });
+  }
 
-  // Auto-renew vs one-time. Lifetime has no subscription price, so it's always one-time regardless
-  // of what the client asked for.
+  // Auto-renew vs one-time. A plan with no subscription price is always one-time regardless of what
+  // the client asked for.
   const requested = typeof body?.billingMode === "string" && isBillingMode(body.billingMode) ? body.billingMode : "onetime";
-  const billingMode: BillingMode = plan === "lifetime" ? "onetime" : requested;
+  const billingMode: BillingMode = PLANS[plan].sub ? requested : "onetime";
   const option = planOption(plan, billingMode);
   const expiresAt = new Date(Date.now() + ORDER_TTL_MS);
 

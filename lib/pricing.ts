@@ -2,8 +2,8 @@ export type PlanId = "monthly" | "yearly" | "lifetime";
 
 // Every membership plan now offers two ways to pay: an auto-renewing subscription (cheaper, the
 // buyer stays in control and can cancel anytime) or a one-time payment (pricier, never auto-charges
-// again). Lifetime is one-time only. The buyer's choice is a `billingMode`; the underlying access
-// level ("plan") is unchanged — a monthly-sub and a monthly-onetime both grant "monthly" access.
+// again). The buyer's choice is a `billingMode`; the underlying access level ("plan") is unchanged
+// — a monthly-sub and a monthly-onetime both grant "monthly" access.
 export type BillingMode = "sub" | "onetime";
 
 export interface PlanPriceOption {
@@ -19,6 +19,10 @@ export interface PlanDefinition {
   perks: string[];
   sub?: PlanPriceOption; // recurring option — present for monthly/yearly, absent for lifetime
   onetime: PlanPriceOption; // always available
+  /** Whether this plan can still be BOUGHT. Retired plans stay in this map (and in `PlanId`) so
+   * existing holders keep their access level, their AI quota tier, and the never-downgrade guard in
+   * lib/creatorGrant.ts — only the pricing page and POST /api/orders honour this flag. */
+  purchasable: boolean;
 }
 
 export const PLANS: Record<PlanId, PlanDefinition> = {
@@ -28,6 +32,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     perks: ["Unlimited readings", "All premium spreads", "Reading journal", "Full card library", "2 free AI deep readings / month"],
     sub: { amountUsd: 6.9, priceLabel: "$6.90", cadence: "/ month" },
     onetime: { amountUsd: 9.9, priceLabel: "$9.90", cadence: "one-time" },
+    purchasable: true,
   },
   yearly: {
     id: "yearly",
@@ -36,14 +41,24 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     perks: ["Everything in Monthly", "Best value", "3 free AI deep readings / month"],
     sub: { amountUsd: 39, priceLabel: "$39", cadence: "/ year" },
     onetime: { amountUsd: 49, priceLabel: "$49", cadence: "one-time" },
+    purchasable: true,
   },
+  // RETIRED as a purchasable tier (2026-07-15) — Whop, the payment platform we're onboarding to,
+  // prohibits offers that advertise "lifetime" access and requires a clearly disclosed access
+  // period. Not deleted: `demo@wyndralore.com` holds this plan, creatorGrant.ts's never-downgrade
+  // guard reads it, and admins can still grant it by hand. Flip `purchasable` back to revive it
+  // (e.g. if we ever move to Stripe direct, which has no such rule).
   lifetime: {
     id: "lifetime",
     label: "Lifetime",
     perks: ["Pay once, own it forever", "Everything in Yearly", "No renewals, ever", "4 free AI deep readings / month"],
     onetime: { amountUsd: 129, priceLabel: "$129", cadence: "one-time" },
+    purchasable: false,
   },
 };
+
+/** Plans a buyer may actually purchase, in display order. */
+export const PURCHASABLE_PLANS: PlanId[] = (Object.keys(PLANS) as PlanId[]).filter((id) => PLANS[id].purchasable);
 
 /** The price option a buyer actually gets for a plan + chosen billing mode. Falls back to the
  * one-time option when a plan has no subscription option (lifetime) or "sub" isn't applicable. */
