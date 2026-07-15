@@ -76,6 +76,30 @@ export async function POST(req: NextRequest) {
       signature: req.headers.get("webhook-signature"),
     })
   ) {
+    // TEMPORARY DIAGNOSTIC — remove once the first delivery verifies.
+    // Whop's real signatures are being rejected even though our implementation is byte-identical to
+    // the reference `standardwebhooks` signer (cross-tested) and the key derivation is confirmed by
+    // that library's own decoder. `vercel logs` does not reliably surface console output here, so
+    // console.warn is useless for this — persist the actual request instead, so every remaining
+    // hypothesis (header names, timestamp unit, body encoding, wrong secret) can be tested offline
+    // against one real delivery rather than costing another test purchase each.
+    // Records no key material: the signature is a derived value, and the body is our own payment data.
+    await prisma.analyticsEvent
+      .create({
+        data: {
+          name: "whop_webhook_debug",
+          props: JSON.stringify({
+            headers: Object.fromEntries([...req.headers.entries()].filter(([k]) => !/^authorization|cookie/i.test(k))),
+            bodyLength: rawBody.length,
+            body: rawBody.slice(0, 3000),
+            serverNowSeconds: Math.floor(Date.now() / 1000),
+            secretPresent: !!process.env.WHOP_WEBHOOK_SECRET,
+            secretPrefix: (process.env.WHOP_WEBHOOK_SECRET ?? "").slice(0, 3),
+            secretLength: (process.env.WHOP_WEBHOOK_SECRET ?? "").length,
+          }),
+        },
+      })
+      .catch(() => {});
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
