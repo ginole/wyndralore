@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { getAffiliateBalances, AFFILIATE_MIN_PAYOUT_USD } from "@/lib/affiliate";
+import { requestPartnerPayout, AFFILIATE_MIN_PAYOUT_USD } from "@/lib/affiliate";
 import { sendEmail, masterWithdrawalRequestedEmail } from "@/lib/email";
 import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
 import { trackEvent } from "@/lib/analytics";
@@ -17,18 +17,23 @@ export async function POST() {
     return NextResponse.json({ error: "Set a payout method first." }, { status: 400 });
   }
 
-  // Cap requests so a partner can't email-bomb the admin.
+  // Secondary guard; the real spam-stop is that requestPartnerPayout consumes the available balance.
   const rl = await checkRateLimit("affiliate_withdraw", user.id, 3, 60 * 60 * 1000);
   if (!rl.allowed) return rateLimitedResponse(rl.retryAfterSeconds);
 
-  const bal = await getAffiliateBalances(user.id);
-  if (bal.netAvailableUsd < AFFILIATE_MIN_PAYOUT_USD) {
-    return NextResponse.json({ error: `Minimum payout is $${AFFILIATE_MIN_PAYOUT_USD}.` }, { status: 400 });
+  // Atomically move the withdrawable balance to "requested" so a repeat click has nothing left to
+  // request (and sends no second email). Returns 0 if below the minimum or already requested.
+  const amount = await requestPartnerPayout(user.id);
+  if (amount <= 0) {
+    return NextResponse.json(
+      { error: `Nothing to withdraw — you need at least $${AFFILIATE_MIN_PAYOUT_USD} available, or a payout is already pending.` },
+      { status: 400 }
+    );
   }
 
-  const { subject, html } = masterWithdrawalRequestedEmail(user.email, bal.netAvailableUsd, user.affiliatePayoutMethod, user.affiliatePayoutHandle);
+  const { subject, html } = masterWithdrawalRequestedEmail(user.email, amount, user.affiliatePayoutMethod, user.affiliatePayoutHandle);
   await sendEmail({ to: ADMIN_EMAIL, subject, html });
-  await trackEvent("affiliate_withdraw_requested", { userId: user.id, props: { amountUsd: bal.netAvailableUsd } });
+  await trackEvent("affiliate_withdraw_requested", { userId: user.id, props: { amountUsd: amount } });
 
   return NextResponse.json({ ok: true });
 }

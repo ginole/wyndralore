@@ -158,13 +158,30 @@ export async function reverseAffiliateCommission(orderId: string): Promise<void>
 }
 
 /**
- * Admin marks a partner's matured (available) commissions as paid, netting out any post-payout
- * clawback (reversals that landed after a prior payout) — those are then "settled" so they only ever
- * reduce ONE payout. Returns the net amount actually released to the partner.
+ * Partner self-requests a payout: flips their matured "available" commissions to "requested" so the
+ * balance is no longer withdrawable — this is what stops a partner from firing the request (and the
+ * admin email) over and over. Returns the amount requested, or 0 if below the minimum / nothing to
+ * request (idempotent: a second call finds nothing "available" and returns 0).
+ */
+export async function requestPartnerPayout(creatorId: string): Promise<number> {
+  const bal = await getAffiliateBalances(creatorId);
+  if (bal.netAvailableUsd < AFFILIATE_MIN_PAYOUT_USD) return 0;
+  await prisma.creatorCommission.updateMany({
+    where: { creatorId, status: "available" },
+    data: { status: "requested" },
+  });
+  return bal.netAvailableUsd;
+}
+
+/**
+ * Admin marks a partner's matured commissions (available OR already-requested) as paid, netting out
+ * any post-payout clawback (reversals that landed after a prior payout) — those are then "settled"
+ * so they only ever reduce ONE payout. Returns the net amount actually released to the partner.
  */
 export async function payoutPartner(creatorId: string): Promise<number> {
   const bal = await getAffiliateBalances(creatorId);
-  if (bal.availableUsd <= 0 && bal.clawbackUsd <= 0) return 0;
+  const payable = roundCents(bal.availableUsd + bal.requestedUsd);
+  if (payable <= 0 && bal.clawbackUsd <= 0) return 0;
   const now = new Date();
   const batchId = `AFB-${now.getTime()}`;
   await prisma.creatorCommission.updateMany({
@@ -172,10 +189,10 @@ export async function payoutPartner(creatorId: string): Promise<number> {
     data: { status: "reversed_settled" },
   });
   await prisma.creatorCommission.updateMany({
-    where: { creatorId, status: "available" },
+    where: { creatorId, status: { in: ["available", "requested"] } },
     data: { status: "paid", paidAt: now, payoutBatchId: batchId },
   });
-  return Math.max(0, bal.netAvailableUsd);
+  return Math.max(0, roundCents(payable - bal.clawbackUsd));
 }
 
 /** Cron: matures held commissions whose 30-day hold has elapsed → available (withdrawable). */
@@ -190,11 +207,12 @@ export async function releaseMaturedCommissions(): Promise<number> {
 
 export interface AffiliateBalances {
   heldUsd: number; // still in the 30-day hold
-  availableUsd: number; // matured, withdrawable
+  availableUsd: number; // matured, withdrawable (not yet requested)
+  requestedUsd: number; // partner asked to be paid; awaiting the admin's manual payout
   paidUsd: number; // already paid out
   clawbackUsd: number; // reversals that hit after payout — owed back
-  netAvailableUsd: number; // availableUsd - clawbackUsd (what a payout run would actually release)
-  lifetimeUsd: number; // held + available + paid (excludes reversed)
+  netAvailableUsd: number; // availableUsd - clawbackUsd (what's requestable right now)
+  lifetimeUsd: number; // held + available + requested + paid (excludes reversed)
   referredUsers: number; // distinct customers attributed to this partner
   payingUsers: number; // distinct customers who generated at least one commission
 }
@@ -208,16 +226,18 @@ export async function getAffiliateBalances(creatorId: string): Promise<Affiliate
   const sum = (pred: (r: (typeof rows)[number]) => boolean) => roundCents(rows.filter(pred).reduce((s, r) => s + r.commissionUsd, 0));
   const held = sum((r) => r.status === "held");
   const available = sum((r) => r.status === "available");
+  const requested = sum((r) => r.status === "requested");
   const paid = sum((r) => r.status === "paid");
   const clawback = sum((r) => r.status === "reversed" && r.paidAt != null);
   const payingUsers = new Set(rows.filter((r) => r.status !== "reversed").map((r) => r.customerId)).size;
   return {
     heldUsd: held,
     availableUsd: available,
+    requestedUsd: requested,
     paidUsd: paid,
     clawbackUsd: clawback,
     netAvailableUsd: roundCents(available - clawback),
-    lifetimeUsd: roundCents(held + available + paid),
+    lifetimeUsd: roundCents(held + available + requested + paid),
     referredUsers,
     payingUsers,
   };

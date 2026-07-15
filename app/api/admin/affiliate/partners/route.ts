@@ -24,6 +24,7 @@ export async function GET() {
         payoutHandle: p.affiliatePayoutHandle,
         heldUsd: bal.heldUsd,
         availableUsd: bal.availableUsd,
+        requestedUsd: bal.requestedUsd,
         netAvailableUsd: bal.netAvailableUsd,
         clawbackUsd: bal.clawbackUsd,
         paidUsd: bal.paidUsd,

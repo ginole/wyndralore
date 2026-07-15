@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   netAvailableUsd: number;
+  requestedUsd: number;
   minPayoutUsd: number;
   payoutMethod: string | null;
   payoutHandle: string | null;
   paused: boolean;
 }
 
-export default function PartnerPayout({ netAvailableUsd, minPayoutUsd, payoutMethod, payoutHandle, paused }: Props) {
+export default function PartnerPayout({ netAvailableUsd, requestedUsd, minPayoutUsd, payoutMethod, payoutHandle, paused }: Props) {
   const router = useRouter();
   const [method, setMethod] = useState(payoutMethod ?? "paypal");
   const [handle, setHandle] = useState(payoutHandle ?? "");
@@ -116,7 +117,12 @@ export default function PartnerPayout({ netAvailableUsd, minPayoutUsd, payoutMet
           </button>
         </div>
       )}
-      {!editing && netAvailableUsd < minPayoutUsd && (
+      {!editing && requestedUsd > 0 && (
+        <p className="mt-3 text-xs text-gold">
+          ${requestedUsd.toFixed(2)} payout requested — we&apos;re processing it. You&apos;ll get it in your account soon.
+        </p>
+      )}
+      {!editing && requestedUsd === 0 && netAvailableUsd < minPayoutUsd && (
         <p className="mt-3 text-xs text-moon-dim/70">Minimum payout is ${minPayoutUsd}. Keep sharing your link!</p>
       )}
       {msg && <p className={`mt-3 text-sm ${msg.type === "error" ? "text-red-400" : "text-gold"}`}>{msg.text}</p>}

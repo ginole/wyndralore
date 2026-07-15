@@ -12,6 +12,7 @@ interface Partner {
   payoutHandle: string | null;
   heldUsd: number;
   availableUsd: number;
+  requestedUsd: number;
   netAvailableUsd: number;
   clawbackUsd: number;
   paidUsd: number;
@@ -132,7 +133,8 @@ export default function AffiliatePanel() {
                   </td>
                   <td className="text-moon-dim">${p.heldUsd.toFixed(2)}</td>
                   <td className="text-gold-bright">
-                    ${p.netAvailableUsd.toFixed(2)}
+                    ${(p.netAvailableUsd + p.requestedUsd).toFixed(2)}
+                    {p.requestedUsd > 0 && <div className="text-[10px] text-gold-dim">${p.requestedUsd.toFixed(2)} requested</div>}
                     {p.clawbackUsd > 0 && <div className="text-[10px] text-red-300">-${p.clawbackUsd.toFixed(2)} owed</div>}
                   </td>
                   <td className="text-moon-dim">${p.paidUsd.toFixed(2)}</td>
@@ -143,7 +145,7 @@ export default function AffiliatePanel() {
                   <td className="whitespace-nowrap text-right">
                     <button
                       type="button"
-                      disabled={p.netAvailableUsd <= 0 || busy === `pay-${p.id}`}
+                      disabled={p.netAvailableUsd + p.requestedUsd <= 0 || busy === `pay-${p.id}`}
                       onClick={() => act(`pay-${p.id}`, { action: "pay", creatorId: p.id })}
                       className="rounded-full bg-gold px-4 py-1.5 text-[10px] uppercase tracking-[0.15em] text-ink disabled:opacity-40"
                     >

@@ -115,6 +115,7 @@ export default async function PartnerDashboardPage() {
 
       <PartnerPayout
         netAvailableUsd={balances.netAvailableUsd}
+        requestedUsd={balances.requestedUsd}
         minPayoutUsd={AFFILIATE_MIN_PAYOUT_USD}
         payoutMethod={user.affiliatePayoutMethod}
         payoutHandle={user.affiliatePayoutHandle}
