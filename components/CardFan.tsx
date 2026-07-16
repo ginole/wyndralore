@@ -22,6 +22,8 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
   const n = cards.length;
   const trackRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef((n - 1) / 2); // start centered mid-deck
+  const targetRef = useRef((n - 1) / 2); // where a wheel glide is easing toward
+  const glidingRef = useRef(false);
   const velocityRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const draggingRef = useRef(false);
@@ -81,6 +83,7 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
         velocityRef.current *= 0.7;
       }
       offsetRef.current = off;
+      targetRef.current = off;
       applyTransforms();
       const settled = Math.abs(velocityRef.current) < MIN_VELOCITY && off >= -0.02 && off <= max + 0.02;
       rafRef.current = settled ? null : requestAnimationFrame(step);
@@ -91,6 +94,7 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (disabled) return;
     draggingRef.current = true;
+    glidingRef.current = false;
     movedRef.current = 0;
     lastXRef.current = e.clientX;
     lastTRef.current = performance.now();
@@ -122,6 +126,7 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
     let off = offsetRef.current - dx / spacing;
     off = Math.max(-OVERSCROLL, Math.min(max + OVERSCROLL, off));
     offsetRef.current = off;
+    targetRef.current = off;
     velocityRef.current = (-dx / spacing) * (16 / dt);
     applyTransforms();
   }
@@ -158,9 +163,28 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
+    // Nudge the target and let a rAF loop ease the fan toward it, so a wheel notch glides
+    // smoothly like a drag does instead of hard-jumping a card at a time. Repeated notches
+    // accumulate on the target and the same loop keeps easing — continuous, not stuttery.
     const browse = (delta: number) => {
-      offsetRef.current = Math.max(-0.3, Math.min(n - 0.7, offsetRef.current + delta * 0.01));
-      applyTransforms();
+      targetRef.current = Math.max(-0.3, Math.min(n - 0.7, targetRef.current + delta * 0.01));
+      if (glidingRef.current) return;
+      cancelMomentum();
+      glidingRef.current = true;
+      const step = () => {
+        const diff = targetRef.current - offsetRef.current;
+        if (Math.abs(diff) < 0.002) {
+          offsetRef.current = targetRef.current;
+          applyTransforms();
+          glidingRef.current = false;
+          rafRef.current = null;
+          return;
+        }
+        offsetRef.current += diff * 0.18;
+        applyTransforms();
+        rafRef.current = requestAnimationFrame(step);
+      };
+      rafRef.current = requestAnimationFrame(step);
     };
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
