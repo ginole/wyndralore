@@ -10,6 +10,7 @@ import CardFace from "./CardFace";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "./WhopCheckoutModal";
 import { storedWhopAffiliate } from "./WhopAffiliateCapture";
 import { readSseStream } from "@/lib/sse";
+import DeckQuickSwitch from "./DeckQuickSwitch";
 import { YEAR_READING_PRICE_USD, LOVE_READING_PRICE_USD } from "@/lib/pricing";
 
 type Kind = "year_reading" | "love_reading";
@@ -335,6 +336,7 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
             Continue to Select
           </button>
         </div>
+        <DeckQuickSwitch kind="back" className="mt-8" />
       </section>
     );
   }
@@ -375,6 +377,9 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
         <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">
           {kind === "year_reading" ? "Your Year Ahead" : `${nameA.trim() || "You"} & ${nameB.trim() || "Them"}`}
         </h1>
+        <div className="mt-5">
+          <DeckQuickSwitch kind="face" />
+        </div>
       </div>
 
       <div className={`grid gap-3 ${kind === "year_reading" ? "grid-cols-4 sm:grid-cols-5 md:grid-cols-7" : "grid-cols-3 sm:grid-cols-5"}`}>

@@ -122,13 +122,13 @@ export default function Home() {
               href: "/reading/year-ahead",
               title: "Your Year Ahead",
               subtitle: "A theme card and one card for each of the next twelve months, read as a single unfolding story.",
-              meta: "13 cards · $9.90 once",
+              meta: "13 cards",
             },
             {
               href: "/reading/love-compatibility",
               title: "Love Compatibility",
               subtitle: "Two people, five cards: your energy, theirs, and an honest reading of the bond between you.",
-              meta: "5 cards · $4.99 once",
+              meta: "5 cards",
             },
           ].map((item) => (
             <Link

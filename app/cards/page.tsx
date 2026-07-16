@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllCards, getCardSlug } from "@/lib/cards";
 import CardFace from "@/components/CardFace";
+import DeckQuickSwitch from "@/components/DeckQuickSwitch";
 
 export const metadata: Metadata = {
   title: "Tarot Card Meanings — The Complete 78-Card Library | Wyndralore",
@@ -30,6 +31,9 @@ export default function CardsIndexPage() {
           All 78 cards of the tarot, each written to help you see the present clearly — not to predict a fixed future.
           Tap any card to read its full meaning.
         </p>
+        <div className="mt-5">
+          <DeckQuickSwitch kind="face" />
+        </div>
       </div>
 
       {SUIT_SECTIONS.map((section) => {

@@ -15,6 +15,7 @@ import ShareCardModal from "./ShareCardModal";
 import AiReadingPanel from "./AiReadingPanel";
 import FortuneShareCard from "./FortuneShareCard";
 import TipBlock from "./TipBlock";
+import DeckQuickSwitch from "./DeckQuickSwitch";
 
 type Phase = "checking" | "limited" | "intro" | "shuffle" | "select" | "reveal";
 
@@ -451,6 +452,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
             Continue to Select
           </button>
         </div>
+        <DeckQuickSwitch kind="back" className="mt-8" />
       </section>
     );
   }
@@ -510,6 +512,9 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
             {streak === 1 ? "Day 1 of your streak — come back tomorrow" : `${streak}-day streak — see you tomorrow`}
           </p>
         )}
+        <div className="mt-5">
+          <DeckQuickSwitch kind="face" />
+        </div>
       </div>
 
       <div className="flex flex-col gap-10">
