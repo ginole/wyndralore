@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { PlanId, BillingMode } from "./pricing";
+import { WHOP_EXAMPLE_AFFILIATE } from "./featureFlags";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -77,6 +78,9 @@ export async function createCheckoutSession(
   redirectUrl?: string,
   affiliateCode?: string
 ): Promise<string> {
+  // The invite email's worked example is a real Whop username owned by a stranger — a verbatim
+  // copy must lose its attribution, not pay him (see WHOP_EXAMPLE_AFFILIATE).
+  if (affiliateCode === WHOP_EXAMPLE_AFFILIATE) affiliateCode = undefined;
   const attempt = (withAffiliate: boolean) =>
     fetch(`${whopApiBase()}/v1/checkout_configurations`, {
       method: "POST",

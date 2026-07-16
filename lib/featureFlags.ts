@@ -25,3 +25,16 @@ export const CREATOR_AFFILIATE_ENABLED = false;
 
 /** Where creators get their Whop affiliate link while CREATOR_AFFILIATE_ENABLED is false. */
 export const WHOP_STORE_URL = "https://whop.com/wyndralore/";
+
+/**
+ * The worked-example username in the creator invite email ("wyndralore.com/?a=lunatarot").
+ *
+ * It is ALSO a real, registered Whop username belonging to a stranger (probed against Whop's API
+ * 2026-07-16), so a creator who shares the example verbatim would silently route 30% of every sale
+ * she drives to that stranger, forever — the invite email's own safety claim ("an unknown code is
+ * dropped and the sale completes") only holds for names Whop doesn't recognise. Every surface that
+ * accepts a ?a= code therefore drops this exact value: the sale still completes, it just carries no
+ * attribution. If the actual owner of this username ever becomes our creator (≈never), admin can
+ * set her row directly.
+ */
+export const WHOP_EXAMPLE_AFFILIATE = "lunatarot";

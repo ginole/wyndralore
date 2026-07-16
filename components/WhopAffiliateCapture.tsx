@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { WHOP_EXAMPLE_AFFILIATE } from "@/lib/featureFlags";
 
 export const WHOP_AFF_PARAM = "a";
 export const WHOP_AFF_STORAGE_KEY = "wl_whop_aff";
@@ -26,6 +27,9 @@ export default function WhopAffiliateCapture() {
   useEffect(() => {
     const code = params.get(WHOP_AFF_PARAM);
     if (!code) return;
+    // The invite email's worked example is a real stranger's Whop username. Storing it would also
+    // poison first-link-wins: a real creator's link clicked later could never overwrite it.
+    if (code === WHOP_EXAMPLE_AFFILIATE) return;
     try {
       if (localStorage.getItem(WHOP_AFF_STORAGE_KEY)) return;
       localStorage.setItem(WHOP_AFF_STORAGE_KEY, code);

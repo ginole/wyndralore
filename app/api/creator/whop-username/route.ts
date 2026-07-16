@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isRealWhopUsername } from "@/lib/whop";
+import { WHOP_EXAMPLE_AFFILIATE } from "@/lib/featureFlags";
 import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
 
 /**
@@ -43,6 +44,16 @@ export async function POST(req: NextRequest) {
     .toLowerCase();
   if (!/^[a-z0-9._-]{1,60}$/.test(username)) {
     return NextResponse.json({ error: "That doesn't look like a Whop username." }, { status: 400 });
+  }
+
+  // The invite email demonstrates the link format with this name — and it happens to be a real
+  // stranger's Whop account, so it would pass the validation below and quietly collect her
+  // commission (see WHOP_EXAMPLE_AFFILIATE).
+  if (username === WHOP_EXAMPLE_AFFILIATE) {
+    return NextResponse.json(
+      { error: `"${username}" is the example from our email — enter your own Whop username, the one you signed up with.` },
+      { status: 400 }
+    );
   }
 
   let real: boolean;
