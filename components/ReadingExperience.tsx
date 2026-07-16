@@ -522,6 +522,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         cards={fortuneCards}
         firstCardId={selected[0].card.id}
         referralCode={user?.referralCode ?? null}
+        whopUsername={user?.whopUsername ?? null}
       />
 
       {user?.isPremium && (

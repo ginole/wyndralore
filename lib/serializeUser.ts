@@ -26,5 +26,10 @@ export function serializeUser(user: User, isMaster: boolean = false) {
     // surface a link to their partner dashboard (same pattern as isMaster).
     isPartner: Boolean(user.affiliateCode),
     affiliateCode: user.affiliateCode,
+    // Creator partner (permanent, set by the admin invite) and the Whop username she supplies. Both
+    // are hers and safe to expose: the username is public on Whop and is meant to be shared. Drives
+    // the creator block on /account and makes her share card carry ?a= instead of ?ref=.
+    isCreator: user.isCreator,
+    whopUsername: user.whopUsername,
   };
 }

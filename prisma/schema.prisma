@@ -50,6 +50,16 @@ model User {
   referredByCode       String?
   referralRewarded     Boolean @default(false)
 
+  // Creator partner. `isCreator` is set by the admin invite and is PERMANENT — she stays a creator
+  // long after the complimentary month lapses; it is an identity, not a side effect of the free plan.
+  // `whopUsername` is hers to fill in on /account, and is what makes her share card carry ?a=<username>
+  // (commission, paid by Whop) instead of ?ref=<code> (friend credits) — otherwise her most natural
+  // promo action, drawing a reading and sharing the card, hands out the wrong link and earns her
+  // nothing. Note this is NOT the affiliate mechanism needing per-creator setup: ?a= works for any
+  // Whop username without us knowing it. This is only so we can build her link for her.
+  isCreator    Boolean @default(false)
+  whopUsername String?
+
   // Auto-renewing Paddle subscription (the "Subscribe & save" pricing option). At most one active
   // subscription per user. While active, planExpiresAt is kept aligned to the Paddle billing
   // period; cancelling just flips autoRenew off and access lapses naturally at currentPeriodEnd.
@@ -115,12 +125,20 @@ model Order {
   paidAt        DateTime?
   paidAmountUsd Float?
   affiliateId   String? // Lemon Squeezy affiliate/influencer id, passed through custom_data (AI-reading PRD §3)
-  paddleTransactionId String? // Paddle txn_... id, stored on payment so a later refund/chargeback (adjustment webhook) can map back to this order
+  // The payment processor's transaction id, stored at payment so a later refund/chargeback webhook
+  // can map back to this order. Named for Paddle for historical reasons; it now holds Whop's
+  // `pay_…` id. Kept as-is deliberately — it's a generic "processor transaction id", and renaming it
+  // would mean a migration on the shared production DB for no behavioural gain.
+  paddleTransactionId String?
 
   webhookEvents WiseWebhookEvent[]
 
   @@index([userId])
   @@index([status])
+  // Refund/dispute webhooks look an order up by this and nothing else. The index existed in the
+  // database but had never been declared here, so the next migration to run silently dropped it —
+  // which is exactly what happened. Declared now so it stays.
+  @@index([paddleTransactionId])
 }
 
 // Minimal draw log for the admin dashboard (PRD §5.4). Only logged-in draws are captured

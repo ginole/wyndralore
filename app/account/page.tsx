@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import CreatorLinkPanel from "@/components/CreatorLinkPanel";
 import { pixelTrack } from "@/lib/pixel";
 import { REF_STORAGE_KEY } from "@/lib/referral";
 import { VIA_STORAGE_KEY } from "@/lib/affiliate";
@@ -328,6 +329,10 @@ export default function AccountPage() {
           </button>
           {cancelMsg && <p className="mt-2 text-xs text-gold-bright">{cancelMsg}</p>}
         </div>
+      )}
+
+      {user.isCreator && (
+        <CreatorLinkPanel initialUsername={user.whopUsername} onSaved={() => void refresh()} />
       )}
 
       {user.isPartner && (

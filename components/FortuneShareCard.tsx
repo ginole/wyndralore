@@ -14,18 +14,30 @@ interface FortuneShareCardProps {
   firstCardId: number;
   /** The signed-in user's referral code, so the QR/link doubles as their invite. */
   referralCode: string | null;
+  /** A creator partner's Whop username, when she has recorded one. Takes precedence over
+   * referralCode: for a creator, this card IS her promo material, and it should carry the link that
+   * pays her cash rather than the one that pays her spread credits. */
+  whopUsername?: string | null;
 }
 
 // Result-page "flaunt" card (裂变模块一): renders the reading into a polished 1080×1920 black-gold
 // image — distilled keyword, the actual cards drawn, and a QR that encodes the sharer's referral
 // link — then offers one-tap share/save so posting it to TikTok/Instagram also invites friends.
-export default function FortuneShareCard({ spreadTitle, cards, firstCardId, referralCode }: FortuneShareCardProps) {
+export default function FortuneShareCard({ spreadTitle, cards, firstCardId, referralCode, whopUsername }: FortuneShareCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [saved, setSaved] = useState(false);
 
-  const shareUrl = referralCode ? `${SITE_URL}/?ref=${referralCode}` : SITE_URL;
+  // A creator's card carries her commission link (?a=, paid by Whop); everyone else's carries their
+  // friend-invite link (?ref=, pays spread credits). Without this a creator's most natural promo
+  // move — draw a reading, share the card — hands her audience the wrong link, and the only symptom
+  // she'd ever see is that she never gets paid.
+  const shareUrl = whopUsername
+    ? `${SITE_URL}/?a=${whopUsername}`
+    : referralCode
+      ? `${SITE_URL}/?ref=${referralCode}`
+      : SITE_URL;
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +86,7 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
     // Rebuild if the reading (or the user's referral code) changes.
-  }, [spreadTitle, firstCardId, referralCode, shareUrl, cards]);
+  }, [spreadTitle, firstCardId, referralCode, whopUsername, shareUrl, cards]);
 
   async function handleShare() {
     const canvas = canvasRef.current;

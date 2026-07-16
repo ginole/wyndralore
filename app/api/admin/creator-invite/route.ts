@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
 
   const { userId, planGranted, wasNewAccount, actionLink } = await grantCreatorPremium(email, req.nextUrl.origin);
 
+  // Being a creator is permanent and separate from the complimentary month — she is still a creator
+  // long after that plan lapses. It's what unlocks the Whop-username field on /account, which in
+  // turn makes her share card carry her commission link.
+  await prisma.user.update({ where: { id: userId }, data: { isCreator: true } });
+
   // Commission is Whop's job now (see lib/featureFlags.ts), so the invite points the creator at our
   // Whop store to grab their own link rather than handing them one of ours.
   //

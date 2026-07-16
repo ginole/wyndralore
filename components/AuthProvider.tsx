@@ -17,6 +17,11 @@ export interface SessionUser {
   currentPeriodEnd: string | null;
   isPartner: boolean;
   affiliateCode: string | null;
+  /** Creator partner — permanent, set by the admin invite, and independent of the complimentary
+   * month it grants. `whopUsername` is the account her commission is paid to; once set, her share
+   * card's QR carries ?a=<username> instead of ?ref=<code>. */
+  isCreator: boolean;
+  whopUsername: string | null;
 }
 
 export interface QuotaStatus {

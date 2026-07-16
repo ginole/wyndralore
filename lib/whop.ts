@@ -118,6 +118,30 @@ export async function createCheckoutSession(
   return session.id;
 }
 
+/**
+ * Whether `username` is a real Whop account, checked by asking Whop — there is no lookup endpoint,
+ * but creating a throwaway checkout session with the name as `affiliate_code` gets a straight answer
+ * ("...is not a valid Whop user" vs a created session). The session is never shown to anyone and
+ * expires on its own; nothing is charged.
+ *
+ * Worth the round trip: a creator who mistypes her username has no way to notice. Her link keeps
+ * working, buyers keep buying (createCheckoutSession drops a bad code and retries), and the only
+ * symptom is that she earns nothing — weeks later, with no way to trace why. Catch it while she is
+ * still looking at the field.
+ */
+export async function isRealWhopUsername(username: string): Promise<boolean> {
+  const res = await fetch(`${whopApiBase()}/v1/checkout_configurations`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${requireEnv("WHOP_API_KEY")}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ plan_id: planIdFor("monthly", "sub"), mode: "payment", affiliate_code: username }),
+  });
+  if (res.ok) return true;
+  const body = await res.text();
+  if (body.includes("not a valid Whop user")) return false;
+  // Some other failure (network, auth, Whop down) — don't call a real username fake over it.
+  throw new Error(`Whop username check failed (${res.status}): ${body.slice(0, 200)}`);
+}
+
 export interface WhopPlanTarget {
   plan: PlanId | AiReadCheckoutKind;
   billingMode: BillingMode;
