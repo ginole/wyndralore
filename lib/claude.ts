@@ -115,6 +115,24 @@ export function streamFreeSummary(args: ReadingPromptArgs): AsyncGenerator<strin
   return streamText(systemBlocks(), prompt, 20);
 }
 
+/** Year Ahead ($9.90): a theme card plus one card per month for the coming twelve. The month
+ * names ride in as positions, so the narrative can anchor to real months the reader will live. */
+export function streamYearAheadReading(args: ReadingPromptArgs): AsyncGenerator<string> {
+  const prompt = `${drawSummary(
+    args
+  )}\n\nThis is a YEAR AHEAD reading: the first card is the theme of the reader's whole year, the rest are one card per month, in order. Write about 2600 characters. Open with 2–3 sentences on the theme card as the year's undercurrent. Then walk the months IN ORDER — give each month 1–3 sentences that read the card in that month's seasonal context, and let months speak to each other (a seed planted in one month blooming or being tested in a later one). Close with 2–3 sentences of practical counsel for the year as one arc. Flowing prose with the month names woven in naturally; no headers, no bullet lists.`;
+  return streamText(systemBlocks(), prompt, 1500);
+}
+
+/** Love Compatibility ($4.99): two people, five cards. The names arrive in the position labels
+ * (You (Ana) / Them (Sam)); read the bond between them, honestly but never cruelly. */
+export function streamLoveReading(args: ReadingPromptArgs): AsyncGenerator<string> {
+  const prompt = `${drawSummary(
+    args
+  )}\n\nThis is a TWO-PERSON compatibility reading. The five positions are: each person's card, the connection between them, its challenge, and where it's heading. Write about 1400 characters. Read each person's energy as it meets the other's — this is about the BOND, not two separate fortunes. Be honest about the challenge card without being cruel, and end with what this pair can actually do with what the cards show. Use their names naturally. Flowing prose, no headers.`;
+  return streamText(systemBlocks(), prompt, 850);
+}
+
 /** Paid follow-up ($1.99): one more question asked against a deep reading the querent just
  * received. The previous reading rides along as context so the answer stays consistent with
  * what the cards already said, rather than re-reading them from scratch. */

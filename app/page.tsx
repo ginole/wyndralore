@@ -110,6 +110,46 @@ export default function Home() {
             );
           })}
         </div>
+
+        {/* One-time special readings — bought once, not part of the membership. */}
+        <div className="mt-16 text-center">
+          <h3 className="font-display text-2xl text-moon">Special readings</h3>
+          <p className="mt-2 text-sm text-moon-dim">Big questions, one-time rituals — yours forever, no subscription.</p>
+        </div>
+        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
+          {[
+            {
+              href: "/reading/year-ahead",
+              title: "Your Year Ahead",
+              subtitle: "A theme card and one card for each of the next twelve months, read as a single unfolding story.",
+              meta: "13 cards · $9.90 once",
+            },
+            {
+              href: "/reading/love-compatibility",
+              title: "Love Compatibility",
+              subtitle: "Two people, five cards: your energy, theirs, and an honest reading of the bond between you.",
+              meta: "5 cards · $4.99 once",
+            },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group relative flex h-full flex-col justify-between rounded-2xl border border-gold-dim/50 bg-ink-raised/60 p-6 shadow-[inset_0_1px_0_rgba(228,200,148,0.1)] transition-[border-color,transform,box-shadow] duration-200 hover:border-gold hover:shadow-[inset_0_1px_0_rgba(228,200,148,0.16),0_18px_40px_-24px_rgba(201,169,110,0.45)] active:scale-[0.985]"
+            >
+              <span className="font-accent absolute right-4 top-4 rounded-full border border-gold-dim bg-gold/10 px-2.5 py-1 text-[10px] uppercase tracking-widest text-gold">
+                One-time
+              </span>
+              <div>
+                <h3 className="font-display text-xl text-moon">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-moon-dim">{item.subtitle}</p>
+              </div>
+              <p className="font-accent mt-6 text-xs uppercase tracking-[0.2em] text-gold-dim">
+                {item.meta}
+                <span className="ml-2 inline-block text-gold opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-1 group-hover:opacity-100">→</span>
+              </p>
+            </Link>
+          ))}
+        </div>
       </section>
     </>
   );

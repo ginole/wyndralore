@@ -103,15 +103,34 @@ model User {
   // Premium-only opt-in: a morning email if today's card hasn't been drawn yet.
   dailyReminderOptIn Boolean @default(false)
 
-  createdAt      DateTime        @default(now())
-  orders         Order[]
-  journalEntries JournalEntry[]
-  creatorInvites CreatorInvite[]
+  createdAt       DateTime         @default(now())
+  orders          Order[]
+  journalEntries  JournalEntry[]
+  creatorInvites  CreatorInvite[]
+  specialReadings SpecialReading[]
 
   // "Meet Our Masters" marketplace: a User may BE a master (their storefront profile) and/or
   // BUY from masters (their storefront orders). Both optional relations.
   masterProfile MasterProfile?
   masterOrders  MasterOrder[]
+}
+
+// A purchased one-time reading (Year Ahead / Love Compatibility). Unlike JournalEntry this is
+// NOT premium-gated: someone who paid $9.90 for a reading owns it forever, plan or no plan —
+// it gets a permanent /readings/[id] page. cards/input are JSON strings (same convention as
+// JournalEntry.cards).
+model SpecialReading {
+  id        String   @id @default(cuid())
+  userId    String
+  kind      String // year_reading | love_reading
+  title     String
+  cards     String // [{position, name, orientation, image}]
+  input     String? // {question?, nameA?, nameB?}
+  aiText    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
 }
 
 // Saved readings for Premium members (PRD §4.2). Kept even after a plan lapses so a

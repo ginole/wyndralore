@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import CreatorLinkPanel from "@/components/CreatorLinkPanel";
 import DeckStylePanel from "@/components/DeckStylePanel";
+import SpecialReadingsPanel from "@/components/SpecialReadingsPanel";
 import { pixelTrack } from "@/lib/pixel";
 import { REF_STORAGE_KEY } from "@/lib/referral";
 import { VIA_STORAGE_KEY } from "@/lib/affiliate";
@@ -364,6 +365,8 @@ export default function AccountPage() {
       {user.isCreator && (
         <CreatorLinkPanel initialUsername={user.whopUsername} onSaved={() => void refresh()} />
       )}
+
+      <SpecialReadingsPanel />
 
       <DeckStylePanel />
 
