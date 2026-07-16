@@ -8,7 +8,7 @@ export default function CardBack({ className = "", shine = "none" }: CardBackPro
   return (
     <div className={`relative h-full w-full ${className}`}>
       <img
-        src="/cards/back.svg"
+        src="/cards/back-lunar.svg"
         alt=""
         width={400}
         height={640}

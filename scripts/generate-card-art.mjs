@@ -631,29 +631,9 @@ function courtCard(suit, rank) {
 
 const files = [];
 
-// card back — a celestial astrolabe: zodiac-ticked medallion, a full moon-phase cycle
-// across the top, and small constellations in the margins (see PRD design-refresh notes).
-{
-  const astrolabeCY = 360;
-  const inner = `
-    ${moonPhaseArc(CX, 128, 300, 9, 9.5)}
-    ${constellation([[52, 200],[74, 220],[62, 250],[88, 262]])}
-    ${constellation([[348, 210],[324, 232],[338, 258],[312, 270]])}
-    ${constellation([[56, 470],[80, 486],[66, 512]])}
-    ${constellation([[344, 480],[320, 498],[336, 522],[310, 532]])}
-    ${ring(CX, astrolabeCY, 168, 0.75, 1.5)}
-    ${tickRing(CX, astrolabeCY, 168, 36)}
-    ${ring(CX, astrolabeCY, 150, 0.4, 0.8, "1 4")}
-    ${ring(CX, astrolabeCY, 108, 0.55, 1)}
-    ${rayBurst(CX, astrolabeCY, 60, 100, 16, { width: 0.9, opacity: 0.45 })}
-    ${star(CX, astrolabeCY, 8, 62, 27, { width: 1.8 })}
-    <text x="${CX}" y="${astrolabeCY + 9}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="27" fill="${GOLD_LUMEN}">W</text>
-    <text x="${CX}" y="${H - 46}" text-anchor="middle" font-family="Georgia, serif" font-size="14" letter-spacing="5" fill="${GOLD}" opacity="0.8">WYNDRALORE</text>
-  `;
-  const svg = svgWrap(inner, { seed: 999 });
-  writeFileSync(join(OUT_DIR, "back.svg"), svg, "utf8");
-  files.push("back.svg");
-}
+// The card back is no longer generated here — it's the hand-authored public/cards/back-lunar.svg
+// (moon-phase lunar mandala), with public/cards/back-damask.svg kept as an alternate. This block
+// used to emit the old procedural back.svg; retired when the lunar design shipped.
 
 const MAJOR_NAMES = [
   "The Fool",

@@ -51,7 +51,7 @@ export default function DeckStack({ isShuffling }: DeckStackProps) {
               } as React.CSSProperties
             }
           >
-            <CardBack shine={i === STACK.length - 1 ? "loop" : "none"} />
+            <CardBack shine="loop" />
           </div>
         ))}
       </div>

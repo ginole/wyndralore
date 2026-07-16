@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 640" width="400" height="640">
+  <defs>
+    <radialGradient id="sdBg" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#131730"/>
+      <stop offset="60%" stop-color="#0d1120"/>
+      <stop offset="100%" stop-color="#080b15"/>
+    </radialGradient>
+    <linearGradient id="sdGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d9b87f"/>
+      <stop offset="50%" stop-color="#f0dcae"/>
+      <stop offset="100%" stop-color="#c9a96e"/>
+    </linearGradient>
+    <filter id="sdGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- damask lattice cell: diamond with quatrefoil bud -->
+    <pattern id="sdLattice" width="56" height="56" patternUnits="userSpaceOnUse" patternTransform="translate(4 12)">
+      <path d="M28 2 L54 28 L28 54 L2 28 Z" fill="none" stroke="#c9a96e" stroke-width="0.55" opacity="0.34"/>
+      <circle cx="28" cy="28" r="3.2" fill="none" stroke="#c9a96e" stroke-width="0.5" opacity="0.42"/>
+      <path d="M28 22.5 Q29.8 26.2 33.5 28 Q29.8 29.8 28 33.5 Q26.2 29.8 22.5 28 Q26.2 26.2 28 22.5 Z" fill="#c9a96e" opacity="0.30"/>
+      <circle cx="0" cy="0" r="1.1" fill="#c9a96e" opacity="0.45"/>
+      <circle cx="56" cy="0" r="1.1" fill="#c9a96e" opacity="0.45"/>
+      <circle cx="0" cy="56" r="1.1" fill="#c9a96e" opacity="0.45"/>
+      <circle cx="56" cy="56" r="1.1" fill="#c9a96e" opacity="0.45"/>
+    </pattern>
+
+    <!-- border rosette -->
+    <g id="sdRosette">
+      <circle r="4.6" fill="none" stroke="#e4c894" stroke-width="0.9"/>
+      <circle r="1.4" fill="#f0dcae"/>
+    </g>
+
+    <!-- corner spandrel -->
+    <g id="sdSpandrel">
+      <path d="M30 30 L96 30 Q64 38 46 56 Q38 64 34 96 L30 96 Z" fill="#c9a96e" opacity="0.14"/>
+      <path d="M96 30 Q64 38 46 56 Q38 64 34 96" fill="none" stroke="#c9a96e" stroke-width="1.1"/>
+      <path d="M84 34 Q66 42 52 56 Q44 64 40 84" fill="none" stroke="#c9a96e" stroke-width="0.6" opacity="0.6"/>
+      <path d="M62 40 q6 2 4 8 q-2 6 -8 4 q-5 -2 -3 -7 q2 -5 7 -5 Z" fill="none" stroke="#e4c894" stroke-width="0.8"/>
+      <circle cx="42" cy="42" r="2" fill="#f0dcae"/>
+    </g>
+  </defs>
+
+  <rect width="400" height="640" fill="url(#sdBg)"/>
+
+  <!-- field of damask, clipped inside the inner frame -->
+  <rect x="34" y="34" width="332" height="572" fill="url(#sdLattice)"/>
+  <!-- vignette so the lattice breathes under the medallion -->
+  <radialGradient id="sdFade" cx="50%" cy="50%" r="58%">
+    <stop offset="0%" stop-color="#0d1120" stop-opacity="0.92"/>
+    <stop offset="55%" stop-color="#0d1120" stop-opacity="0.35"/>
+    <stop offset="100%" stop-color="#0d1120" stop-opacity="0"/>
+  </radialGradient>
+  <ellipse cx="200" cy="320" rx="185" ry="235" fill="url(#sdFade)"/>
+
+  <!-- frames -->
+  <rect x="13" y="13" width="374" height="614" fill="none" stroke="url(#sdGold)" stroke-width="2.4"/>
+  <rect x="22" y="22" width="356" height="596" fill="none" stroke="#c9a96e" stroke-width="0.8" opacity="0.75"/>
+  <rect x="34" y="34" width="332" height="572" fill="none" stroke="#c9a96e" stroke-width="1.1" opacity="0.9"/>
+
+  <!-- border rosettes at frame midpoints (rotationally symmetric) -->
+  <g filter="url(#sdGlow)">
+    <use href="#sdRosette" transform="translate(200 22)"/>
+    <use href="#sdRosette" transform="translate(200 618)"/>
+    <use href="#sdRosette" transform="translate(22 320)"/>
+    <use href="#sdRosette" transform="translate(378 320)"/>
+  </g>
+
+  <!-- corner spandrels ×4 (built for TL, mirrored/rotated) -->
+  <g filter="url(#sdGlow)">
+    <use href="#sdSpandrel"/>
+    <use href="#sdSpandrel" transform="translate(400 0) scale(-1 1)"/>
+    <use href="#sdSpandrel" transform="rotate(180 200 320)"/>
+    <use href="#sdSpandrel" transform="translate(400 0) scale(-1 1) rotate(180 200 320)"/>
+  </g>
+
+  <!-- central lozenge medallion -->
+  <g filter="url(#sdGlow)">
+    <!-- lozenge -->
+    <path d="M200 148 L318 320 L200 492 L82 320 Z" fill="#0d1120" opacity="0.85"/>
+    <path d="M200 148 L318 320 L200 492 L82 320 Z" fill="none" stroke="url(#sdGold)" stroke-width="1.7"/>
+    <path d="M200 162 L306 320 L200 478 L94 320 Z" fill="none" stroke="#c9a96e" stroke-width="0.7" opacity="0.7"/>
+    <path d="M200 176 L294 320 L200 464 L106 320 Z" fill="none" stroke="#c9a96e" stroke-width="0.45" opacity="0.4"/>
+
+    <!-- lozenge tip finials -->
+    <g id="sdFinial">
+      <path d="M200 122 L206 140 L200 152 L194 140 Z" fill="#e4c894"/>
+      <circle cx="200" cy="116" r="2.4" fill="none" stroke="#e4c894" stroke-width="0.9"/>
+    </g>
+    <use href="#sdFinial" transform="rotate(180 200 320)"/>
+    <g id="sdFinialSide">
+      <path d="M330 320 l14 -5 v10 Z" fill="#e4c894" opacity="0.9"/>
+    </g>
+    <use href="#sdFinialSide" transform="rotate(180 200 320)"/>
+
+    <!-- inner starburst -->
+    <circle cx="200" cy="320" r="86" fill="none" stroke="#c9a96e" stroke-width="0.9" opacity="0.8"/>
+    <circle cx="200" cy="320" r="78" fill="none" stroke="#c9a96e" stroke-width="0.5" opacity="0.5" stroke-dasharray="1 4"/>
+    <g transform="translate(200 320)">
+      <g id="sdBurst">
+        <path d="M0 -66 L6 -18 L0 -8 L-6 -18 Z" fill="#c9a96e" opacity="0.85"/>
+      </g>
+      <use href="#sdBurst" transform="rotate(45)"/>
+      <use href="#sdBurst" transform="rotate(90)"/>
+      <use href="#sdBurst" transform="rotate(135)"/>
+      <use href="#sdBurst" transform="rotate(180)"/>
+      <use href="#sdBurst" transform="rotate(225)"/>
+      <use href="#sdBurst" transform="rotate(270)"/>
+      <use href="#sdBurst" transform="rotate(315)"/>
+      <g id="sdBurstS">
+        <path d="M0 -48 L3.4 -16 L0 -9 L-3.4 -16 Z" fill="#e4c894" opacity="0.6"/>
+      </g>
+      <use href="#sdBurstS" transform="rotate(22.5)"/>
+      <use href="#sdBurstS" transform="rotate(67.5)"/>
+      <use href="#sdBurstS" transform="rotate(112.5)"/>
+      <use href="#sdBurstS" transform="rotate(157.5)"/>
+      <use href="#sdBurstS" transform="rotate(202.5)"/>
+      <use href="#sdBurstS" transform="rotate(247.5)"/>
+      <use href="#sdBurstS" transform="rotate(292.5)"/>
+      <use href="#sdBurstS" transform="rotate(337.5)"/>
+      <!-- octagram core on a dark medal (reversible) -->
+      <circle r="30" fill="#0d1120" stroke="#e4c894" stroke-width="1.2"/>
+      <circle r="24" fill="none" stroke="#c9a96e" stroke-width="0.6" opacity="0.7" stroke-dasharray="1 3"/>
+      <path d="M0 -20 L5 -5 L20 0 L5 5 L0 20 L-5 5 L-20 0 L-5 -5 Z" fill="none" stroke="#f0dcae" stroke-width="1.2"/>
+      <path d="M0 -20 L5 -5 L20 0 L5 5 L0 20 L-5 5 L-20 0 L-5 -5 Z" fill="none" stroke="#e4c894" stroke-width="0.9" opacity="0.8" transform="rotate(45)"/>
+      <circle r="4" fill="#f0dcae"/>
+    </g>
+  </g>
+</svg>
