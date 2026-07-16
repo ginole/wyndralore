@@ -22,6 +22,17 @@ export interface SessionUser {
    * card's QR carries ?a=<username> instead of ?ref=<code>. */
   isCreator: boolean;
   whopUsername: string | null;
+  /** Deck appearance preferences ("minimal" | "classic", "lunar" | "damask"). */
+  deckStyle: string;
+  cardBackStyle: string;
+  /** Daily-card streak + premium morning-reminder opt-in. */
+  dailyStreak: number;
+  bestStreak: number;
+  dailyReminderOptIn: boolean;
+  /** One-time purchased reading credits. */
+  aiFollowupCredits: number;
+  yearReadingCredits: number;
+  loveReadingCredits: number;
 }
 
 export interface QuotaStatus {

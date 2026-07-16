@@ -18,6 +18,8 @@ interface AiQuotaStatus {
   deepReadsLimit: number;
   extraReadsAvailable: number;
   cycleResetsAt: string | null;
+  /** Purchased follow-up-question credits (kind "ai_followup"). */
+  followupCredits?: number;
 }
 
 interface AiReadingPanelProps {
@@ -106,6 +108,12 @@ export default function AiReadingPanel({
   const [quota, setQuota] = useState<AiQuotaStatus | null>(null);
   const [purchasing, setPurchasing] = useState(false);
   const [checkout, setCheckout] = useState<WhopCheckoutTarget | null>(null);
+  // Follow-up question on a finished deep reading ($1.99 / a purchased credit).
+  const [followState, setFollowState] = useState<"offer" | "asking" | "loading" | "streaming" | "done" | "error">("offer");
+  const [followQuestion, setFollowQuestion] = useState("");
+  const [followText, setFollowText] = useState("");
+  // Which product the open checkout modal is buying, so onComplete polls the right balance.
+  const purchaseKindRef = useRef<"read" | "followup">("read");
   const started = useRef(false);
 
   useEffect(() => {
@@ -206,6 +214,7 @@ export default function AiReadingPanel({
 
   async function handlePurchase(kind: "ai_single" | "ai_overage") {
     setPurchasing(true);
+    purchaseKindRef.current = "read";
     onBeforePurchase?.();
     try {
       const res = await fetch("/api/ai-reading/purchase", {
@@ -223,6 +232,89 @@ export default function AiReadingPanel({
     }
   }
 
+  async function handleFollowupPurchase() {
+    setPurchasing(true);
+    purchaseKindRef.current = "followup";
+    onBeforePurchase?.();
+    try {
+      const res = await fetch("/api/orders/special", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "ai_followup",
+          redirectPath: `/reading/${spreadSlug}?resume=1`,
+          whopAffiliate: storedWhopAffiliate(),
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (data?.planId && data?.sessionId) {
+        setCheckout({ planId: data.planId, sessionId: data.sessionId });
+      }
+      setPurchasing(false);
+    } catch {
+      setPurchasing(false);
+    }
+  }
+
+  /** Same webhook-lag polling as refreshQuotaAfterPurchase, but watching the follow-up balance. */
+  async function refreshFollowupAfterPurchase() {
+    const before = quota?.followupCredits ?? 0;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      await new Promise((r) => setTimeout(r, 1000));
+      try {
+        const res = await fetch("/api/ai-reading/quota", { cache: "no-store" });
+        const data = await res.json();
+        if (data?.quota) {
+          setQuota(data.quota);
+          if ((data.quota.followupCredits ?? 0) > before) {
+            setFollowState("asking");
+            return;
+          }
+        }
+      } catch {
+        /* keep polling */
+      }
+    }
+  }
+
+  async function handleAskFollowup() {
+    const q = followQuestion.trim();
+    if (!q) return;
+    setFollowState("loading");
+    setFollowText("");
+    try {
+      const res = await fetch("/api/ai-reading/followup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cards, theme, question, previousReading: deepText, followupQuestion: q }),
+      });
+      if (res.status === 402) {
+        // Credit vanished (spent in another tab) — fall back to the offer.
+        setFollowState("offer");
+        return;
+      }
+      if (!res.ok) {
+        setFollowState("error");
+        return;
+      }
+      setFollowState("streaming");
+      let received = "";
+      await readSse(res, (chunk) => {
+        received += chunk;
+        setFollowText((prev) => prev + chunk);
+      });
+      if (received) {
+        setFollowState("done");
+        // Reflect the spent credit without waiting on a refetch.
+        setQuota((prev) => (prev ? { ...prev, followupCredits: Math.max(0, (prev.followupCredits ?? 1) - 1) } : prev));
+      } else {
+        setFollowState("error");
+      }
+    } catch {
+      setFollowState("error");
+    }
+  }
+
   return (
     <div className="mt-12 border-t border-ink-line/60 pt-8">
       <WhopCheckoutModal
@@ -230,7 +322,8 @@ export default function AiReadingPanel({
         onClose={() => setCheckout(null)}
         onComplete={() => {
           setCheckout(null);
-          void refreshQuotaAfterPurchase();
+          if (purchaseKindRef.current === "followup") void refreshFollowupAfterPurchase();
+          else void refreshQuotaAfterPurchase();
         }}
       />
       {summary && (
@@ -271,6 +364,64 @@ export default function AiReadingPanel({
             <p className="mx-auto mt-4 max-w-xl whitespace-pre-wrap text-left text-sm leading-relaxed text-moon">{deepText}</p>
             {deepState === "done" && !isPremium && (
               <p className="mt-4 text-xs text-gold-dim">{COPY.en.notSavedHint}</p>
+            )}
+
+            {/* One follow-up question against the reading just given ($1.99 / a purchased credit). */}
+            {deepState === "done" && (
+              <div className="mt-6 border-t border-ink-line/60 pt-5">
+                {(followState === "streaming" || followState === "done") && (
+                  <>
+                    <p className="text-left text-xs uppercase tracking-[0.2em] text-gold-dim">Your follow-up</p>
+                    <p className="mx-auto mt-2 max-w-xl whitespace-pre-wrap text-left text-sm leading-relaxed text-moon">{followText}</p>
+                  </>
+                )}
+                {followState === "loading" && <p className="text-sm text-moon-dim">Listening to the cards again…</p>}
+                {followState === "error" && (
+                  <p className="text-sm text-moon-dim">Something went wrong with your follow-up. Try again.</p>
+                )}
+                {followState === "asking" && (
+                  <div className="text-left">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">Ask your follow-up question</p>
+                    <textarea
+                      value={followQuestion}
+                      onChange={(e) => setFollowQuestion(e.target.value.slice(0, 300))}
+                      placeholder="What would you like the cards to clarify?"
+                      rows={2}
+                      className="mt-2 w-full resize-none rounded-xl border border-ink-line bg-ink px-4 py-3 text-sm text-moon placeholder:text-moon-dim/50 focus:border-gold-dim focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAskFollowup}
+                      disabled={!followQuestion.trim()}
+                      className="mt-3 rounded-full bg-gold px-6 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-transform hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-50"
+                    >
+                      Ask the cards
+                    </button>
+                  </div>
+                )}
+                {followState === "offer" &&
+                  ((quota?.followupCredits ?? 0) > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFollowState("asking")}
+                      className="rounded-full border border-gold-dim px-6 py-2.5 text-xs uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
+                    >
+                      Ask a follow-up — you have a credit
+                    </button>
+                  ) : (
+                    <>
+                      <p className="text-sm text-moon-dim">Something in this reading you want to go deeper on?</p>
+                      <button
+                        type="button"
+                        onClick={handleFollowupPurchase}
+                        disabled={purchasing}
+                        className="mt-3 rounded-full border border-gold-dim px-6 py-2.5 text-xs uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
+                      >
+                        {purchasing ? "One moment…" : "Ask one follow-up question — $1.99"}
+                      </button>
+                    </>
+                  ))}
+              </div>
             )}
           </>
         )}

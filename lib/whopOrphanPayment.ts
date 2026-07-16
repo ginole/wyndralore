@@ -4,9 +4,20 @@ import { hashPassword } from "./password";
 import { generateResetToken } from "./passwordReset";
 import { generateOrderCode } from "./orderCode";
 import { markOrderPaid } from "./paymentProcessing";
-import { planTargetFor } from "./whop";
-import { PLANS, planOption, PlanId } from "./pricing";
-import { AI_SINGLE_PRICE_USD, AI_OVERAGE_PRICE_USD } from "./aiQuota";
+import { planTargetFor, isOneTimeCheckoutKind, OneTimeCheckoutKind } from "./whop";
+import { PLANS, planOption, PlanId, YEAR_READING_PRICE_USD, LOVE_READING_PRICE_USD, TIP_PRICE_USD } from "./pricing";
+import { AI_SINGLE_PRICE_USD, AI_OVERAGE_PRICE_USD, AI_FOLLOWUP_PRICE_USD } from "./aiQuota";
+
+// Catalog price + human label for each one-time kind — used when a payment arrives with no
+// Order of ours (bought straight on Whop) and we have to reconstruct what it was.
+const ONE_TIME_INFO: Record<OneTimeCheckoutKind, { priceUsd: number; label: string }> = {
+  ai_single: { priceUsd: AI_SINGLE_PRICE_USD, label: "AI deep reading" },
+  ai_overage: { priceUsd: AI_OVERAGE_PRICE_USD, label: "AI deep reading" },
+  ai_followup: { priceUsd: AI_FOLLOWUP_PRICE_USD, label: "follow-up question" },
+  year_reading: { priceUsd: YEAR_READING_PRICE_USD, label: "Year Ahead Reading" },
+  love_reading: { priceUsd: LOVE_READING_PRICE_USD, label: "Love Compatibility Reading" },
+  tip: { priceUsd: TIP_PRICE_USD, label: "tip" },
+};
 import { sendEmail, whopOrphanClaimEmail } from "./email";
 import { trackEvent } from "./analytics";
 
@@ -47,11 +58,9 @@ export async function creditOrphanedWhopPayment(input: OrphanPaymentInput): Prom
   }
 
   const email = input.email.trim().toLowerCase();
-  const isAiRead = target.plan === "ai_single" || target.plan === "ai_overage";
-  const amountUsd = isAiRead
-    ? target.plan === "ai_single"
-      ? AI_SINGLE_PRICE_USD
-      : AI_OVERAGE_PRICE_USD
+  const isOneTime = isOneTimeCheckoutKind(target.plan);
+  const amountUsd = isOneTime
+    ? ONE_TIME_INFO[target.plan as OneTimeCheckoutKind].priceUsd
     : planOption(target.plan as PlanId, target.billingMode).amountUsd;
 
   let user = await prisma.user.findUnique({ where: { email } });
@@ -78,7 +87,7 @@ export async function creditOrphanedWhopPayment(input: OrphanPaymentInput): Prom
       code: generateOrderCode(),
       userId: user.id,
       plan: target.plan,
-      ...(isAiRead ? { kind: target.plan } : {}),
+      ...(isOneTime ? { kind: target.plan } : {}),
       amountUsd,
       expiresAt: new Date(Date.now() + 60_000),
     },
@@ -90,7 +99,7 @@ export async function creditOrphanedWhopPayment(input: OrphanPaymentInput): Prom
 
   if (claimToken) {
     const { subject, html } = whopOrphanClaimEmail(
-      isAiRead ? "AI deep reading" : PLANS[target.plan as PlanId].label,
+      isOneTime ? ONE_TIME_INFO[target.plan as OneTimeCheckoutKind].label : PLANS[target.plan as PlanId].label,
       `${SITE_URL}/reset-password?token=${claimToken}`
     );
     const sent = await sendEmail({ to: email, subject, html });

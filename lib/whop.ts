@@ -14,15 +14,28 @@ export function whopApiBase(): string {
 }
 
 export type AiReadCheckoutKind = "ai_single" | "ai_overage";
+// One-time specials (Whop plans created 2026-07-16): a follow-up question on a deep reading,
+// the two premium standalone readings, and the tip. Like the AI kinds, each maps to exactly one
+// one-time Whop plan and grants its effect in markOrderPaid — never a membership.
+export type SpecialCheckoutKind = "ai_followup" | "year_reading" | "love_reading" | "tip";
+export type OneTimeCheckoutKind = AiReadCheckoutKind | SpecialCheckoutKind;
+
+export function isOneTimeCheckoutKind(value: string): value is OneTimeCheckoutKind {
+  return value in PLAN_ENV && !["monthly", "yearly"].includes(value);
+}
 
 // The one-time Whop Plan for each product. `lifetime` is deliberately absent: the tier was retired
 // from sale (see PLANS.lifetime.purchasable in lib/pricing.ts — Whop prohibits offers advertising
 // "lifetime" access), so no Whop plan exists for it and planIdFor("lifetime") throws by design.
-const PLAN_ENV: Partial<Record<PlanId | AiReadCheckoutKind, string>> = {
+const PLAN_ENV: Partial<Record<PlanId | OneTimeCheckoutKind, string>> = {
   monthly: "WHOP_PLAN_MONTHLY",
   yearly: "WHOP_PLAN_YEARLY",
   ai_single: "WHOP_PLAN_AI_SINGLE",
   ai_overage: "WHOP_PLAN_AI_OVERAGE",
+  ai_followup: "WHOP_PLAN_AI_FOLLOWUP",
+  year_reading: "WHOP_PLAN_YEAR_READING",
+  love_reading: "WHOP_PLAN_LOVE_READING",
+  tip: "WHOP_PLAN_TIP",
 };
 
 // The auto-renewing plans — only monthly/yearly have one. AI reads are always one-time.
@@ -34,7 +47,7 @@ const SUB_PLAN_ENV: Partial<Record<PlanId, string>> = {
 /** The Whop Plan id for a membership plan (in the given billing mode) or AI-read kind. Defaults to
  * the one-time plan; only monthly/yearly + "sub" resolve to a recurring plan. Mirrors priceIdFor()
  * in lib/paddle.ts. */
-export function planIdFor(planOrKind: PlanId | AiReadCheckoutKind, billingMode: BillingMode = "onetime"): string {
+export function planIdFor(planOrKind: PlanId | OneTimeCheckoutKind, billingMode: BillingMode = "onetime"): string {
   if (billingMode === "sub" && (planOrKind === "monthly" || planOrKind === "yearly")) {
     return requireEnv(SUB_PLAN_ENV[planOrKind]!);
   }
@@ -51,7 +64,7 @@ export function planIdFor(planOrKind: PlanId | AiReadCheckoutKind, billingMode: 
  * mode the buyer picked — either legitimate plan must pass.
  */
 export function expectedPlanIdsForOrder(order: { kind: string; plan: string }): string[] {
-  if (order.kind === "ai_single" || order.kind === "ai_overage") return [planIdFor(order.kind)];
+  if (isOneTimeCheckoutKind(order.kind)) return [planIdFor(order.kind)];
   const plan = order.plan as PlanId;
   const ids = [planIdFor(plan, "onetime")];
   if (plan === "monthly" || plan === "yearly") ids.push(planIdFor(plan, "sub"));
@@ -147,7 +160,7 @@ export async function isRealWhopUsername(username: string): Promise<boolean> {
 }
 
 export interface WhopPlanTarget {
-  plan: PlanId | AiReadCheckoutKind;
+  plan: PlanId | OneTimeCheckoutKind;
   billingMode: BillingMode;
 }
 

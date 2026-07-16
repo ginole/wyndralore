@@ -1,7 +1,7 @@
 import { Order } from "@prisma/client";
 import { prisma } from "./db";
 import { planExpiryFrom, PlanId } from "./pricing";
-import { sendEmail, paymentConfirmationEmail, aiReadPurchaseEmail } from "./email";
+import { sendEmail, paymentConfirmationEmail, aiReadPurchaseEmail, specialCreditEmail, tipThanksEmail } from "./email";
 import { trackEvent } from "./analytics";
 import { grantExtraAiReads } from "./aiQuota";
 import { sendMetaPurchaseEvent } from "./metaCapi";
@@ -29,6 +29,47 @@ export async function markOrderPaid(order: Order, amountUsd: number, netUsd?: nu
   // Credit the referring partner, if this buyer was referred by one (any product kind). Idempotent
   // per order; a no-op for unattributed buyers.
   await recordAffiliateCommission(order, amountUsd, netUsd);
+
+  // One-time special purchases: a credit (or plain gratitude), NEVER a membership change —
+  // without these early returns the fallthrough below would set user.plan to "tip" et al.
+  if (order.kind === "ai_followup" || order.kind === "year_reading" || order.kind === "love_reading") {
+    const CREDIT_FIELD = {
+      ai_followup: "aiFollowupCredits",
+      year_reading: "yearReadingCredits",
+      love_reading: "loveReadingCredits",
+    } as const;
+    const LABEL = {
+      ai_followup: "follow-up question",
+      year_reading: "Year Ahead Reading",
+      love_reading: "Love Compatibility Reading",
+    } as const;
+    const user = await prisma.user.update({
+      where: { id: order.userId },
+      data: { [CREDIT_FIELD[order.kind]]: { increment: 1 } },
+    });
+    const { subject, html } = specialCreditEmail(LABEL[order.kind]);
+    const result = await sendEmail({ to: user.email, subject, html });
+    if (!result.ok) {
+      console.error(`[payment-confirmation] special-credit email failed for order ${order.code}:`, result.error);
+    }
+    await trackEvent("special_reading_purchased", { userId: order.userId, props: { kind: order.kind, amountUsd } });
+    await sendMetaPurchaseEvent({ email: user.email, value: amountUsd, eventId: order.code, contentName: order.kind });
+    await sendGa4PurchaseEvent({ userId: order.userId, value: amountUsd, transactionId: order.code, itemName: order.kind });
+    return;
+  }
+
+  if (order.kind === "tip") {
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: order.userId } });
+    const { subject, html } = tipThanksEmail();
+    const result = await sendEmail({ to: user.email, subject, html });
+    if (!result.ok) {
+      console.error(`[payment-confirmation] tip thank-you email failed for order ${order.code}:`, result.error);
+    }
+    await trackEvent("tip_received", { userId: order.userId, props: { amountUsd } });
+    await sendMetaPurchaseEvent({ email: user.email, value: amountUsd, eventId: order.code, contentName: "tip" });
+    await sendGa4PurchaseEvent({ userId: order.userId, value: amountUsd, transactionId: order.code, itemName: "tip" });
+    return;
+  }
 
   if (order.kind === "ai_overage" || order.kind === "ai_single") {
     await grantExtraAiReads(order.userId, 1);

@@ -21,6 +21,8 @@ const AI_CYCLE_MS = AI_CYCLE_DAYS * 24 * 60 * 60 * 1000;
 // quota is used up ($1.99 — already discounted vs. the non-member price).
 export const AI_SINGLE_PRICE_USD = 2.99;
 export const AI_OVERAGE_PRICE_USD = 1.99;
+// One more question asked against a deep reading the buyer just received (kind "ai_followup").
+export const AI_FOLLOWUP_PRICE_USD = 1.99;
 
 /** Advances `cycleStart` by whole 30-day increments to the most recent boundary <= now. */
 function currentCycleStart(cycleStart: Date, now: Date): Date {

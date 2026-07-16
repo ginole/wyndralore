@@ -31,5 +31,17 @@ export function serializeUser(user: User, isMaster: boolean = false) {
     // the creator block on /account and makes her share card carry ?a= instead of ?ref=.
     isCreator: user.isCreator,
     whopUsername: user.whopUsername,
+    // Deck appearance — the client renders card faces/backs from these, mirrored to localStorage
+    // for guests (components/DeckPrefs.tsx).
+    deckStyle: user.deckStyle,
+    cardBackStyle: user.cardBackStyle,
+    // Daily-card streak + the premium-only morning-reminder opt-in.
+    dailyStreak: user.dailyStreak,
+    bestStreak: user.bestStreak,
+    dailyReminderOptIn: user.dailyReminderOptIn,
+    // One-time purchased reading credits (see markOrderPaid) — balances only, safe to expose.
+    aiFollowupCredits: user.aiFollowupCredits,
+    yearReadingCredits: user.yearReadingCredits,
+    loveReadingCredits: user.loveReadingCredits,
   };
 }

@@ -83,6 +83,26 @@ model User {
   affiliateFirstPaidAt  DateTime? // first commissionable purchase — anchors the 6-month recurring window
   affiliateBlacklisted  Boolean   @default(false) // serial refunder: their purchases stop earning commission
 
+  // Deck appearance preferences (guests keep the same choice in localStorage; these columns
+  // make it follow a signed-in user across devices).
+  deckStyle      String @default("minimal") // minimal | classic
+  cardBackStyle  String @default("lunar") // lunar | damask
+
+  // One-time purchased reading credits (granted by markOrderPaid per Order.kind; consumed by
+  // the corresponding reading flow). Deliberately simple counters, same pattern as
+  // aiExtraReadsAvailable — an unconsumed credit survives navigation, retries, and devices.
+  aiFollowupCredits  Int @default(0) // kind "ai_followup"  — one more question on a deep reading
+  yearReadingCredits Int @default(0) // kind "year_reading" — 12-card year-ahead deep reading
+  loveReadingCredits Int @default(0) // kind "love_reading" — two-person compatibility reading
+
+  // Daily-card streak. lastDailyDate is the client-local YYYY-MM-DD of the last counted daily
+  // draw (same convention as quotaDate — the user's own midnight, not the server's).
+  dailyStreak        Int     @default(0)
+  bestStreak         Int     @default(0)
+  lastDailyDate      String?
+  // Premium-only opt-in: a morning email if today's card hasn't been drawn yet.
+  dailyReminderOptIn Boolean @default(false)
+
   createdAt      DateTime        @default(now())
   orders         Order[]
   journalEntries JournalEntry[]

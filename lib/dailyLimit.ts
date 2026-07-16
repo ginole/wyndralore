@@ -47,3 +47,32 @@ export function recordDraw(): void {
   const usage = readUsage();
   writeUsage({ date: usage.date, drawsUsed: usage.drawsUsed + 1 });
 }
+
+// --- Guest daily-card streak (signed-in users get theirs from the server; see lib/streak.ts).
+// Same semantics: idempotent per day, +1 on consecutive days, reset to 1 after a gap.
+const STREAK_KEY = "wl_daily_streak";
+
+interface GuestStreak {
+  last: string; // local YYYY-MM-DD of the last counted daily draw
+  streak: number;
+}
+
+function prevDayKey(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() - 1);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+}
+
+export function recordGuestDailyStreak(today: string): number {
+  try {
+    const raw = window.localStorage.getItem(STREAK_KEY);
+    const prev = raw ? (JSON.parse(raw) as GuestStreak) : null;
+    if (prev?.last === today) return prev.streak;
+    const streak = prev?.last === prevDayKey(today) ? prev.streak + 1 : 1;
+    window.localStorage.setItem(STREAK_KEY, JSON.stringify({ last: today, streak }));
+    return streak;
+  } catch {
+    return 1;
+  }
+}

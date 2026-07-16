@@ -115,6 +115,18 @@ export function streamFreeSummary(args: ReadingPromptArgs): AsyncGenerator<strin
   return streamText(systemBlocks(), prompt, 20);
 }
 
+/** Paid follow-up ($1.99): one more question asked against a deep reading the querent just
+ * received. The previous reading rides along as context so the answer stays consistent with
+ * what the cards already said, rather than re-reading them from scratch. */
+export function streamFollowupAnswer(
+  args: ReadingPromptArgs,
+  previousReading: string,
+  followupQuestion: string
+): AsyncGenerator<string> {
+  const prompt = `${drawSummary(args)}\n\nYou already gave the querent this reading:\n"""\n${previousReading}\n"""\n\nThe querent now asks a follow-up question: "${followupQuestion}"\n\nAnswer it in about 700 characters, staying consistent with the reading above — deepen or clarify it through the same drawn cards, don't contradict it or introduce new cards. Flowing prose, no headers.`;
+  return streamText(systemBlocks(), prompt, 500);
+}
+
 /** Paid tier: a ~1500-character narrative reading tied to the querent's question. */
 export function streamDeepReading(args: ReadingPromptArgs): AsyncGenerator<string> {
   const prompt = `${drawSummary(

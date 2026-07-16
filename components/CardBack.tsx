@@ -1,3 +1,7 @@
+"use client";
+
+import { useDeckPrefs, cardBackSrc } from "./DeckPrefs";
+
 interface CardBackProps {
   className?: string;
   /** "loop" = ambient sweep every few seconds; "hover" = one sweep when a parent .group is hovered. */
@@ -5,10 +9,11 @@ interface CardBackProps {
 }
 
 export default function CardBack({ className = "", shine = "none" }: CardBackProps) {
+  const { cardBackStyle } = useDeckPrefs();
   return (
     <div className={`relative h-full w-full ${className}`}>
       <img
-        src="/cards/back-lunar.svg"
+        src={cardBackSrc(cardBackStyle)}
         alt=""
         width={400}
         height={640}

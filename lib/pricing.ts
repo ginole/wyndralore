@@ -68,6 +68,12 @@ export function planOption(plan: PlanId, mode: BillingMode): PlanPriceOption {
   return def.onetime;
 }
 
+// One-time "special" products (Whop plans created 2026-07-16; ids in WHOP_PLAN_* env vars).
+// AI single/overage prices live beside their quota logic in lib/aiQuota.ts.
+export const YEAR_READING_PRICE_USD = 9.9; // 12-card year-ahead deep reading (kind "year_reading")
+export const LOVE_READING_PRICE_USD = 4.99; // two-person compatibility reading (kind "love_reading")
+export const TIP_PRICE_USD = 2.99; // "leave a tip" — no entitlement, just gratitude (kind "tip")
+
 // Incoming international wire transfers can have Wise's receiving fee (a few USD) deducted
 // before the balance is credited, so a customer who paid correctly can still land a hair under
 // the sticker price. Treat anything within this tolerance as "paid in full" rather than

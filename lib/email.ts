@@ -65,6 +65,51 @@ export function whopOrphanClaimEmail(purchaseLabel: string, claimLink: string): 
   };
 }
 
+export function dailyReminderEmail(streak: number): { subject: string; html: string } {
+  const streakLine =
+    streak > 1
+      ? `<p>You're on a <strong>${streak}-day streak</strong> — today's card keeps it alive.</p>`
+      : `<p>Your card for today is waiting.</p>`;
+  return {
+    subject: streak > 1 ? `Your card is waiting — day ${streak + 1} of your streak` : "Your card for today is waiting",
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">One quiet minute, one card</h1>
+        ${streakLine}
+        <p><a href="https://wyndralore.com/reading/daily" style="color: #c9a96e;">Draw your Card of the Day</a></p>
+        <p style="font-size: 13px; color: #6b6b6b;">You asked for this morning nudge — turn it off any time on your <a href="https://wyndralore.com/account" style="color: #c9a96e;">account page</a>.</p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
+export function specialCreditEmail(label: string): { subject: string; html: string } {
+  return {
+    subject: `Your ${label} is unlocked`,
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Payment confirmed</h1>
+        <p>Your ${label} is ready — head back to Wyndralore whenever you'd like to use it. The credit stays on your account until you do.</p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
+export function tipThanksEmail(): { subject: string; html: string } {
+  return {
+    subject: "Thank you — truly",
+    html: `
+      <div style="font-family: Georgia, serif; color: #0b0e1a; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Thank you 💛</h1>
+        <p>Your tip means more than you know — Wyndralore is built and kept alive by one person, and this is the kind of thing that keeps the cards turning.</p>
+        <p>With warmth,<br/>Wyndralore</p>
+      </div>
+    `,
+  };
+}
+
 export function aiReadPurchaseEmail(): { subject: string; html: string } {
   return {
     subject: "Your AI deep reading is unlocked",

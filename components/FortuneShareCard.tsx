@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { TarotCard, Orientation } from "@/lib/types";
 import { track } from "@/lib/track";
 import { renderFortuneCard, canvasToBlob, FortuneCardCard } from "@/lib/shareCard";
+import { useDeckPrefs, deckImageSrc } from "./DeckPrefs";
 
 const SITE_URL = "https://wyndralore.com";
 
@@ -25,6 +26,7 @@ interface FortuneShareCardProps {
 // link — then offers one-tap share/save so posting it to TikTok/Instagram also invites friends.
 export default function FortuneShareCard({ spreadTitle, cards, firstCardId, referralCode, whopUsername }: FortuneShareCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { deckStyle } = useDeckPrefs();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [saved, setSaved] = useState(false);
@@ -67,7 +69,8 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
           cardName: card.name,
           orientation,
           keywords: keywords.length ? keywords : [card.name],
-          cards,
+          // Render the same deck art the reader chose — the share image is their keepsake.
+          cards: cards.map((c) => ({ ...c, image: deckImageSrc(c.image, deckStyle) })),
           qrDataUrl,
           urlLabel: "wyndralore.com",
         });
@@ -85,8 +88,8 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-    // Rebuild if the reading (or the user's referral code) changes.
-  }, [spreadTitle, firstCardId, referralCode, whopUsername, shareUrl, cards]);
+    // Rebuild if the reading, the user's link, or the deck style changes.
+  }, [spreadTitle, firstCardId, referralCode, whopUsername, shareUrl, cards, deckStyle]);
 
   async function handleShare() {
     const canvas = canvasRef.current;

@@ -1,4 +1,7 @@
+"use client";
+
 import { Orientation } from "@/lib/types";
+import { useDeckPrefs, deckImageSrc } from "./DeckPrefs";
 
 interface CardFaceProps {
   src: string;
@@ -11,9 +14,10 @@ interface CardFaceProps {
 }
 
 export default function CardFace({ src, alt, orientation = "upright", priority = false, className = "", shine = "none" }: CardFaceProps) {
+  const { deckStyle } = useDeckPrefs();
   const img = (
     <img
-      src={src}
+      src={deckImageSrc(src, deckStyle)}
       alt={alt}
       width={400}
       height={640}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TarotCard } from "@/lib/types";
 import { renderShareCard, canvasToBlob } from "@/lib/shareCard";
+import { useDeckPrefs, deckImageSrc } from "./DeckPrefs";
 
 interface ShareCardModalProps {
   cardId: number;
@@ -14,6 +15,7 @@ interface ShareCardModalProps {
 // download. The first drawn card of the reading is used as the shareable hero.
 export default function ShareCardModal({ cardId, onShareGranted, onClose }: ShareCardModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { deckStyle } = useDeckPrefs();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState<string | null>(null);
@@ -24,7 +26,9 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
 
     (async () => {
       try {
-        const card: TarotCard = await (await fetch(`/api/cards/${cardId}`)).json();
+        const fetched: TarotCard = await (await fetch(`/api/cards/${cardId}`)).json();
+        // The share image should show the same deck art the reader was just looking at.
+        const card = { ...fetched, image: deckImageSrc(fetched.image, deckStyle) };
         const orientation = Math.random() < 0.5 ? "upright" : "reversed";
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -46,7 +50,7 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [cardId]);
+  }, [cardId, deckStyle]);
 
   async function handleShare() {
     const canvas = canvasRef.current;

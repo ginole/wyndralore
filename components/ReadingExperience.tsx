@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { DeckCard, Orientation, SpreadConfig, Theme } from "@/lib/types";
-import { canDraw, recordDraw } from "@/lib/dailyLimit";
+import { canDraw, recordDraw, recordGuestDailyStreak } from "@/lib/dailyLimit";
 import { useAuth, todayLocal, QuotaStatus } from "./AuthProvider";
 import { track } from "@/lib/track";
 import DeckStack, { SHUFFLE_SETTLE_MS } from "./DeckStack";
@@ -14,6 +14,7 @@ import AdBonusModal from "./AdBonusModal";
 import ShareCardModal from "./ShareCardModal";
 import AiReadingPanel from "./AiReadingPanel";
 import FortuneShareCard from "./FortuneShareCard";
+import TipBlock from "./TipBlock";
 
 type Phase = "checking" | "limited" | "intro" | "shuffle" | "select" | "reveal";
 
@@ -82,6 +83,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   const [note, setNote] = useState("");
   const [journalState, setJournalState] = useState<"idle" | "saving" | "saved">("idle");
   const [aiReadingText, setAiReadingText] = useState<string | null>(null);
+  const [streak, setStreak] = useState<number | null>(null);
   const didInit = useRef(false);
   const trackedReveal = useRef(false);
   const quotaConsumedRef = useRef(false);
@@ -207,16 +209,20 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: todayLocal(), spread: spread.slug }),
-      }).then((res) => {
+      }).then(async (res) => {
         refreshAuth();
         if (!res.ok) {
           // Quota vanished between the intro check and the pick (e.g. spent in another tab).
           setSelected([]);
           setPhase("limited");
+          return;
         }
+        const data = await res.json().catch(() => null);
+        if (typeof data?.streak === "number") setStreak(data.streak);
       });
     } else {
       recordDraw();
+      if (spread.slug === "daily") setStreak(recordGuestDailyStreak(todayLocal()));
     }
   }
 
@@ -498,6 +504,12 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spread.title}</p>
         <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">Your Reading</h1>
         {question.trim() && <p className="mt-3 text-sm italic text-moon-dim">&ldquo;{question.trim()}&rdquo;</p>}
+        {spread.slug === "daily" && streak !== null && streak > 0 && (
+          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-gold-dim/60 px-4 py-1.5 text-xs tracking-wide text-gold-bright">
+            <span aria-hidden>🔥</span>
+            {streak === 1 ? "Day 1 of your streak — come back tomorrow" : `${streak}-day streak — see you tomorrow`}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-10">
@@ -524,6 +536,8 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         referralCode={user?.referralCode ?? null}
         whopUsername={user?.whopUsername ?? null}
       />
+
+      <TipBlock spreadSlug={spread.slug} />
 
       {user?.isPremium && (
         <div className="mt-12 border-t border-ink-line/60 pt-8">

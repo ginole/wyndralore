@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { AuthProvider } from "@/components/AuthProvider";
+import { DeckPrefsProvider } from "@/components/DeckPrefs";
 import VisitTracker from "@/components/VisitTracker";
 import ReferralCapture from "@/components/ReferralCapture";
 import AffiliateCapture from "@/components/AffiliateCapture";
@@ -71,6 +72,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col overflow-x-hidden bg-ink text-moon">
         <AuthProvider>
+          <DeckPrefsProvider>
           <Suspense fallback={null}>
             <VisitTracker />
             <ReferralCapture />
@@ -87,6 +89,7 @@ export default function RootLayout({
           <SiteHeader />
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           <SiteFooter />
+          </DeckPrefsProvider>
         </AuthProvider>
       </body>
     </html>

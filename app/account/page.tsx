@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import CreatorLinkPanel from "@/components/CreatorLinkPanel";
+import DeckStylePanel from "@/components/DeckStylePanel";
 import { pixelTrack } from "@/lib/pixel";
 import { REF_STORAGE_KEY } from "@/lib/referral";
 import { VIA_STORAGE_KEY } from "@/lib/affiliate";
@@ -277,6 +278,35 @@ export default function AccountPage() {
             </span>
           </div>
         )}
+        {user.dailyStreak > 0 && (
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">Daily streak</span>
+            <span className="text-sm text-gold-bright">
+              🔥 {user.dailyStreak} day{user.dailyStreak === 1 ? "" : "s"}
+              {user.bestStreak > user.dailyStreak ? ` · best ${user.bestStreak}` : ""}
+            </span>
+          </div>
+        )}
+        {user.isPremium && (
+          <label className="mt-4 flex cursor-pointer items-center justify-between border-t border-ink-line/60 pt-4">
+            <span className="pr-4 text-xs leading-relaxed text-moon-dim">
+              Morning email if I haven&apos;t drawn my Card of the Day
+            </span>
+            <input
+              type="checkbox"
+              checked={user.dailyReminderOptIn}
+              onChange={async (e) => {
+                await fetch("/api/account/prefs", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ dailyReminderOptIn: e.target.checked }),
+                });
+                void refresh();
+              }}
+              className="h-4 w-4 accent-[#c9a96e]"
+            />
+          </label>
+        )}
       </div>
 
       <div className="mt-6 rounded-2xl border border-gold-dim bg-ink-raised/60 p-6 text-left">
@@ -334,6 +364,8 @@ export default function AccountPage() {
       {user.isCreator && (
         <CreatorLinkPanel initialUsername={user.whopUsername} onSaved={() => void refresh()} />
       )}
+
+      <DeckStylePanel />
 
       {user.isPartner && (
         <Link

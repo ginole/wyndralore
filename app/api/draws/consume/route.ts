@@ -5,6 +5,7 @@ import { consumeDraw, isPremiumActive } from "@/lib/quota";
 import { getSpread } from "@/lib/spreads";
 import { spendPremiumSpreadCredit } from "@/lib/premiumSpread";
 import { creditReferrerForReading } from "@/lib/referral";
+import { recordDailyStreak } from "@/lib/streak";
 
 export async function POST(req: NextRequest) {
   const userId = await getSessionUserId();
@@ -36,5 +37,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Daily free reading already used." }, { status: 429 });
   }
   await creditReferrerForReading(userId);
-  return NextResponse.json({ ok: true, remaining: result.remaining });
+  // The Card of the Day is a ritual, not just a spread — count it toward the streak.
+  const streak = spreadSlug === "daily" ? await recordDailyStreak(userId, clientDate) : undefined;
+  return NextResponse.json({ ok: true, remaining: result.remaining, streak: streak?.streak, bestStreak: streak?.best });
 }
