@@ -151,17 +151,29 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
     }
   }
 
-  // Desktop nicety: a horizontal trackpad swipe browses the fan. A vertical wheel — which is
-  // all a mouse wheel produces — is deliberately left alone so it scrolls the PAGE; the fan
-  // fills most of the viewport here, so hijacking vertical wheel would trap the page (it did).
+  // Wheel over the fan: scroll the PAGE whenever the page still has room to scroll in that
+  // direction, and only browse the fan when it doesn't. So a mouse wheel scrolls to the
+  // results below when there's more page, and — on a screen where everything already fits —
+  // it browses the deck instead of doing nothing. A horizontal trackpad swipe always browses.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; // vertical → let the page scroll
-      e.preventDefault();
-      offsetRef.current = Math.max(-0.3, Math.min(n - 0.7, offsetRef.current + e.deltaX * 0.01));
+    const browse = (delta: number) => {
+      offsetRef.current = Math.max(-0.3, Math.min(n - 0.7, offsetRef.current + delta * 0.01));
       applyTransforms();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault();
+        browse(e.deltaX);
+        return;
+      }
+      const doc = document.documentElement;
+      const canScrollDown = e.deltaY > 0 && window.scrollY + window.innerHeight < doc.scrollHeight - 1;
+      const canScrollUp = e.deltaY < 0 && window.scrollY > 0;
+      if (canScrollDown || canScrollUp) return; // page has room → let it scroll normally
+      e.preventDefault();
+      browse(e.deltaY);
     };
     track.addEventListener("wheel", onWheel, { passive: false });
     return () => track.removeEventListener("wheel", onWheel);
