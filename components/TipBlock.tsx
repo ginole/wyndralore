@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useAuth } from "./AuthProvider";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "./WhopCheckoutModal";
-import { storedWhopAffiliate } from "./WhopAffiliateCapture";
 import { TIP_PRICE_USD } from "@/lib/pricing";
 
 /**
@@ -29,10 +28,12 @@ export default function TipBlock({ spreadSlug }: { spreadSlug: string }) {
   async function handleTip() {
     setState("loading");
     try {
+      // Deliberately NO affiliate code here: a tip is gratitude to the maker, not a conversion —
+      // the Support product's affiliate percentage is 0 on Whop too.
       const res = await fetch("/api/orders/special", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "tip", redirectPath: `/reading/${spreadSlug}`, whopAffiliate: storedWhopAffiliate() }),
+        body: JSON.stringify({ kind: "tip", redirectPath: `/reading/${spreadSlug}` }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
