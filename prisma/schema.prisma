@@ -84,8 +84,10 @@ model User {
   affiliateBlacklisted  Boolean   @default(false) // serial refunder: their purchases stop earning commission
 
   // Deck appearance preferences (guests keep the same choice in localStorage; these columns
-  // make it follow a signed-in user across devices).
-  deckStyle      String @default("minimal") // minimal | classic
+  // make it follow a signed-in user across devices). Classic 1909 faces are the default —
+  // that's the deck cold visitors already know from every pick-a-card video; the minimal
+  // line-art set stays as the switchable "clean mode". The back stays ours: it IS the brand.
+  deckStyle      String @default("classic") // classic | minimal
   cardBackStyle  String @default("lunar") // lunar | damask
 
   // One-time purchased reading credits (granted by markOrderPaid per Order.kind; consumed by

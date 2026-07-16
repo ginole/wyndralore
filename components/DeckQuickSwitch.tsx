@@ -14,8 +14,8 @@ export default function DeckQuickSwitch({ kind, className = "" }: { kind: "face"
   const options =
     kind === "face"
       ? ([
-          { value: "minimal", label: "Wyndralore" },
           { value: "classic", label: "Classic 1909" },
+          { value: "minimal", label: "Wyndralore" },
         ] as const)
       : ([
           { value: "lunar", label: "Lunar" },

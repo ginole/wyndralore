@@ -37,12 +37,13 @@ function readStored<T extends string>(key: string, allowed: readonly T[], fallba
  */
 export function DeckPrefsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [deckStyle, setDeckState] = useState<DeckStyle>("minimal");
+  // Classic 1909 is the default face set — cold visitors know it from every pick-a-card video.
+  const [deckStyle, setDeckState] = useState<DeckStyle>("classic");
   const [cardBackStyle, setBackState] = useState<CardBackStyle>("lunar");
 
   // Hydrate from localStorage first (covers guests and the gap before /api/auth/me returns).
   useEffect(() => {
-    setDeckState(readStored(DECK_KEY, ["minimal", "classic"] as const, "minimal"));
+    setDeckState(readStored(DECK_KEY, ["minimal", "classic"] as const, "classic"));
     setBackState(readStored(BACK_KEY, ["lunar", "damask"] as const, "lunar"));
   }, []);
 

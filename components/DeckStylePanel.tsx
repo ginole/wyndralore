@@ -11,8 +11,8 @@ export default function DeckStylePanel() {
   const { deckStyle, cardBackStyle, setDeckStyle, setCardBackStyle } = useDeckPrefs();
 
   const faceOptions: { value: DeckStyle; label: string; sample: string }[] = [
-    { value: "minimal", label: "Wyndralore", sample: deckImageSrc("/cards/major-17-star.svg", "minimal") },
     { value: "classic", label: "Classic 1909", sample: deckImageSrc("/cards/major-17-star.svg", "classic") },
+    { value: "minimal", label: "Wyndralore", sample: deckImageSrc("/cards/major-17-star.svg", "minimal") },
   ];
   const backOptions: { value: CardBackStyle; label: string }[] = [
     { value: "lunar", label: "Lunar Mandala" },
