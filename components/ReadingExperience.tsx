@@ -223,7 +223,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
       });
     } else {
       recordDraw();
-      if (spread.slug === "daily") setStreak(recordGuestDailyStreak(todayLocal()));
+      if (spread.slug === "daily" || spread.slug === "pick-a-card") setStreak(recordGuestDailyStreak(todayLocal()));
     }
   }
 
@@ -366,6 +366,29 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spread.count} card{spread.count > 1 ? "s" : ""}</p>
         <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">{spread.title}</h1>
         <p className="mt-4 text-sm leading-relaxed text-moon-dim sm:text-base">{spread.subtitle}</p>
+
+        {/* The daily ritual has two modes — one card, or three piles to choose from. One homepage
+            tile, two spreads; the toggle just navigates between them (both count the streak). */}
+        {(spread.slug === "daily" || spread.slug === "pick-a-card") && (
+          <div className="mt-6 inline-flex overflow-hidden rounded-full border border-ink-line">
+            <Link
+              href="/reading/daily"
+              className={`px-5 py-2 text-xs uppercase tracking-[0.15em] transition-colors ${
+                spread.slug === "daily" ? "bg-gold/15 text-gold-bright" : "text-moon-dim hover:text-moon"
+              }`}
+            >
+              One card
+            </Link>
+            <Link
+              href="/reading/pick-a-card"
+              className={`px-5 py-2 text-xs uppercase tracking-[0.15em] transition-colors ${
+                spread.slug === "pick-a-card" ? "bg-gold/15 text-gold-bright" : "text-moon-dim hover:text-moon"
+              }`}
+            >
+              Three piles
+            </Link>
+          </div>
+        )}
         {spread.free && user && quota && !quota.isPremium && (
           <p className="mt-3 text-xs uppercase tracking-[0.2em] text-gold-dim">
             {quota.remaining} of {quota.limit} readings left today
@@ -506,7 +529,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spread.title}</p>
         <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">Your Reading</h1>
         {question.trim() && <p className="mt-3 text-sm italic text-moon-dim">&ldquo;{question.trim()}&rdquo;</p>}
-        {spread.slug === "daily" && streak !== null && streak > 0 && (
+        {(spread.slug === "daily" || spread.slug === "pick-a-card") && streak !== null && streak > 0 && (
           <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-gold-dim/60 px-4 py-1.5 text-xs tracking-wide text-gold-bright">
             <span aria-hidden>🔥</span>
             {streak === 1 ? "Day 1 of your streak — come back tomorrow" : `${streak}-day streak — see you tomorrow`}

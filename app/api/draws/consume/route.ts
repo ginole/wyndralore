@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Daily free reading already used." }, { status: 429 });
   }
   await creditReferrerForReading(userId);
-  // The Card of the Day is a ritual, not just a spread — count it toward the streak.
-  const streak = spreadSlug === "daily" ? await recordDailyStreak(userId, clientDate) : undefined;
+  // The daily ritual counts the streak in either mode — one card or three piles.
+  const streak =
+    spreadSlug === "daily" || spreadSlug === "pick-a-card" ? await recordDailyStreak(userId, clientDate) : undefined;
   return NextResponse.json({ ok: true, remaining: result.remaining, streak: streak?.streak, bestStreak: streak?.best });
 }
