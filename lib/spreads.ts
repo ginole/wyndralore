@@ -17,6 +17,17 @@ export const SPREADS: Record<string, SpreadConfig> = {
     free: true,
     positions: ["Answer"],
   },
+  // The format every tarot-TikTok viewer already knows — three parallel piles, choose the one
+  // that calls to you. Also what our own short-videos film with (the position labels ARE the
+  // pile numbers, so recordings need no editing to hide a timeline).
+  "pick-a-card": {
+    slug: "pick-a-card",
+    title: "Pick a Card",
+    subtitle: "Three piles, one choice. Trust the pull.",
+    count: 3,
+    free: true,
+    positions: ["Pile One", "Pile Two", "Pile Three"],
+  },
   "three-card": {
     slug: "three-card",
     title: "Past · Present · Future",
@@ -62,7 +73,7 @@ export const SPREADS: Record<string, SpreadConfig> = {
   },
 };
 
-export const SPREAD_ORDER = ["daily", "yes-no", "three-card", "love", "career", "celtic-cross"];
+export const SPREAD_ORDER = ["daily", "yes-no", "pick-a-card", "three-card", "love", "career", "celtic-cross"];
 
 export function getSpread(slug: string): SpreadConfig | undefined {
   return SPREADS[slug];

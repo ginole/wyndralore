@@ -13,7 +13,7 @@ import ReadingExperience from "@/components/ReadingExperience";
 export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
-  return ["daily", "yes-no", "three-card"].map((spread) => ({ spread }));
+  return ["daily", "yes-no", "pick-a-card", "three-card"].map((spread) => ({ spread }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ spread: string }> }): Promise<Metadata> {
