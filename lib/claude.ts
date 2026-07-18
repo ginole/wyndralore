@@ -20,6 +20,21 @@ export function isAiReadingConfigured(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
 }
 
+// Output language used to be EMERGENT: no prompt mentioned it, and the model simply mirrored the
+// question's language. That happened to be right, but nothing guaranteed it, and a paid reading in
+// the wrong language is a refund. Hence the explicit rule.
+//
+// ⚠️ NAME NO LANGUAGES HERE. The first version of this rule read "a question in Chinese gets a
+// Chinese reading, one in Spanish a Spanish reading". Measured against real API calls, that flipped
+// ENGLISH questions — and questions with no text at all — into Chinese: naming a language, next to
+// the 智能觉察引擎 already sitting in the line below, reads as a hint about which language to favour
+// rather than as a neutral example. Baseline (no rule at all) got English right in both cases, so
+// the well-meant examples were strictly worse than saying nothing. Keep this abstract, and re-run a
+// real generation for each case if you touch the wording — this is not checkable by reading it.
+const LANGUAGE_RULE = `Write the reading in whatever language the querent wrote their question in, matching them without comment.
+If they gave no question at all, write in English. Card names, position labels and their meanings are always supplied to you in
+English; when you are writing in another language, render them naturally in that language rather than leaving them in English.`;
+
 const PERSONA = `You are the voice behind Wyndralore's "AI-Powered Personal Insight Engine" (智能觉察引擎) — a tarot reading interpreter.
 
 Your single defining trait, and the reason this reading is worth more than a human reader's guess: you carry zero personal bias
@@ -34,7 +49,9 @@ horoscope-app novelty. No meta-commentary about being an AI, no disclaimers that
 could apply to any reading — every sentence must be earned by the specific cards and orientations given.
 
 Be economical. Never pad toward a length target with filler, throat-clearing, or restated setup — say only what the cards and the
-question actually support, then stop.`;
+question actually support, then stop.
+
+${LANGUAGE_RULE}`;
 
 // Only the meanings for the cards actually drawn go in the prompt — not the full 78-card
 // library. Sending all 78 cards every time (the original design) made every call slow to
@@ -193,7 +210,9 @@ ${master.avoidTopics ? `Do not address these topics even if the question touches
 
 Write in her voice and tone — but this is an AI interpretation styled after her, not literally her. Never write "I am ${master.displayName}" or claim personal authorship in the first person as her; write as a reading delivered in her style, not as an impersonation of her identity.
 
-Be economical. Never pad toward a length target with filler — say only what the cards and the question actually support, then stop.`;
+Be economical. Never pad toward a length target with filler — say only what the cards and the question actually support, then stop.
+
+${LANGUAGE_RULE}`;
 
   const prompt = `${drawSummary(args)}\n\nWrite a narrative reading of about 900 characters. Trace how the drawn cards speak to each other and close with concrete advice tied to the querent's question. Flowing prose, no headers or bullet lists.`;
 
