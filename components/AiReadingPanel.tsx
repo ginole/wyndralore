@@ -194,6 +194,14 @@ export default function AiReadingPanel({
    * can land a beat later. Poll briefly instead of immediately re-rendering a stale "0 reads left"
    * at someone who just paid. Gives up quietly after ~8s; the credit still lands, it just needs a
    * refresh to show.
+   *
+   * Then REVEAL IT. deepState is still "paywall" at this point — that is what put the buyer in
+   * checkout — and refreshing the quota alone does not move it, so without this the buyer lands back
+   * on the very button they just paid at, with an unspent credit and nothing to show for their money.
+   * That is a refund in this category, and refunds are what got two processors to drop us. The
+   * follow-up sibling below always did the equivalent (setFollowState("asking")); this path simply
+   * never got it. Reveal even when the poll times out: handleReveal 402s harmlessly back to the
+   * paywall if the credit really has not landed, whereas leaving a paid-for read ungenerated does not.
    */
   async function refreshQuotaAfterPurchase() {
     const before = quota?.extraReadsAvailable ?? 0;
@@ -204,12 +212,16 @@ export default function AiReadingPanel({
         const data = await res.json();
         if (data?.quota) {
           setQuota(data.quota);
-          if (data.quota.extraReadsAvailable > before) return;
+          if (data.quota.extraReadsAvailable > before) {
+            void handleReveal();
+            return;
+          }
         }
       } catch {
         /* keep polling */
       }
     }
+    void handleReveal();
   }
 
   async function handlePurchase(kind: "ai_single" | "ai_overage") {
