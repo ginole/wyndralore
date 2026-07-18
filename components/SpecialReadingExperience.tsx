@@ -9,6 +9,7 @@ import CardFan from "./CardFan";
 import CardFace from "./CardFace";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "./WhopCheckoutModal";
 import { storedWhopAffiliate } from "./WhopAffiliateCapture";
+import { storedTrafficSource } from "@/components/TrafficSourceCapture";
 import { readSseStream } from "@/lib/sse";
 import DeckQuickSwitch from "./DeckQuickSwitch";
 import { YEAR_READING_PRICE_USD, LOVE_READING_PRICE_USD } from "@/lib/pricing";
@@ -113,7 +114,7 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
         body: JSON.stringify({
           kind,
           redirectPath: kind === "year_reading" ? "/reading/year-ahead" : "/reading/love-compatibility",
-          whopAffiliate: storedWhopAffiliate(),
+          whopAffiliate: storedWhopAffiliate(), source: storedTrafficSource(),
         }),
       });
       const data = await res.json().catch(() => null);

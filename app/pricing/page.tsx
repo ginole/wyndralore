@@ -7,6 +7,7 @@ import { PLANS, PURCHASABLE_PLANS, PlanId, BillingMode, planOption } from "@/lib
 import { pixelTrack } from "@/lib/pixel";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "@/components/WhopCheckoutModal";
 import { storedWhopAffiliate } from "@/components/WhopAffiliateCapture";
+import { storedTrafficSource } from "@/components/TrafficSourceCapture";
 
 export default function PricingPage() {
   const { user, loading } = useAuth();
@@ -34,7 +35,7 @@ export default function PricingPage() {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, billingMode, whopAffiliate: storedWhopAffiliate() }),
+        body: JSON.stringify({ plan, billingMode, whopAffiliate: storedWhopAffiliate(), source: storedTrafficSource() }),
       });
       const data = await res.json();
       if (!res.ok) {

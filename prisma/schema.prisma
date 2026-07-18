@@ -172,10 +172,23 @@ model Order {
   // would mean a migration on the shared production DB for no behavioural gain.
   paddleTransactionId String?
 
+  // Where this buyer came from, captured on their FIRST visit and carried to checkout (see
+  // components/TrafficSourceCapture.tsx). First-party and stored by us on purpose: the Meta Pixel
+  // cannot be created (blocked upstream on Business Verification) and GA4's server-side purchase
+  // event rides a synthetic client_id that never joins the visitor's real session, so without this
+  // there is NO way to tell whether an ad, a creator link, or search produced a sale. Nullable
+  // throughout — most orders will have none of it, and a missing source must never block a sale.
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  referrer    String?
+
   webhookEvents WiseWebhookEvent[]
 
   @@index([userId])
   @@index([status])
+  // "Which orders came from the Facebook ad" is the whole point of the columns above.
+  @@index([utmSource])
   // Refund/dispute webhooks look an order up by this and nothing else. The index existed in the
   // database but had never been declared here, so the next migration to run silently dropped it —
   // which is exactly what happened. Declared now so it stays.

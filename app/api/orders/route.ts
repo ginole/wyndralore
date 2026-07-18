@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { parseTrafficSource } from "@/lib/trafficSource";
 import { prisma } from "@/lib/db";
 import { isPlanId, isBillingMode, planOption, PLANS, BillingMode } from "@/lib/pricing";
 import { generateOrderCode } from "@/lib/orderCode";
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     const code = generateOrderCode();
     try {
       const order = await prisma.order.create({
-        data: { code, userId: user.id, plan, amountUsd: option.amountUsd, expiresAt },
+        data: { code, userId: user.id, plan, amountUsd: option.amountUsd, expiresAt, ...parseTrafficSource(body?.source) },
       });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { plan, billingMode } });
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Theme } from "@/lib/types";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "@/components/WhopCheckoutModal";
 import { storedWhopAffiliate } from "@/components/WhopAffiliateCapture";
+import { storedTrafficSource } from "@/components/TrafficSourceCapture";
 
 interface ReadingCard {
   position: string;
@@ -259,7 +260,7 @@ export default function AiReadingPanel({
       const res = await fetch("/api/ai-reading/purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, spreadSlug, whopAffiliate: storedWhopAffiliate() }),
+        body: JSON.stringify({ kind, spreadSlug, whopAffiliate: storedWhopAffiliate(), source: storedTrafficSource() }),
       });
       const data = await res.json().catch(() => null);
       if (data?.planId && data?.sessionId) {
@@ -282,7 +283,7 @@ export default function AiReadingPanel({
         body: JSON.stringify({
           kind: "ai_followup",
           redirectPath: `/reading/${spreadSlug}?resume=1`,
-          whopAffiliate: storedWhopAffiliate(),
+          whopAffiliate: storedWhopAffiliate(), source: storedTrafficSource(),
         }),
       });
       const data = await res.json().catch(() => null);

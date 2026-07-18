@@ -10,6 +10,7 @@ import VisitTracker from "@/components/VisitTracker";
 import ReferralCapture from "@/components/ReferralCapture";
 import AffiliateCapture from "@/components/AffiliateCapture";
 import WhopAffiliateCapture from "@/components/WhopAffiliateCapture";
+import TrafficSourceCapture from "@/components/TrafficSourceCapture";
 import { CREATOR_AFFILIATE_ENABLED } from "@/lib/featureFlags";
 import MetaPixel from "@/components/MetaPixel";
 import AdSenseScript from "@/components/AdSenseScript";
@@ -82,6 +83,12 @@ export default function RootLayout({
                 • WhopAffiliateCapture — ?a=<whop-username>, creator commission paid by Whop. Live. */}
             {CREATOR_AFFILIATE_ENABLED && <AffiliateCapture />}
             <WhopAffiliateCapture />
+            {/* A fourth, and the one that answers "did the ad pay for itself": TrafficSourceCapture
+                records utm_* / referrer on first touch and the order endpoints persist it onto the
+                Order. Unlike the three above it pays nobody — it exists purely so ad spend can be
+                judged, which nothing else here can do (no Meta Pixel, and GA4's purchase event
+                cannot be joined back to a session — see lib/ga4.ts). */}
+            <TrafficSourceCapture />
             <MetaPixel />
             <AdSenseScript />
             <GoogleAnalytics />
