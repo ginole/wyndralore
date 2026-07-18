@@ -87,8 +87,8 @@ export default function JournalView() {
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Premium Feature</p>
         <h1 className="font-display mt-4 text-3xl text-moon">Your Journal</h1>
         <p className="mt-4 text-sm leading-relaxed text-moon-dim">
-          The journal automatically saves every reading — cards, meanings, your question, and your own notes — so you can
-          look back any time. It unlocks with Premium.
+          The journal keeps your readings — cards, meanings, your question, and your own notes — so you can look back any
+          time. Any reading you buy is kept here automatically, on any plan. Premium adds every free daily draw too.
         </p>
         <Link href="/pricing" className="mt-8 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
           Go Premium
@@ -106,12 +106,14 @@ export default function JournalView() {
 
       {!user.isPremium && (
         <p className="mx-auto mt-6 max-w-md text-center text-sm text-gold-dim">
-          Your membership has ended, so new readings won&apos;t be saved — but everything you saved while a member is still
-          here.{" "}
+          {/* Reaches two different people now: a lapsed member, and someone who never subscribed
+              but bought a reading — which the server files here on any plan. "Your membership has
+              ended" was wrong for the second, so say what is true for both. */}
+          Readings you buy are always kept here. Free daily draws are saved with{" "}
           <Link href="/pricing" className="underline underline-offset-4 hover:text-gold">
-            Renew Premium
-          </Link>{" "}
-          to start saving again.
+            Premium
+          </Link>
+          .
         </p>
       )}
 

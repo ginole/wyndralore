@@ -39,6 +39,9 @@ interface AiReadingPanelProps {
    * hosted-checkout URL can navigate the top frame, and the session's redirect_url points back here
    * with ?resume=1 for exactly that case. Cheap to keep, and losing a paid reading is expensive. */
   onBeforePurchase?: () => void;
+  /** Fired when the server has already filed this reading in the Journal because the querent
+   *  bought it outright — see the paid-reading branch in app/api/ai-reading/deep/route.ts. */
+  onAutoSavedToJournal?: () => void;
 }
 
 type DeepState = "idle" | "loading" | "streaming" | "done" | "paywall" | "error" | "not_configured";
@@ -67,7 +70,13 @@ const COPY = {
   },
 };
 
-async function readSse(res: Response, onChunk: (text: string) => void): Promise<void> {
+/** `onDone` carries the terminal event's payload — currently `{journalEntryId}` when the server
+ *  already filed a bought-and-paid-for reading in the Journal on the querent's behalf. */
+async function readSse(
+  res: Response,
+  onChunk: (text: string) => void,
+  onDone?: (payload: { journalEntryId?: string | null }) => void
+): Promise<void> {
   const reader = res.body?.getReader();
   if (!reader) return;
   const decoder = new TextDecoder();
@@ -80,9 +89,16 @@ async function readSse(res: Response, onChunk: (text: string) => void): Promise<
     buffer = events.pop() ?? "";
     for (const evt of events) {
       if (evt.startsWith("event: error")) throw new Error("Generation failed mid-stream.");
-      if (evt.startsWith("event: done")) continue;
       const dataLine = evt.split("\n").find((l) => l.startsWith("data:"));
       if (!dataLine) continue;
+      if (evt.startsWith("event: done")) {
+        try {
+          onDone?.(JSON.parse(dataLine.slice(5).trim()));
+        } catch {
+          // a done event we can't parse still means done — nothing to recover
+        }
+        continue;
+      }
       try {
         onChunk(JSON.parse(dataLine.slice(5).trim()));
       } catch {
@@ -101,6 +117,7 @@ export default function AiReadingPanel({
   spreadSlug,
   onDeepReadingComplete,
   onBeforePurchase,
+  onAutoSavedToJournal,
 }: AiReadingPanelProps) {
   const [summary, setSummary] = useState<string | null>(null);
   const [deepState, setDeepState] = useState<DeepState>("idle");
@@ -154,7 +171,9 @@ export default function AiReadingPanel({
       const res = await fetch("/api/ai-reading/deep", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cards, theme, question }),
+        // spreadSlug rides along so the server can file a PAID reading in the Journal itself —
+        // a JournalEntry needs to know which spread it belongs to.
+        body: JSON.stringify({ cards, theme, question, spreadSlug }),
       });
       if (res.status === 402) {
         const data = await res.json().catch(() => null);
@@ -172,10 +191,18 @@ export default function AiReadingPanel({
       }
       setDeepState("streaming");
       let received = "";
-      await readSse(res, (chunk) => {
-        received += chunk;
-        setDeepText((prev) => prev + chunk);
-      });
+      await readSse(
+        res,
+        (chunk) => {
+          received += chunk;
+          setDeepText((prev) => prev + chunk);
+        },
+        // The server files paid readings in the Journal itself; tell the page so it shows this as
+        // already saved rather than offering a Save button that would only file a duplicate.
+        (payload) => {
+          if (payload?.journalEntryId) onAutoSavedToJournal?.();
+        }
+      );
       // A killed serverless function (e.g. hitting Vercel's execution time limit) can close
       // the connection cleanly with zero bytes sent — no thrown error, just an empty result.
       if (received) {

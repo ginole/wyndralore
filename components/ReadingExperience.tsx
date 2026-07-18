@@ -82,7 +82,10 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   const [showShareModal, setShowShareModal] = useState(false);
   const [bonusMessage, setBonusMessage] = useState<string | null>(null);
   const [note, setNote] = useState("");
-  const [journalState, setJournalState] = useState<"idle" | "saving" | "saved">("idle");
+  // "members_only" is a real state, not an error: saving a FREE draw is a member feature, and the
+  // button used to just flick back to "idle" on the 403 — a click that visibly did nothing and
+  // explained nothing. Readings the querent PAID for never reach it; the server files those itself.
+  const [journalState, setJournalState] = useState<"idle" | "saving" | "saved" | "members_only">("idle");
   const [aiReadingText, setAiReadingText] = useState<string | null>(null);
   const [streak, setStreak] = useState<number | null>(null);
   const didInit = useRef(false);
@@ -186,7 +189,12 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         aiReading: aiReadingText || undefined,
       }),
     });
-    setJournalState(res.ok ? "saved" : "idle");
+    if (res.ok) {
+      setJournalState("saved");
+      return;
+    }
+    const data = await res.json().catch(() => null);
+    setJournalState(data?.upgrade ? "members_only" : "idle");
   }
 
   // Quota lifecycle (拒绝提前扣费): NOTHING is consumed while shuffling or browsing the fan.
@@ -555,6 +563,9 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         spreadSlug={spread.slug}
         onDeepReadingComplete={setAiReadingText}
         onBeforePurchase={handleBeforePurchase}
+        // A reading they bought outright is filed by the server the moment it finishes, on any
+        // plan — so show it as saved rather than inviting a Save that would duplicate it.
+        onAutoSavedToJournal={() => setJournalState("saved")}
       />
 
       <FortuneShareCard
@@ -596,19 +607,29 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         >
           Share
         </button>
-        {user?.isPremium ? (
+        {/* "Saved" wins over the plan check: a reading bought outright is filed by the server on
+            any plan, so a free buyer must not be shown a locked padlock over something that is
+            already sitting in their Journal. Link it, so they can go and see that it really is. */}
+        {journalState === "saved" ? (
+          <Link
+            href="/journal"
+            className="rounded-full border border-gold-dim px-6 py-3 text-sm uppercase tracking-[0.2em] text-gold transition-colors hover:border-gold"
+          >
+            Saved ✓ View Journal
+          </Link>
+        ) : user?.isPremium ? (
           <button
             type="button"
             onClick={handleSaveToJournal}
-            disabled={journalState !== "idle"}
+            disabled={journalState === "saving"}
             className="rounded-full border border-gold-dim px-6 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
           >
-            {journalState === "saving" ? "Saving…" : journalState === "saved" ? "Saved ✓" : "Save to Journal"}
+            {journalState === "saving" ? "Saving…" : journalState === "members_only" ? "Members only — see plans" : "Save to Journal"}
           </button>
         ) : (
           <Link
             href="/pricing"
-            title="Unlocks with Premium"
+            title="Saving a free draw unlocks with Premium — readings you buy are always saved"
             className="rounded-full border border-ink-line px-6 py-3 text-sm uppercase tracking-[0.2em] text-moon-dim/60 transition-colors hover:border-gold-dim hover:text-moon"
           >
             Save to Journal 🔒

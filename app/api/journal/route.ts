@@ -46,8 +46,15 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  // Saving a FREE draw is a member feature. Readings the querent bought never come through here —
+  // app/api/ai-reading/deep files those server-side on any plan, because something paid for must
+  // not vanish with the tab. `upgrade` lets the client say so plainly instead of rendering a dead
+  // button: the old bare 403 made the click look broken rather than gated.
   if (!isPremiumActive(user)) {
-    return NextResponse.json({ error: "Journaling is a Premium feature." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Saving a free draw is a member feature — readings you buy are always saved.", upgrade: true },
+      { status: 403 }
+    );
   }
 
   const body = await req.json().catch(() => null);
