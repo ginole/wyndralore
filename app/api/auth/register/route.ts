@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { hashPassword, isValidEmail } from "@/lib/password";
+import { hashPassword, isValidEmail, passwordProblem } from "@/lib/password";
 import { setSessionCookie } from "@/lib/auth";
 import { serializeUser } from "@/lib/serializeUser";
 import { trackEvent, getAnonId } from "@/lib/analytics";
@@ -25,8 +25,9 @@ export async function POST(req: NextRequest) {
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
+  const pwProblem = passwordProblem(password, email);
+  if (pwProblem) {
+    return NextResponse.json({ error: pwProblem }, { status: 400 });
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
