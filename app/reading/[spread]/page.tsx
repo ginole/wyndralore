@@ -93,5 +93,23 @@ export default async function ReadingPage({ params }: { params: Promise<{ spread
   // at first card pick (draw-consume), never on merely opening the page.
   const creditUnlock = access.allowed && access.via === "credit" ? { creditsRemaining: access.creditsRemaining } : undefined;
 
-  return <ReadingExperience spread={spread} deck={deck} creditUnlock={creditUnlock} />;
+  return (
+    <>
+      <ReadingExperience spread={spread} deck={deck} creditUnlock={creditUnlock} />
+      {/* Server-rendered, so it is a real crawlable link rather than something React paints in
+          later. /yes-or-no-tarot targets actual search demand but had no internal links at all and
+          sat in "Discovered – currently not indexed"; this page is linked from the homepage, so it
+          has authority to pass on. It also genuinely helps: that page is the no-ritual, no-sign-up
+          version of this same question. */}
+      {spread.slug === "yes-no" && (
+        <p className="mx-auto max-w-lg px-6 pb-16 text-center text-sm text-moon-dim">
+          Just want a straight answer, without the shuffle?{" "}
+          <Link href="/yes-or-no-tarot" className="text-gold-dim underline underline-offset-4 hover:text-gold">
+            Try the instant Yes or No draw
+          </Link>
+          .
+        </p>
+      )}
+    </>
+  );
 }

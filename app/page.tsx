@@ -111,6 +111,45 @@ export default function Home() {
           })}
         </div>
 
+        {/* Free tools. These two exist to be FOUND — they target real search demand ("tarot birth
+            card", "yes or no tarot") — but until now nothing on the site linked to them, so they
+            lived only in sitemap.xml. Google treats a page with no internal links as a page the
+            site itself doesn't consider important, and both sat in "Discovered – currently not
+            indexed". A link from the homepage is the cheapest possible signal otherwise. */}
+        <div className="mt-16 text-center">
+          <h3 className="font-display text-2xl text-moon">Free to try</h3>
+          <p className="mt-2 text-sm text-moon-dim">No sign-up, no cards to shuffle — just an answer.</p>
+        </div>
+        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
+          {[
+            {
+              href: "/yes-or-no-tarot",
+              title: "Yes or No Tarot",
+              subtitle: "One card, one straight answer. Ask, draw, know — nothing to sign up for.",
+            },
+            {
+              href: "/birth-card",
+              title: "Your Birth Card",
+              subtitle: "The card your birthday points to, and what it says about the pattern you keep returning to.",
+            },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group flex h-full flex-col justify-between rounded-2xl border border-ink-line bg-ink-raised/40 p-6 transition-[border-color,transform] duration-200 hover:border-gold-dim active:scale-[0.985]"
+            >
+              <div>
+                <h4 className="font-display text-lg text-moon">{item.title}</h4>
+                <p className="mt-2 text-sm leading-relaxed text-moon-dim">{item.subtitle}</p>
+              </div>
+              <p className="font-accent mt-6 text-xs uppercase tracking-[0.2em] text-gold-dim">
+                Free
+                <span className="ml-2 inline-block text-gold opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-1 group-hover:opacity-100">→</span>
+              </p>
+            </Link>
+          ))}
+        </div>
+
         {/* One-time special readings — bought once, not part of the membership. */}
         <div className="mt-16 text-center">
           <h3 className="font-display text-2xl text-moon">Special readings</h3>
