@@ -5,6 +5,7 @@ import { generateOrderCode } from "@/lib/orderCode";
 import { trackEvent, getAnonId } from "@/lib/analytics";
 import { planIdFor, createCheckoutSession, AiReadCheckoutKind } from "@/lib/whop";
 import { AI_SINGLE_PRICE_USD, AI_OVERAGE_PRICE_USD } from "@/lib/aiQuota";
+import { isPremiumActive } from "@/lib/quota";
 import { getSpread } from "@/lib/spreads";
 
 const ORDER_TTL_MS = 48 * 60 * 60 * 1000;
@@ -25,6 +26,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid purchase kind." }, { status: 400 });
   }
   const kind: AiReadCheckoutKind = rawKind;
+
+  // ai_overage is the DISCOUNTED member rate ($1.99 vs $2.99) for a member who has used up the free
+  // deep readings their plan includes. Until now the only thing enforcing that was the button in
+  // AiReadingPanel choosing which kind to send, so any signed-in non-member could POST
+  // {kind:"ai_overage"} and buy the $2.99 read for $1.99 — and the webhook would wave it through,
+  // because the plan id genuinely matches the order's own kind. A dollar a time, but it is a
+  // discount with no eligibility check, which is the kind of hole that stops being small the moment
+  // traffic arrives. Price eligibility belongs on the server; the client only picks a default.
+  if (kind === "ai_overage" && !isPremiumActive(user)) {
+    return NextResponse.json({ error: "The member rate needs an active membership." }, { status: 403 });
+  }
 
   // Bounce the buyer back to the exact spread they were reading, not just some generic page —
   // the frontend restores their drawn cards from sessionStorage when it sees `?resume=1`.
