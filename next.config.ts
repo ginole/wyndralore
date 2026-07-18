@@ -28,7 +28,17 @@ const PADDLE = ["https://*.paddle.com"];
 // Paddle's entry: one vendor wildcard beats enumerating hosts and re-debugging a silent CSP block.
 // This exact trap already cost real time once — Paddle.js was blocked outright by this CSP and the
 // failure was invisible in the on-page error UI (see the LS→Paddle migration notes).
-const WHOP = ["https://*.whop.com"];
+//
+// ⚠️ THE APEX ENTRY IS LOAD-BEARING — DO NOT COLLAPSE THESE TWO INTO THE WILDCARD.
+// A CSP wildcard host-source matches SUBDOMAINS ONLY: `*.whop.com` covers js.whop.com and
+// sandbox.whop.com but NOT bare `whop.com`. @whop/checkout frames the apex
+// (`https://whop.com/…`), so with only the wildcard the production checkout iframe was blocked
+// outright — Chrome renders "This content is blocked. Contact the site owner", the buyer cannot
+// pay, and NOTHING is logged server-side. Live from go-live 2026-07-15 until 2026-07-18, which is
+// why not one real card charge ever completed.
+// Sandbox hid it perfectly: sandbox.whop.com IS a subdomain, so the sandbox purchase that
+// "verified the whole chain end-to-end" passed through the wildcard and proved nothing about prod.
+const WHOP = ["https://whop.com", "https://*.whop.com"];
 
 // A CSP that still allows the ad/analytics stack: those vendors inject inline <script> snippets
 // (Meta Pixel, gtag init), so 'unsafe-inline' in script-src is unavoidable without moving every
