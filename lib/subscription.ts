@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { isPlanId, planExpiryFrom } from "./pricing";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Whop — the live processor. Everything below the Paddle divider is dormant
@@ -73,6 +74,55 @@ export async function applyMembershipUpdate(data: WhopMembershipData): Promise<v
       ...(renewed ? { aiQuotaCycleStart: new Date(), aiDeepReadsUsed: 0 } : {}),
     },
   });
+}
+
+/**
+ * Renewal safety net, driven by the RENEWAL PAYMENT rather than by a membership event.
+ *
+ * Access extension was SUPPOSED to come from applyMembershipUpdate above, via membership.went_valid.
+ * It cannot. Established against the live API on 2026-07-18: our webhook is registered
+ * api_version **v1**, and v1 rejects that event outright —
+ *
+ *     PATCH /v1/webhooks/hook_… { events: [… "membership_went_valid"] }
+ *     → 422 "Events membership_went_valid is not a valid event"
+ *
+ * — even though the enum in the API's own validation error lists it, because that enum is the UNION
+ * across api_versions and went_valid/went_invalid are v2-only. (The mirror of the note in the route
+ * file: v1 accepts membership.activated/deactivated, which v2 rejects.) Switching to v2 to get them
+ * is not on the table: v2 has no HMAC at all, it posts the shared secret back in plaintext.
+ *
+ * So the went_valid/went_invalid branches in the route are unreachable, and on a smooth renewal no
+ * membership event is known to arrive at all. Nothing would move planExpiresAt, and the failure is
+ * SILENT: the money lands, the expiry does not, and the subscriber loses access with no error raised
+ * anywhere. This function is therefore not a belt-and-braces backup — it is the primary mechanism.
+ *
+ * payment.succeeded with billing_reason "subscription_cycle" is, by contrast, guaranteed — it IS the
+ * renewal charge. So extend from that too. The rule mirrors markOrderPaid's own (+30/+365 from now,
+ * and never SHORTEN an expiry that is already later), which means this and the membership path
+ * cannot fight whichever order they arrive in: the more generous date wins, and a membership event
+ * carrying Whop's authoritative renewal_period_end still refines it.
+ *
+ * Returns true if the expiry actually moved.
+ */
+export async function extendPlanForRenewal(order: { userId: string; plan: string }): Promise<boolean> {
+  const plan = order.plan;
+  if (!isPlanId(plan) || plan === "lifetime") return false;
+  const user = await prisma.user.findUnique({ where: { id: order.userId }, select: { planExpiresAt: true } });
+  if (!user) return false;
+
+  const now = new Date();
+  const computed = planExpiryFrom(plan, now);
+  // Already extended past what this renewal grants (a membership event got here first) — leave it,
+  // and leave the AI quota cycle alone too, since that path resets it as well.
+  if (!computed || (user.planExpiresAt && user.planExpiresAt > computed)) return false;
+
+  await prisma.user.update({
+    where: { id: order.userId },
+    // Re-asserting `plan` matters when the previous period had already lapsed: the renewal has to put
+    // them back on the plan, not just push a date on an account that still reads as expired.
+    data: { plan, planExpiresAt: computed, aiQuotaCycleStart: now, aiDeepReadsUsed: 0 },
+  });
+  return true;
 }
 
 /**

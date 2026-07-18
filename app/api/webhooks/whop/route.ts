@@ -8,6 +8,7 @@ import {
   linkMembershipToUser,
   applyMembershipUpdate,
   markMembershipCanceled,
+  extendPlanForRenewal,
   WhopMembershipData,
 } from "@/lib/subscription";
 
@@ -22,6 +23,13 @@ import {
 // header — no HMAC, so no body integrity and no replay protection. v1 is the Standard-Webhooks-shaped
 // one (`type` field, signed `webhook-signature`), which is both safer and what the official SDK's
 // types describe. v1 also accepts membership.activated/deactivated, which v2 rejects.
+//
+// ⚠️ The converse, confirmed against the live API 2026-07-18: **v1 REJECTS membership.went_valid and
+// membership.went_invalid** (422 "not a valid event" on PATCH /v1/webhooks/…), so the two branches
+// below that handle them are UNREACHABLE and must not be relied on. They are kept only because they
+// cost nothing and would become live if this ever moved to v2 — which it should not, v2 having no
+// HMAC. The practical consequence is that renewal access extension cannot come from a membership
+// event: it comes from payment.succeeded → extendPlanForRenewal (see lib/subscription.ts).
 //
 // Event names arrive dotted (`payment.succeeded`); eventKey() folds them to underscores so the
 // branches read like the names used at registration. Keep it: the two shapes are genuinely mixed
@@ -170,7 +178,26 @@ export async function POST(req: NextRequest) {
       const gross = plausibleAmount(data?.usd_total ?? data?.total, order.amountUsd, "renewal gross") ?? order.amountUsd;
       const net = plausibleAmount(data?.amount_after_fees, order.amountUsd, "renewal net");
       await recordAffiliateCommission({ id: paymentId!, code: paymentId!, userId: order.userId }, gross, net);
-      return NextResponse.json({ ok: true, note: "subscription renewal commission recorded" });
+      // Extend access from the payment itself rather than trusting a membership event to arrive.
+      // See extendPlanForRenewal — this is the path that keeps a renewal from silently granting
+      // nothing, and it is idempotent against the membership path.
+      const extended = await extendPlanForRenewal(order);
+      const user = await prisma.user.findUnique({
+        where: { id: order.userId },
+        select: { planExpiresAt: true },
+      });
+      // The one outcome that must never pass quietly: we took a renewal payment and the buyer's
+      // access still runs out. Shout, because this is otherwise invisible until they complain.
+      if (user?.planExpiresAt && user.planExpiresAt.getTime() < Date.now()) {
+        console.error(
+          `[whop] RENEWAL PAID BUT ACCESS STILL EXPIRED — order ${order.code}, user ${order.userId}, ` +
+            `plan "${order.plan}", expiry ${user.planExpiresAt.toISOString()}. Grant it by hand in /admin.`
+        );
+      }
+      return NextResponse.json({
+        ok: true,
+        note: `subscription renewal commission recorded${extended ? ", access extended" : ""}`,
+      });
     }
     return NextResponse.json({ ok: true, note: "already paid, duplicate delivery" });
   }
