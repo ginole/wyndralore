@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { track } from "@/lib/track";
+import { storedTrafficSource } from "@/components/TrafficSourceCapture";
 
 // Records a "visit" event per pathname change (SPA-aware). Kept intentionally minimal —
 // see PRD §9 for the funnel this feeds.
@@ -13,7 +14,17 @@ export default function VisitTracker() {
   useEffect(() => {
     if (last.current === pathname) return;
     last.current = pathname;
-    track("visit", { path: pathname });
+    // Stamp the campaign onto the visit. Orders already carry it (Order.utmSource), but an order
+    // is the LAST step — on a small ad budget there may be none at all, and then the spend teaches
+    // nothing. Every AnalyticsEvent shares an anonId, so putting the source on the visit makes the
+    // middle of the funnel readable: of the visitors from a campaign, how many finished a reading,
+    // how many signed up. That is the only thing a few hundred pesos can actually measure.
+    // Omitted entirely for direct traffic, so ordinary visits carry no extra payload.
+    const src = storedTrafficSource();
+    track("visit", {
+      path: pathname,
+      ...(src?.utmSource ? { utmSource: src.utmSource, utmCampaign: src.utmCampaign } : {}),
+    });
     if (pathname === "/pricing") track("pricing_view");
   }, [pathname]);
 
