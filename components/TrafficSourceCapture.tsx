@@ -122,6 +122,33 @@ export default function TrafficSourceCapture() {
   return null;
 }
 
+/**
+ * The source to attribute THIS pageview to: the stored first touch if there is one, otherwise
+ * whatever the current URL is carrying.
+ *
+ * The fallback is load-bearing and was missing at first. VisitTracker and this component are
+ * siblings, React runs their effects in mount order, and VisitTracker is mounted first — so on the
+ * very first page of a session it read localStorage before anything had been written to it and
+ * recorded the visit with no source at all. That is precisely the visit that matters: an ad click
+ * lands, most visitors read one page and leave, and there is never a second pageview to catch. A
+ * whole day of campaign traffic was recorded unattributed that way.
+ *
+ * Deriving from the URL here makes the answer independent of which effect happens to run first,
+ * rather than leaving it correct-by-luck. This function only READS — first-touch storage stays the
+ * responsibility of the component above, so a later visit still can't overwrite the original.
+ */
+export function currentTrafficSource(): TrafficSource | undefined {
+  const stored = storedTrafficSource();
+  if (stored) return stored;
+  if (typeof window === "undefined") return undefined;
+  const q = new URLSearchParams(window.location.search);
+  const utmSource = clean(q.get("utm_source"));
+  const utmMedium = clean(q.get("utm_medium"));
+  const utmCampaign = clean(q.get("utm_campaign"));
+  if (!utmSource && !utmMedium && !utmCampaign) return undefined;
+  return { utmSource, utmMedium, utmCampaign };
+}
+
 /** The stored first-touch source, for the checkout callers to pass to the order endpoints. */
 export function storedTrafficSource(): TrafficSource | undefined {
   try {

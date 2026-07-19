@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { track } from "@/lib/track";
-import { storedTrafficSource } from "@/components/TrafficSourceCapture";
+import { currentTrafficSource } from "@/components/TrafficSourceCapture";
 
 // Records a "visit" event per pathname change (SPA-aware). Kept intentionally minimal —
 // see PRD §9 for the funnel this feeds.
@@ -20,7 +20,10 @@ export default function VisitTracker() {
     // middle of the funnel readable: of the visitors from a campaign, how many finished a reading,
     // how many signed up. That is the only thing a few hundred pesos can actually measure.
     // Omitted entirely for direct traffic, so ordinary visits carry no extra payload.
-    const src = storedTrafficSource();
+    // currentTrafficSource, not storedTrafficSource: this effect runs BEFORE TrafficSourceCapture
+    // has written anything on the first page of a session, so reading storage alone left every ad
+    // landing unattributed — and a landing is usually the only pageview an ad visitor produces.
+    const src = currentTrafficSource();
     track("visit", {
       path: pathname,
       ...(src?.utmSource ? { utmSource: src.utmSource, utmCampaign: src.utmCampaign } : {}),
