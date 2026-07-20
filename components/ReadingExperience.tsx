@@ -315,12 +315,26 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   }
 
   if (phase === "limited") {
+    // A signed-OUT visitor who hits this wall is the whole ballgame: they drew once, they want
+    // more, and this is the moment to convert them to a free account. The old copy pointed them at
+    // "Sign in" (they have no account to sign into — an ad click is a brand-new person) and led
+    // with "Premium members read without limits" (pushing a paid subscription at someone who won't
+    // even register). Ad-funnel data (2026-07-20): guests who exhausted their one free draw
+    // registered at 0%. So for guests, make REGISTERING the offer — a free account unlocks the
+    // share/ad bonus draws that guests don't get — and save Premium for people who already signed up.
+    const isGuest = !user;
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-6 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Today&apos;s reading is complete</p>
-        <h1 className="font-display mt-4 text-3xl text-moon sm:text-4xl">You&apos;ve used today&apos;s free reading</h1>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">
+          {isGuest ? "Want another card?" : "Today’s reading is complete"}
+        </p>
+        <h1 className="font-display mt-4 text-3xl text-moon sm:text-4xl">
+          {isGuest ? "Create a free account to keep going" : "You’ve used today’s free reading"}
+        </h1>
         <p className="mt-4 text-sm leading-relaxed text-moon-dim">
-          Your free draw resets tomorrow. Premium members read without limits.
+          {isGuest
+            ? "It’s free — no card needed. Members get more readings every day, save every one to their journal, and can unlock extra draws by sharing or watching a short clip."
+            : "Your free draw resets tomorrow. Premium members read without limits."}
         </p>
 
         {user ? (
@@ -345,12 +359,20 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
             )}
           </div>
         ) : (
-          <Link
-            href="/account"
-            className="mt-8 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4 hover:text-gold-bright"
-          >
-            Sign in to unlock bonus readings
-          </Link>
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <Link
+              href="/account?mode=register"
+              className="cta-gold rounded-full px-9 py-4 text-sm font-medium uppercase tracking-[0.2em]"
+            >
+              Create My Free Account
+            </Link>
+            <Link
+              href="/account"
+              className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
+            >
+              Already have one? Sign in
+            </Link>
+          </div>
         )}
 
         <Link

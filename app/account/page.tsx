@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import CreatorLinkPanel from "@/components/CreatorLinkPanel";
@@ -13,6 +13,15 @@ import { VIA_STORAGE_KEY } from "@/lib/affiliate";
 export default function AccountPage() {
   const { user, quota, loading, refresh, logout } = useAuth();
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
+
+  // Open straight on the register tab when linked with ?mode=register — the "limited" wall sends
+  // signed-out visitors here to make an account, and landing them on the login form first is the
+  // exact extra step that conversion is trying to remove. Read from the URL rather than
+  // useSearchParams, which would force a Suspense boundary this page isn't wrapped in.
+  useEffect(() => {
+    const m = new URLSearchParams(window.location.search).get("mode");
+    if (m === "register" || m === "forgot") setMode(m);
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
