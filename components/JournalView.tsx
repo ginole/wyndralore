@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import CardFace from "./CardFace";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 interface JournalCard {
   position: string;
@@ -27,6 +29,10 @@ interface JournalEntry {
 
 export default function JournalView() {
   const { user, loading: authLoading } = useAuth();
+  const locale = useLocale();
+  const t = getAppDict(locale).journal;
+  const tw = locale === "zh-TW";
+  const L = (p: string) => (tw ? `/tw${p}` : p);
   const [entries, setEntries] = useState<JournalEntry[] | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
@@ -69,10 +75,10 @@ export default function JournalView() {
   if (!user) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-6 text-center">
-        <h1 className="font-display text-3xl text-moon">Your Journal</h1>
-        <p className="mt-4 text-sm text-moon-dim">Sign in to see your saved readings.</p>
-        <Link href="/account" className="mt-6 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
-          Sign In
+        <h1 className="font-display text-3xl text-moon">{t.title}</h1>
+        <p className="mt-4 text-sm text-moon-dim">{t.signInToSee}</p>
+        <Link href={L("/account")} className="mt-6 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
+          {t.signIn}
         </Link>
       </section>
     );
@@ -84,14 +90,11 @@ export default function JournalView() {
   if (!user.isPremium && entries.length === 0) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-6 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Premium Feature</p>
-        <h1 className="font-display mt-4 text-3xl text-moon">Your Journal</h1>
-        <p className="mt-4 text-sm leading-relaxed text-moon-dim">
-          The journal keeps your readings — cards, meanings, your question, and your own notes — so you can look back any
-          time. Any reading you buy is kept here automatically, on any plan. Premium adds every free daily draw too.
-        </p>
-        <Link href="/pricing" className="mt-8 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
-          Go Premium
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{t.premiumFeature}</p>
+        <h1 className="font-display mt-4 text-3xl text-moon">{t.title}</h1>
+        <p className="mt-4 text-sm leading-relaxed text-moon-dim">{t.upsellBody}</p>
+        <Link href={L("/pricing")} className="mt-8 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
+          {t.goPremium}
         </Link>
       </section>
     );
@@ -100,28 +103,25 @@ export default function JournalView() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-16">
       <div className="text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Your Journal</p>
-        <h1 className="font-display mt-3 text-4xl text-moon">Readings you&apos;ve kept</h1>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{t.title}</p>
+        <h1 className="font-display mt-3 text-4xl text-moon">{t.keptHeading}</h1>
       </div>
 
       {!user.isPremium && (
         <p className="mx-auto mt-6 max-w-md text-center text-sm text-gold-dim">
-          {/* Reaches two different people now: a lapsed member, and someone who never subscribed
-              but bought a reading — which the server files here on any plan. "Your membership has
-              ended" was wrong for the second, so say what is true for both. */}
-          Readings you buy are always kept here. Free daily draws are saved with{" "}
-          <Link href="/pricing" className="underline underline-offset-4 hover:text-gold">
-            Premium
+          {t.boughtKeptPre}
+          <Link href={L("/pricing")} className="underline underline-offset-4 hover:text-gold">
+            {t.premiumWord}
           </Link>
-          .
+          {t.boughtKeptPost}
         </p>
       )}
 
       {entries.length === 0 ? (
         <div className="mt-12 text-center">
-          <p className="text-sm text-moon-dim">No saved readings yet. Save one from any reading&apos;s result page.</p>
-          <Link href="/reading/three-card" className="mt-6 inline-block rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
-            Start a Reading
+          <p className="text-sm text-moon-dim">{t.noneYet}</p>
+          <Link href={L("/reading/three-card")} className="mt-6 inline-block rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
+            {t.startReading}
           </Link>
         </div>
       ) : (
@@ -150,7 +150,7 @@ export default function JournalView() {
 
               {entry.aiReading && (
                 <div className="mt-5 border-t border-ink-line/60 pt-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">AI Deep Reading</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.aiDeepReading}</p>
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-moon-dim">{entry.aiReading}</p>
                 </div>
               )}
@@ -166,17 +166,17 @@ export default function JournalView() {
                     />
                     <div className="mt-2 flex gap-3">
                       <button type="button" onClick={() => handleSaveNote(entry.id)} className="text-xs uppercase tracking-widest text-gold">
-                        Save
+                        {t.save}
                       </button>
                       <button type="button" onClick={() => setEditing(null)} className="text-xs uppercase tracking-widest text-moon-dim">
-                        Cancel
+                        {t.cancel}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-start justify-between gap-4">
                     <p className="flex-1 text-sm leading-relaxed text-moon-dim">
-                      {entry.note || <span className="italic text-moon-dim/60">No note yet.</span>}
+                      {entry.note || <span className="italic text-moon-dim/60">{t.noNote}</span>}
                     </p>
                     <button
                       type="button"
@@ -186,7 +186,7 @@ export default function JournalView() {
                       }}
                       className="shrink-0 text-xs uppercase tracking-widest text-gold-dim hover:text-gold"
                     >
-                      {entry.note ? "Edit" : "Add note"}
+                      {entry.note ? t.edit : t.addNote}
                     </button>
                   </div>
                 )}
@@ -194,7 +194,7 @@ export default function JournalView() {
 
               <div className="mt-4 text-right">
                 <button type="button" onClick={() => handleDelete(entry.id)} className="text-[11px] uppercase tracking-widest text-moon-dim/60 hover:text-red-400">
-                  Delete
+                  {t.delete}
                 </button>
               </div>
             </article>

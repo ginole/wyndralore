@@ -8,10 +8,16 @@ import { pixelTrack } from "@/lib/pixel";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "@/components/WhopCheckoutModal";
 import { storedWhopAffiliate } from "@/components/WhopAffiliateCapture";
 import { storedTrafficSource } from "@/components/TrafficSourceCapture";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 export default function PricingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const locale = useLocale();
+  const t = getAppDict(locale).pricing;
+  const tw = locale === "zh-TW";
+  const accountHref = tw ? "/tw/account" : "/account";
   const [mode, setMode] = useState<BillingMode>("sub");
   const [pending, setPending] = useState<PlanId | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +32,7 @@ export default function PricingPage() {
     setError(null);
     if (loading) return;
     if (!user) {
-      router.push("/account");
+      router.push(accountHref);
       return;
     }
     const billingMode = modeFor(plan);
@@ -39,14 +45,14 @@ export default function PricingPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Could not start your order.");
+        setError(data.error ?? t.couldNotStart);
         return;
       }
       // FB ad conversion signal — user committed to a plan and reached checkout.
       pixelTrack("InitiateCheckout", { value: planOption(plan, billingMode).amountUsd, currency: "USD", content_name: plan });
       setCheckout({ planId: data.planId, sessionId: data.sessionId });
     } catch {
-      setError("Could not open checkout — please try again.");
+      setError(t.couldNotOpen);
     } finally {
       setPending(null);
     }
@@ -60,14 +66,11 @@ export default function PricingPage() {
         onClose={() => setCheckout(null)}
         // The webhook is what actually grants the plan; this just moves the buyer along once Whop
         // says the payment went through.
-        onComplete={() => router.push("/account")}
+        onComplete={() => router.push(accountHref)}
       />
-      <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">Wyndralore Premium</p>
-      <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">Read without limits</h1>
-      <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-moon-dim">
-        You choose how to pay. Subscribe and save — cancel anytime, no lock-in — or pay once with no auto-renewal
-        at all. Whatever you pick is spelled out plainly, never a hidden charge.
-      </p>
+      <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">{t.eyebrow}</p>
+      <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">{t.title}</h1>
+      <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-moon-dim">{t.intro}</p>
 
       {/* Billing toggle — affects any plan that has a subscription price. */}
       <div className="mx-auto mt-10 inline-flex rounded-full border border-gold-dim bg-ink-raised/50 p-1 text-xs uppercase tracking-[0.15em]">
@@ -76,14 +79,14 @@ export default function PricingPage() {
           onClick={() => setMode("sub")}
           className={`rounded-full px-5 py-2 transition-colors ${mode === "sub" ? "bg-gold text-ink" : "text-moon-dim hover:text-moon"}`}
         >
-          Subscribe &amp; save
+          {t.subscribeSave}
         </button>
         <button
           type="button"
           onClick={() => setMode("onetime")}
           className={`rounded-full px-5 py-2 transition-colors ${mode === "onetime" ? "bg-gold text-ink" : "text-moon-dim hover:text-moon"}`}
         >
-          One-time
+          {t.oneTime}
         </button>
       </div>
 
@@ -96,8 +99,8 @@ export default function PricingPage() {
           const option = planOption(id, shownMode);
           const footnote =
             shownMode === "sub"
-              ? `Renews at ${option.priceLabel}${option.cadence} · cancel anytime`
-              : "One-time payment · never auto-charged";
+              ? t.renewsAt(option.priceLabel, t.cadence(option.cadence))
+              : t.oneTimeNote;
           return (
             <div
               key={id}
@@ -109,16 +112,16 @@ export default function PricingPage() {
             >
               {plan.highlight && (
                 <span className="font-accent absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-ink shadow-[0_4px_14px_-4px_rgba(201,169,110,0.8)]">
-                  Most Popular
+                  {t.mostPopular}
                 </span>
               )}
-              <h2 className="font-display text-2xl text-moon">{plan.label}</h2>
+              <h2 className="font-display text-2xl text-moon">{t.planLabels[id] ?? plan.label}</h2>
               <p className="mt-4">
                 <span className="font-display text-4xl text-gold-bright">{option.priceLabel}</span>
-                <span className="ml-2 text-sm text-moon-dim">{option.cadence}</span>
+                <span className="ml-2 text-sm text-moon-dim">{t.cadence(option.cadence)}</span>
               </p>
               <ul className="mt-6 flex flex-1 flex-col gap-2 text-sm text-moon-dim">
-                {plan.perks.map((perk) => (
+                {(t.planPerks[id] ?? plan.perks).map((perk) => (
                   <li key={perk} className="flex items-center gap-2">
                     <span className="text-gold">✦</span> {perk}
                   </li>
@@ -134,7 +137,7 @@ export default function PricingPage() {
                     : "font-accent border border-gold-dim text-moon transition-[border-color,color,transform] duration-200 hover:border-gold hover:text-gold active:scale-[0.97]"
                 }`}
               >
-                {pending === id ? "Please wait…" : "Get Premium"}
+                {pending === id ? t.pleaseWait : t.getPremium}
               </button>
               <p className="mt-3 text-center text-[11px] text-moon-dim/70">{footnote}</p>
             </div>
@@ -143,13 +146,11 @@ export default function PricingPage() {
       </div>
 
       <p className="mx-auto mt-8 max-w-lg text-[11px] leading-relaxed text-moon-dim/60">
-        Digital goods, delivered instantly — all sales final. Subscriptions renew automatically until you cancel,
-        which you can do anytime from your account. By purchasing you agree to immediate delivery and waive
-        any right of withdrawal. See our{" "}
-        <a href="/terms" className="underline decoration-gold-dim underline-offset-2 hover:text-moon-dim">
-          Terms
+        {t.finePrint}{" "}
+        <a href={tw ? "/tw/terms" : "/terms"} className="underline decoration-gold-dim underline-offset-2 hover:text-moon-dim">
+          {t.terms}
         </a>
-        .
+        {tw ? "。" : "."}
       </p>
     </section>
   );

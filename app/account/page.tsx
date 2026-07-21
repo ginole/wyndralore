@@ -9,9 +9,16 @@ import SpecialReadingsPanel from "@/components/SpecialReadingsPanel";
 import { pixelTrack } from "@/lib/pixel";
 import { REF_STORAGE_KEY } from "@/lib/referral";
 import { VIA_STORAGE_KEY } from "@/lib/affiliate";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 export default function AccountPage() {
   const { user, quota, loading, refresh, logout } = useAuth();
+  const locale = useLocale();
+  const t = getAppDict(locale).account;
+  const planLabels = getAppDict(locale).pricing.planLabels;
+  const tw = locale === "zh-TW";
+  const L = (p: string) => (tw ? `/tw${p}` : p);
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
 
   // Open straight on the register tab when linked with ?mode=register — the "limited" wall sends
@@ -47,20 +54,20 @@ export default function AccountPage() {
   }
 
   async function handleCancelSubscription() {
-    if (typeof window !== "undefined" && !window.confirm("Cancel auto-renewal? You'll keep full access until the end of your current period.")) return;
+    if (typeof window !== "undefined" && !window.confirm(t.cancelConfirm)) return;
     setCanceling(true);
     setCancelMsg(null);
     try {
       const res = await fetch("/api/subscription/cancel", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        setCancelMsg(data.error ?? "Could not cancel — please try again.");
+        setCancelMsg(data.error ?? (tw ? "無法取消，請再試一次。" : "Could not cancel — please try again."));
         return;
       }
       await refresh();
-      setCancelMsg("Auto-renewal canceled — you keep access until your current period ends.");
+      setCancelMsg(tw ? "已取消自動續訂——你會保有權限直到當期結束。" : "Auto-renewal canceled — you keep access until your current period ends.");
     } catch {
-      setCancelMsg("Could not cancel — please try again.");
+      setCancelMsg(tw ? "無法取消，請再試一次。" : "Could not cancel — please try again.");
     } finally {
       setCanceling(false);
     }
@@ -85,7 +92,7 @@ export default function AccountPage() {
     e.preventDefault();
     setError(null);
     if (mode === "register" && password !== confirmPassword) {
-      setError("Passwords don't match. Please retype them.");
+      setError(t.passwordsNoMatchRetype);
       return;
     }
     setSubmitting(true);
@@ -107,7 +114,7 @@ export default function AccountPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
+        setError(data.error ?? t.somethingWrong);
         return;
       }
       // FB ad conversion signal — only new registrations, not logins.
@@ -132,20 +139,15 @@ export default function AccountPage() {
   if (!user && mode === "forgot") {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-6 py-16">
-        <h1 className="font-display mb-3 text-center text-3xl text-moon">Reset your password</h1>
+        <h1 className="font-display mb-3 text-center text-3xl text-moon">{t.resetTitle}</h1>
         {forgotSent ? (
-          <p className="text-center text-sm text-moon-dim">
-            If an account exists for <span className="text-moon">{email}</span>, we&apos;ve sent a link to reset your
-            password. It expires in 1 hour.
-          </p>
+          <p className="text-center text-sm text-moon-dim">{t.resetSent(email)}</p>
         ) : (
           <>
-            <p className="mb-6 text-center text-sm text-moon-dim">
-              Enter your email and we&apos;ll send you a link to choose a new password.
-            </p>
+            <p className="mb-6 text-center text-sm text-moon-dim">{t.resetIntro}</p>
             <form onSubmit={handleForgotSubmit} className="flex flex-col gap-4">
               <label className="flex flex-col gap-2">
-                <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Email</span>
+                <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.email}</span>
                 <input
                   type="email"
                   required
@@ -159,7 +161,7 @@ export default function AccountPage() {
                 disabled={submitting}
                 className="mt-2 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
               >
-                {submitting ? "Sending…" : "Send Reset Link"}
+                {submitting ? t.sending : t.sendResetLink}
               </button>
             </form>
           </>
@@ -172,7 +174,7 @@ export default function AccountPage() {
           }}
           className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
         >
-          Back to Sign In
+          {t.backToSignIn}
         </button>
       </section>
     );
@@ -187,22 +189,22 @@ export default function AccountPage() {
             onClick={() => setMode("login")}
             className={mode === "login" ? "text-gold" : "text-moon-dim"}
           >
-            Sign In
+            {t.signIn}
           </button>
           <button
             type="button"
             onClick={() => setMode("register")}
             className={mode === "register" ? "text-gold" : "text-moon-dim"}
           >
-            Register
+            {t.register}
           </button>
         </div>
         <h1 className="font-display mb-6 text-center text-3xl text-moon">
-          {mode === "login" ? "Welcome back" : "Create your account"}
+          {mode === "login" ? t.welcomeBack : t.createAccount}
         </h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-2">
-            <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Email</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.email}</span>
             <input
               type="email"
               required
@@ -212,7 +214,7 @@ export default function AccountPage() {
             />
           </label>
           <label className="flex flex-col gap-2">
-            <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Password</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.password}</span>
             <input
               type="password"
               required
@@ -228,12 +230,12 @@ export default function AccountPage() {
               onClick={() => setMode("forgot")}
               className="-mt-2 self-end text-xs text-moon-dim underline underline-offset-4 hover:text-moon"
             >
-              Forgot password?
+              {t.forgotPassword}
             </button>
           )}
           {mode === "register" && (
             <label className="flex flex-col gap-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Confirm Password</span>
+              <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.confirmPassword}</span>
               <input
                 type="password"
                 required
@@ -247,7 +249,7 @@ export default function AccountPage() {
                 }`}
               />
               {confirmPassword && confirmPassword !== password && (
-                <span className="text-xs text-red-400">Passwords don&apos;t match yet.</span>
+                <span className="text-xs text-red-400">{t.passwordsNoMatch}</span>
               )}
             </label>
           )}
@@ -257,7 +259,7 @@ export default function AccountPage() {
             disabled={submitting}
             className="mt-2 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
           >
-            {submitting ? "Please wait…" : mode === "login" ? "Sign In" : "Create Account"}
+            {submitting ? t.pleaseWait : mode === "login" ? t.signIn : t.createAccountBtn}
           </button>
         </form>
       </section>
@@ -266,23 +268,23 @@ export default function AccountPage() {
 
   return (
     <section className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-6 py-16 text-center">
-      <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Your Account</p>
+      <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{t.yourAccount}</p>
       <h1 className="font-display mt-3 text-3xl text-moon">{user.email}</h1>
 
       <div className="mt-8 rounded-2xl border border-ink-line bg-ink-raised/60 p-6 text-left">
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">Plan</span>
-          <span className="text-sm text-gold-bright">{user.isPremium ? user.plan.toUpperCase() : "Free"}</span>
+          <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">{t.plan}</span>
+          <span className="text-sm text-gold-bright">{user.isPremium ? (planLabels[user.plan] ?? user.plan.toUpperCase()) : t.free}</span>
         </div>
         {user.isPremium && user.planExpiresAt && (
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">Renews / Expires</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">{t.renewsExpires}</span>
             <span className="text-sm text-moon">{new Date(user.planExpiresAt).toLocaleDateString()}</span>
           </div>
         )}
         {!user.isPremium && quota && (
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">Readings left today</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">{t.readingsLeftToday}</span>
             <span className="text-sm text-moon">
               {quota.remaining} / {quota.limit}
             </span>
@@ -290,18 +292,16 @@ export default function AccountPage() {
         )}
         {user.dailyStreak > 0 && (
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">Daily streak</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-moon-dim">{t.dailyStreak}</span>
             <span className="text-sm text-gold-bright">
-              🔥 {user.dailyStreak} day{user.dailyStreak === 1 ? "" : "s"}
-              {user.bestStreak > user.dailyStreak ? ` · best ${user.bestStreak}` : ""}
+              🔥 {t.dayUnit(user.dailyStreak)}
+              {user.bestStreak > user.dailyStreak ? t.bestStreak(user.bestStreak) : ""}
             </span>
           </div>
         )}
         {user.isPremium && (
           <label className="mt-4 flex cursor-pointer items-center justify-between border-t border-ink-line/60 pt-4">
-            <span className="pr-4 text-xs leading-relaxed text-moon-dim">
-              Morning email if I haven&apos;t drawn my Card of the Day
-            </span>
+            <span className="pr-4 text-xs leading-relaxed text-moon-dim">{t.morningEmail}</span>
             <input
               type="checkbox"
               checked={user.dailyReminderOptIn}
@@ -321,15 +321,10 @@ export default function AccountPage() {
 
       <div className="mt-6 rounded-2xl border border-gold-dim bg-ink-raised/60 p-6 text-left">
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Invite friends</span>
-          <span className="text-sm text-gold-bright">
-            {user.premiumSpreadCredits} free {user.premiumSpreadCredits === 1 ? "unlock" : "unlocks"}
-          </span>
+          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.inviteFriends}</span>
+          <span className="text-sm text-gold-bright">{t.freeUnlocks(user.premiumSpreadCredits)}</span>
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-moon-dim">
-          When a friend signs up with your link and does a reading, you get{" "}
-          <span className="text-moon">3 free unlocks</span> for any premium spread — Love, Career, or Celtic Cross.
-        </p>
+        <p className="mt-2 text-xs leading-relaxed text-moon-dim">{t.inviteBody}</p>
         {user.referralCode ? (
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
@@ -343,21 +338,22 @@ export default function AccountPage() {
               onClick={handleCopyInvite}
               className="rounded-full bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright"
             >
-              {copied ? "Copied ✓" : "Copy Link"}
+              {copied ? t.copied : t.copyLink}
             </button>
           </div>
         ) : (
-          <p className="mt-4 text-xs text-moon-dim/70">Preparing your invite link…</p>
+          <p className="mt-4 text-xs text-moon-dim/70">{t.preparingLink}</p>
         )}
       </div>
 
       {user.autoRenew && (
         <div className="mt-6 rounded-2xl border border-ink-line bg-ink-raised/40 p-5 text-left">
-          <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">Auto-renewal on</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.autoRenewOn}</p>
           <p className="mt-2 text-sm leading-relaxed text-moon-dim">
-            Your {user.plan} plan renews automatically
-            {user.currentPeriodEnd ? ` on ${new Date(user.currentPeriodEnd).toLocaleDateString()}` : ""}. You&apos;re
-            in control — cancel anytime and keep full access until then.
+            {t.autoRenewBody(
+              planLabels[user.plan] ?? user.plan,
+              user.currentPeriodEnd ? new Date(user.currentPeriodEnd).toLocaleDateString() : "",
+            )}
           </p>
           <button
             type="button"
@@ -365,7 +361,7 @@ export default function AccountPage() {
             disabled={canceling}
             className="mt-3 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon disabled:opacity-60"
           >
-            {canceling ? "Canceling…" : "Cancel auto-renewal"}
+            {canceling ? t.canceling : t.cancelAutoRenew}
           </button>
           {cancelMsg && <p className="mt-2 text-xs text-gold-bright">{cancelMsg}</p>}
         </div>
@@ -384,7 +380,7 @@ export default function AccountPage() {
           href="/partner"
           className="mt-6 rounded-full border border-gold-dim px-7 py-3 text-center text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
         >
-          Your Partner Dashboard
+          {t.partnerDashboard}
         </Link>
       )}
 
@@ -393,23 +389,23 @@ export default function AccountPage() {
           href="/masters/dashboard"
           className="mt-6 rounded-full border border-gold-dim px-7 py-3 text-center text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
         >
-          Your Master Dashboard
+          {t.masterDashboard}
         </Link>
       )}
 
       {user.isPremium ? (
         <Link
-          href="/journal"
+          href={L("/journal")}
           className="mt-6 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright"
         >
-          Open Your Journal
+          {t.openJournal}
         </Link>
       ) : (
         <Link
-          href="/pricing"
+          href={L("/pricing")}
           className="mt-6 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright"
         >
-          Go Premium
+          {t.goPremium}
         </Link>
       )}
 
@@ -418,7 +414,7 @@ export default function AccountPage() {
         onClick={logout}
         className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
       >
-        Sign Out
+        {t.signOut}
       </button>
     </section>
   );

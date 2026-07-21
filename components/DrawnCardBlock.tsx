@@ -5,6 +5,8 @@ import { DeckCard, Orientation, TarotCard, Theme } from "@/lib/types";
 import CardFace from "./CardFace";
 import CardBack from "./CardBack";
 import FlipCard from "./FlipCard";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 const THEME_FIELD: Record<Theme, { meaning: keyof TarotCard; upright: keyof TarotCard; reversed: keyof TarotCard }> = {
   general: { meaning: "meaning_upright", upright: "meaning_upright", reversed: "meaning_reversed" },
@@ -22,13 +24,15 @@ interface DrawnCardBlockProps {
 }
 
 export default function DrawnCardBlock({ position, deckCard, orientation, theme, index }: DrawnCardBlockProps) {
+  const locale = useLocale();
+  const t = getAppDict(locale).reading;
   const [card, setCard] = useState<TarotCard | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [textVisible, setTextVisible] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/cards/${deckCard.id}`)
+    fetch(`/api/cards/${deckCard.id}?locale=${locale}`)
       .then((r) => r.json())
       .then((data: TarotCard) => {
         if (!cancelled) setCard(data);
@@ -36,7 +40,7 @@ export default function DrawnCardBlock({ position, deckCard, orientation, theme,
     return () => {
       cancelled = true;
     };
-  }, [deckCard.id]);
+  }, [deckCard.id, locale]);
 
   // The ritual reveal (PRD §6.3.4-5): the card arrives face-down, flips over with a light
   // sweep, then the reading text fades in — staggered per card position.
@@ -83,7 +87,7 @@ export default function DrawnCardBlock({ position, deckCard, orientation, theme,
           <h3 className="font-display text-2xl leading-[1.15] text-moon sm:text-3xl">
             {deckCard.name}
             <span className="mt-1 block text-xs font-sans uppercase tracking-[0.2em] text-gold-dim sm:ml-3 sm:mt-0 sm:inline sm:align-middle">
-              {orientation === "upright" ? "Upright" : "Reversed"}
+              {orientation === "upright" ? t.upright : t.reversed}
             </span>
           </h3>
           {card && (

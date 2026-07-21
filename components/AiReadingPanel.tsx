@@ -6,6 +6,8 @@ import { Theme } from "@/lib/types";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "@/components/WhopCheckoutModal";
 import { storedWhopAffiliate } from "@/components/WhopAffiliateCapture";
 import { storedTrafficSource } from "@/components/TrafficSourceCapture";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 interface ReadingCard {
   position: string;
@@ -46,30 +48,6 @@ interface AiReadingPanelProps {
 }
 
 type DeepState = "idle" | "loading" | "streaming" | "done" | "paywall" | "error" | "not_configured";
-
-const COPY = {
-  en: {
-    brand: "A Tarot-Attuned Reading Engine",
-    tagline:
-      "Not a generic chatbot guessing at your spread. This engine is tuned to tarot alone — steeped in the centuries-old meaning of the very cards you drew, and reading them in the exact positions before you, against your own question. No stranger's bias, no judgment: just the quiet pattern your cards are tracing, finally put into words.",
-    reveal: "Reveal My Deep Reading",
-    generating: "Reading the energy between your cards…",
-    notSavedHint:
-      "Members can save every reading to their Journal — this one won't be saved anywhere. Copy or screenshot it now to keep it.",
-    quotaLine: (remaining: number, limit: number) => `${remaining} of ${limit} free deep readings left this cycle`,
-    priceHintMember: "$1.99 once your free readings run out this cycle",
-    priceHintGuest: "$2.99 to reveal this reading",
-    buySingle: "Unlock this reading — $2.99",
-    buyOverage: "One more reading — $1.99 (member rate)",
-    signInHint: "Sign in free, then $2.99 to reveal — or free with membership",
-    signIn: "Sign in to continue",
-  },
-  zh: {
-    brand: "Wyndralore 智能觉察引擎",
-    tagline:
-      "我们的深度解读基于 78 张卡牌数百年来流传的神秘学象征逻辑。它没有人类占卜师的个人偏见，更不会对你的私密问题进行道德审判。它是一面绝对客观、隐秘的“心理魔镜”，利用先进的 AI 语言逻辑，为你梳理潜意识中被忽略的盲区。",
-  },
-};
 
 /** `onDone` carries the terminal event's payload — currently `{journalEntryId}` when the server
  *  already filed a bought-and-paid-for reading in the Journal on the querent's behalf. */
@@ -133,6 +111,10 @@ export default function AiReadingPanel({
   // Which product the open checkout modal is buying, so onComplete polls the right balance.
   const purchaseKindRef = useRef<"read" | "followup">("read");
   const started = useRef(false);
+  const locale = useLocale();
+  const a = getAppDict(locale).ai;
+  const tw = locale === "zh-TW";
+  const readingPath = tw ? `/tw/reading/${spreadSlug}` : `/reading/${spreadSlug}`;
 
   useEffect(() => {
     if (started.current) return;
@@ -282,7 +264,7 @@ export default function AiReadingPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           kind: "ai_followup",
-          redirectPath: `/reading/${spreadSlug}?resume=1`,
+          redirectPath: `${readingPath}?resume=1`,
           whopAffiliate: storedWhopAffiliate(), source: storedTrafficSource(),
         }),
       });
@@ -373,37 +355,37 @@ export default function AiReadingPanel({
       )}
 
       <div className="mt-8 rounded-2xl border border-gold-dim/40 bg-ink-raised/40 p-6 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{COPY.en.brand}</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{a.brand}</p>
 
         {deepState === "idle" && (
           <>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-moon-dim">{COPY.en.tagline}</p>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-moon-dim">{a.tagline}</p>
             <p className="mt-3 text-xs text-moon-dim/70">
               {!isAuthenticated
-                ? COPY.en.signInHint
+                ? a.signInHint
                 : quota?.isPremium
                   ? quota.deepReadsRemaining + quota.extraReadsAvailable > 0
-                    ? COPY.en.quotaLine(quota.deepReadsRemaining + quota.extraReadsAvailable, quota.deepReadsLimit)
-                    : COPY.en.priceHintMember
-                  : COPY.en.priceHintGuest}
+                    ? a.quotaLine(quota.deepReadsRemaining + quota.extraReadsAvailable, quota.deepReadsLimit)
+                    : a.priceHintMember
+                  : a.priceHintGuest}
             </p>
             <button
               type="button"
               onClick={handleReveal}
               className="mt-5 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright"
             >
-              {COPY.en.reveal}
+              {a.reveal}
             </button>
           </>
         )}
 
-        {deepState === "loading" && <p className="mt-4 text-sm text-moon-dim">{COPY.en.generating}</p>}
+        {deepState === "loading" && <p className="mt-4 text-sm text-moon-dim">{a.generating}</p>}
 
         {(deepState === "streaming" || deepState === "done") && (
           <>
             <p className="mx-auto mt-4 max-w-xl whitespace-pre-wrap text-left text-sm leading-relaxed text-moon">{deepText}</p>
             {deepState === "done" && !isPremium && (
-              <p className="mt-4 text-xs text-gold-dim">{COPY.en.notSavedHint}</p>
+              <p className="mt-4 text-xs text-gold-dim">{a.notSavedHint}</p>
             )}
 
             {/* One follow-up question against the reading just given ($1.99 / a purchased credit). */}
@@ -411,21 +393,21 @@ export default function AiReadingPanel({
               <div className="mt-6 border-t border-ink-line/60 pt-5">
                 {(followState === "streaming" || followState === "done") && (
                   <>
-                    <p className="text-left text-xs uppercase tracking-[0.2em] text-gold-dim">Your follow-up</p>
+                    <p className="text-left text-xs uppercase tracking-[0.2em] text-gold-dim">{a.followYours}</p>
                     <p className="mx-auto mt-2 max-w-xl whitespace-pre-wrap text-left text-sm leading-relaxed text-moon">{followText}</p>
                   </>
                 )}
-                {followState === "loading" && <p className="text-sm text-moon-dim">Listening to the cards again…</p>}
+                {followState === "loading" && <p className="text-sm text-moon-dim">{a.followLoading}</p>}
                 {followState === "error" && (
-                  <p className="text-sm text-moon-dim">Something went wrong with your follow-up. Try again.</p>
+                  <p className="text-sm text-moon-dim">{a.followError}</p>
                 )}
                 {followState === "asking" && (
                   <div className="text-left">
-                    <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">Ask your follow-up question</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-gold-dim">{a.followAskTitle}</p>
                     <textarea
                       value={followQuestion}
                       onChange={(e) => setFollowQuestion(e.target.value.slice(0, 300))}
-                      placeholder="What would you like the cards to clarify?"
+                      placeholder={a.followPlaceholder}
                       rows={2}
                       className="mt-2 w-full resize-none rounded-xl border border-ink-line bg-ink px-4 py-3 text-sm text-moon placeholder:text-moon-dim/50 focus:border-gold-dim focus:outline-none"
                     />
@@ -435,7 +417,7 @@ export default function AiReadingPanel({
                       disabled={!followQuestion.trim()}
                       className="mt-3 rounded-full bg-gold px-6 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-transform hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-50"
                     >
-                      Ask the cards
+                      {a.askTheCards}
                     </button>
                   </div>
                 )}
@@ -446,18 +428,18 @@ export default function AiReadingPanel({
                       onClick={() => setFollowState("asking")}
                       className="rounded-full border border-gold-dim px-6 py-2.5 text-xs uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
                     >
-                      Ask a follow-up — you have a credit
+                      {a.followHaveCredit}
                     </button>
                   ) : (
                     <>
-                      <p className="text-sm text-moon-dim">Something in this reading you want to go deeper on?</p>
+                      <p className="text-sm text-moon-dim">{a.followOffer}</p>
                       <button
                         type="button"
                         onClick={handleFollowupPurchase}
                         disabled={purchasing}
                         className="mt-3 rounded-full border border-gold-dim px-6 py-2.5 text-xs uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
                       >
-                        {purchasing ? "One moment…" : "Ask one follow-up question — $1.99"}
+                        {purchasing ? a.oneMoment : a.followBuy}
                       </button>
                     </>
                   ))}
@@ -466,15 +448,15 @@ export default function AiReadingPanel({
           </>
         )}
 
-        {deepState === "not_configured" && <p className="mt-4 text-sm text-moon-dim">AI deep readings are coming soon.</p>}
+        {deepState === "not_configured" && <p className="mt-4 text-sm text-moon-dim">{a.notConfigured}</p>}
 
-        {deepState === "error" && <p className="mt-4 text-sm text-moon-dim">Something went wrong generating your reading. Try again.</p>}
+        {deepState === "error" && <p className="mt-4 text-sm text-moon-dim">{a.error}</p>}
 
         {deepState === "paywall" && (
           <div className="mt-4">
             {!isAuthenticated ? (
-              <Link href="/account" className="text-sm text-gold underline underline-offset-4">
-                {COPY.en.signIn}
+              <Link href={tw ? "/tw/account" : "/account"} className="text-sm text-gold underline underline-offset-4">
+                {a.signIn}
               </Link>
             ) : (
               <button
@@ -483,7 +465,7 @@ export default function AiReadingPanel({
                 disabled={purchasing}
                 className="rounded-full border border-gold-dim px-6 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
               >
-                {purchasing ? "Redirecting…" : quota?.isPremium ? COPY.en.buyOverage : COPY.en.buySingle}
+                {purchasing ? a.redirecting : quota?.isPremium ? a.buyOverage : a.buySingle}
               </button>
             )}
           </div>

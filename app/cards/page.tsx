@@ -3,12 +3,13 @@ import Link from "next/link";
 import { getAllCards, getCardSlug } from "@/lib/cards";
 import CardFace from "@/components/CardFace";
 import DeckQuickSwitch from "@/components/DeckQuickSwitch";
+import { hreflangAlternates } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Tarot Card Meanings — The Complete 78-Card Library | Wyndralore",
   description:
     "Explore the meaning of all 78 tarot cards — Major and Minor Arcana. Upright and reversed keywords, love, career, and wellness readings, written to empower not predict.",
-  alternates: { canonical: "/cards" },
+  alternates: { canonical: "/cards", ...hreflangAlternates("/cards") },
 };
 
 const SUIT_SECTIONS: { key: string; title: string; filter: (arcana: string, suit: string | null) => boolean }[] = [

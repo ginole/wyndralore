@@ -16,6 +16,9 @@ import AiReadingPanel from "./AiReadingPanel";
 import FortuneShareCard from "./FortuneShareCard";
 import TipBlock from "./TipBlock";
 import DeckQuickSwitch from "./DeckQuickSwitch";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
+import { getDict } from "@/lib/i18n";
 
 type Phase = "checking" | "limited" | "intro" | "shuffle" | "select" | "reveal";
 
@@ -25,12 +28,7 @@ interface Selection {
   orientation: Orientation;
 }
 
-const THEME_OPTIONS: { value: Theme; label: string }[] = [
-  { value: "general", label: "General" },
-  { value: "love", label: "Love" },
-  { value: "career", label: "Career" },
-  { value: "wellness", label: "Wellness" },
-];
+const THEME_VALUES: Theme[] = ["general", "love", "career", "wellness"];
 
 function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -72,6 +70,16 @@ interface ReadingExperienceProps {
 
 export default function ReadingExperience({ spread, deck, creditUnlock }: ReadingExperienceProps) {
   const { user, quota, loading: authLoading, refresh: refreshAuth } = useAuth();
+  const locale = useLocale();
+  const t = getAppDict(locale).reading;
+  const themeT = getAppDict(locale).theme;
+  const tw = locale === "zh-TW";
+  // Locale-aware href: on /tw, keep internal links inside the 繁體 subtree.
+  const L = (p: string) => (tw ? (p === "/" ? "/tw" : `/tw${p}`) : p);
+  const pos = (p: string) => getAppDict(locale).positions[p] ?? p;
+  const sp = getDict(locale).spreads[spread.slug];
+  const spreadTitle = sp?.title ?? spread.title;
+  const spreadSubtitle = sp?.subtitle ?? spread.subtitle;
   const [phase, setPhase] = useState<Phase>("checking");
   const [question, setQuestion] = useState("");
   const [theme, setTheme] = useState<Theme>("general");
@@ -265,7 +273,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
       body: JSON.stringify({ date: todayLocal() }),
     });
     if (res.ok) {
-      setBonusMessage("+1 reading unlocked!");
+      setBonusMessage(t.bonusUnlocked);
       refreshAuth();
     }
   }
@@ -279,16 +287,16 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   async function handleTextShare() {
     track("share_click", { context: "limited" });
     const shareData = {
-      title: "Wyndralore Tarot",
-      text: "I just drew a reading on Wyndralore — a tarot experience built for quiet reflection. Try a free reading of your own.",
-      url: "https://wyndralore.com",
+      title: t.shareTitle,
+      text: t.shareText,
+      url: tw ? "https://wyndralore.com/tw" : "https://wyndralore.com",
     };
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share(shareData);
       } else if (typeof navigator !== "undefined" && navigator.clipboard) {
         await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        setBonusMessage("Link copied to clipboard!");
+        setBonusMessage(t.linkCopied);
       }
     } catch {
       // Share sheet dismissed — we still grant per PRD §4.1.
@@ -326,15 +334,13 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-6 text-center">
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">
-          {isGuest ? "Want another card?" : "Today’s reading is complete"}
+          {isGuest ? t.limitedGuestEyebrow : t.limitedMemberEyebrow}
         </p>
         <h1 className="font-display mt-4 text-3xl text-moon sm:text-4xl">
-          {isGuest ? "Create a free account to keep going" : "You’ve used today’s free reading"}
+          {isGuest ? t.limitedGuestTitle : t.limitedMemberTitle}
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-moon-dim">
-          {isGuest
-            ? "It’s free — no card needed. Members get more readings every day, save every one to their journal, and can unlock extra draws by sharing or watching a short clip."
-            : "Your free draw resets tomorrow. Premium members read without limits."}
+          {isGuest ? t.limitedGuestBody : t.limitedMemberBody}
         </p>
 
         {user ? (
@@ -345,7 +351,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
                 onClick={handleTextShare}
                 className="rounded-full border border-gold-dim px-7 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
               >
-                Share for +1 Reading
+                {t.shareForOne}
               </button>
             )}
             {quota?.adBonusAvailable && (
@@ -354,35 +360,35 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
                 onClick={() => setShowAdModal(true)}
                 className="rounded-full border border-gold-dim px-7 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
               >
-                Watch an Ad for +1 Reading
+                {t.watchAdForOne}
               </button>
             )}
           </div>
         ) : (
           <div className="mt-8 flex flex-col items-center gap-4">
             <Link
-              href="/account?mode=register"
+              href={L("/account?mode=register")}
               className="cta-gold rounded-full px-9 py-4 text-sm font-medium uppercase tracking-[0.2em]"
             >
-              Create My Free Account
+              {t.createFreeAccount}
             </Link>
             <Link
-              href="/account"
+              href={L("/account")}
               className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
             >
-              Already have one? Sign in
+              {t.alreadyHaveSignIn}
             </Link>
           </div>
         )}
 
         <Link
-          href="/pricing"
+          href={L("/pricing")}
           className="cta-gold mt-6 rounded-full px-7 py-3 text-sm font-medium uppercase tracking-[0.2em]"
         >
-          Go Premium for Unlimited
+          {t.goPremiumUnlimited}
         </Link>
-        <Link href="/" className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
-          Back to Wyndralore
+        <Link href={L("/")} className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
+          {t.backToWyndralore}
         </Link>
 
         {showAdModal && <AdBonusModal onComplete={handleAdBonusComplete} onClose={() => setShowAdModal(false)} />}
@@ -393,69 +399,69 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   if (phase === "intro") {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spread.count} card{spread.count > 1 ? "s" : ""}</p>
-        <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">{spread.title}</h1>
-        <p className="mt-4 text-sm leading-relaxed text-moon-dim sm:text-base">{spread.subtitle}</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{t.cardsUnit(spread.count)}</p>
+        <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">{spreadTitle}</h1>
+        <p className="mt-4 text-sm leading-relaxed text-moon-dim sm:text-base">{spreadSubtitle}</p>
 
         {/* The daily ritual has two modes — one card, or three piles to choose from. One homepage
             tile, two spreads; the toggle just navigates between them (both count the streak). */}
         {(spread.slug === "daily" || spread.slug === "pick-a-card") && (
           <div className="mt-6 inline-flex overflow-hidden rounded-full border border-ink-line">
             <Link
-              href="/reading/daily"
+              href={L("/reading/daily")}
               className={`px-5 py-2 text-xs uppercase tracking-[0.15em] transition-colors ${
                 spread.slug === "daily" ? "bg-gold/15 text-gold-bright" : "text-moon-dim hover:text-moon"
               }`}
             >
-              One card
+              {t.oneCard}
             </Link>
             <Link
-              href="/reading/pick-a-card"
+              href={L("/reading/pick-a-card")}
               className={`px-5 py-2 text-xs uppercase tracking-[0.15em] transition-colors ${
                 spread.slug === "pick-a-card" ? "bg-gold/15 text-gold-bright" : "text-moon-dim hover:text-moon"
               }`}
             >
-              Three piles
+              {t.threePiles}
             </Link>
           </div>
         )}
         {spread.free && user && quota && !quota.isPremium && (
           <p className="mt-3 text-xs uppercase tracking-[0.2em] text-gold-dim">
-            {quota.remaining} of {quota.limit} readings left today
+            {t.readingsLeft(quota.remaining ?? 0, quota.limit ?? 0)}
           </p>
         )}
         {creditUnlock && (
           <p className="mt-3 text-xs uppercase tracking-[0.2em] text-gold-bright">
-            ✦ Unlocking with 1 of your {creditUnlock.creditsRemaining} free premium {creditUnlock.creditsRemaining === 1 ? "unlock" : "unlocks"}
+            {t.creditUnlock(creditUnlock.creditsRemaining)}
           </p>
         )}
 
         <label className="mt-10 w-full text-left">
-          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Your question (optional)</span>
+          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.questionLabel}</span>
           <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="What's on your mind right now?"
+            placeholder={t.questionPlaceholder}
             rows={2}
             className="mt-2 w-full resize-none rounded-xl border border-ink-line bg-ink-raised/60 p-4 text-sm text-moon placeholder:text-moon-dim/50 focus:border-gold-dim focus:outline-none"
           />
         </label>
 
         <div className="mt-8 w-full text-left">
-          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Read this through the lens of</span>
+          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.lensLabel}</span>
           <div className="mt-3 flex flex-wrap gap-2">
-            {THEME_OPTIONS.map((opt) => (
+            {THEME_VALUES.map((value) => (
               <button
-                key={opt.value}
+                key={value}
                 type="button"
-                onClick={() => setTheme(opt.value)}
+                onClick={() => setTheme(value)}
                 className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-                  theme === opt.value
+                  theme === value
                     ? "border-gold bg-gold/10 text-gold-bright"
                     : "border-ink-line text-moon-dim hover:border-gold-dim"
                 }`}
               >
-                {opt.label}
+                {themeT[value]}
               </button>
             ))}
           </div>
@@ -466,7 +472,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
           onClick={handleBegin}
           className="cta-gold mt-10 w-full max-w-xs rounded-full px-9 py-4 text-sm font-medium uppercase tracking-[0.2em] sm:w-auto"
         >
-          Begin Shuffling
+          {t.beginShuffling}
         </button>
       </section>
     );
@@ -475,16 +481,16 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   if (phase === "shuffle") {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-6 py-16 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spread.title}</p>
-        <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">Shuffle the deck</h1>
-        <p className="mt-3 max-w-sm text-sm text-moon-dim">Shuffle as many times as feels right, then continue when you&apos;re ready to draw.</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spreadTitle}</p>
+        <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">{t.shuffleTitle}</h1>
+        <p className="mt-3 max-w-sm text-sm text-moon-dim">{t.shuffleBody}</p>
 
         <div className="mt-12">
           <DeckStack isShuffling={isShuffling} />
         </div>
 
         <p className="mt-8 h-4 text-xs uppercase tracking-[0.3em] text-gold-dim transition-opacity duration-500">
-          {isShuffling ? "Shuffling…" : "The deck is ready when you are."}
+          {isShuffling ? t.shuffling : t.deckReady}
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row">
@@ -493,7 +499,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
             onClick={handleShuffleAgain}
             className="rounded-full border border-gold-dim px-7 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
           >
-            Shuffle
+            {t.shuffleBtn}
           </button>
           <button
             type="button"
@@ -502,7 +508,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
               isShuffling ? "" : "btn-breathe"
             }`}
           >
-            Continue to Select
+            {t.continueToSelect}
           </button>
         </div>
         <DeckQuickSwitch kind="back" className="mt-8" />
@@ -513,19 +519,17 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   if (phase === "select") {
     return (
       <section className="mx-auto flex min-h-[75vh] w-full min-w-0 max-w-4xl flex-col px-6 py-14 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spread.title}</p>
-        <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">Choose your card{spread.count > 1 ? "s" : ""}</h1>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spreadTitle}</p>
+        <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">{t.chooseCards}</h1>
         <p className="mt-3 text-sm text-moon-dim">
-          {selected.length < spread.count
-            ? `Select ${spread.count - selected.length} more card${spread.count - selected.length > 1 ? "s" : ""}.`
-            : "Revealing..."}
+          {selected.length < spread.count ? t.selectMore(spread.count - selected.length) : t.revealing}
         </p>
 
         <div className="mx-auto mt-8 flex flex-wrap justify-center gap-4">
-          {spread.positions.map((pos, i) => {
+          {spread.positions.map((pos_, i) => {
             const s = selected[i];
             return (
-              <div key={pos} className="w-16 sm:w-20">
+              <div key={pos_} className="w-16 sm:w-20">
                 <div
                   className={`aspect-[5/8] w-full overflow-hidden rounded-md border transition-shadow duration-300 ${
                     s ? "border-gold-dim shadow-[0_0_18px_-2px_rgba(228,200,148,0.35)]" : "border-dashed border-ink-line"
@@ -539,7 +543,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
                     <div className="flex h-full w-full items-center justify-center bg-ink-raised/40" />
                   )}
                 </div>
-                <p className="mt-1 text-[10px] uppercase tracking-widest text-moon-dim">{pos}</p>
+                <p className="mt-1 text-[10px] uppercase tracking-widest text-moon-dim">{pos(pos_)}</p>
               </div>
             );
           })}
@@ -556,13 +560,13 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   return (
     <section className="mx-auto max-w-3xl px-6 py-16">
       <div className="mb-12 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spread.title}</p>
-        <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">Your Reading</h1>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{spreadTitle}</p>
+        <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">{t.yourReading}</h1>
         {question.trim() && <p className="mt-3 text-sm italic text-moon-dim">&ldquo;{question.trim()}&rdquo;</p>}
         {(spread.slug === "daily" || spread.slug === "pick-a-card") && streak !== null && streak > 0 && (
           <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-gold-dim/60 px-4 py-1.5 text-xs tracking-wide text-gold-bright">
             <span aria-hidden>🔥</span>
-            {streak === 1 ? "Day 1 of your streak — come back tomorrow" : `${streak}-day streak — see you tomorrow`}
+            {streak === 1 ? t.streakDay1 : t.streakN(streak)}
           </p>
         )}
         <div className="mt-5">
@@ -572,7 +576,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
 
       <div className="flex flex-col gap-10">
         {selected.map((s, i) => (
-          <DrawnCardBlock key={s.card.id} position={s.position} deckCard={s.card} orientation={s.orientation} theme={theme} index={i} />
+          <DrawnCardBlock key={s.card.id} position={pos(s.position)} deckCard={s.card} orientation={s.orientation} theme={theme} index={i} />
         ))}
       </div>
 
@@ -591,7 +595,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
       />
 
       <FortuneShareCard
-        spreadTitle={spread.title}
+        spreadTitle={spreadTitle}
         cards={fortuneCards}
         firstCardId={selected[0].card.id}
         referralCode={user?.referralCode ?? null}
@@ -603,14 +607,14 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
       {user?.isPremium && (
         <div className="mt-12 border-t border-ink-line/60 pt-8">
           <label className="block text-left">
-            <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Add a note (saved to your journal)</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.addNoteLabel}</span>
             <textarea
               value={note}
               onChange={(e) => {
                 setNote(e.target.value);
                 if (journalState === "saved") setJournalState("idle");
               }}
-              placeholder="What does this reading bring up for you?"
+              placeholder={t.notePlaceholder}
               rows={3}
               className="mt-2 w-full resize-none rounded-xl border border-ink-line bg-ink-raised/60 p-4 text-sm text-moon placeholder:text-moon-dim/50 focus:border-gold-dim focus:outline-none"
             />
@@ -627,17 +631,17 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
           }}
           className="rounded-full border border-ink-line px-6 py-3 text-sm uppercase tracking-[0.2em] text-moon-dim transition-colors hover:border-gold-dim hover:text-moon"
         >
-          Share
+          {t.share}
         </button>
         {/* "Saved" wins over the plan check: a reading bought outright is filed by the server on
             any plan, so a free buyer must not be shown a locked padlock over something that is
             already sitting in their Journal. Link it, so they can go and see that it really is. */}
         {journalState === "saved" ? (
           <Link
-            href="/journal"
+            href={L("/journal")}
             className="rounded-full border border-gold-dim px-6 py-3 text-sm uppercase tracking-[0.2em] text-gold transition-colors hover:border-gold"
           >
-            Saved ✓ View Journal
+            {t.savedViewJournal}
           </Link>
         ) : user?.isPremium ? (
           <button
@@ -646,15 +650,15 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
             disabled={journalState === "saving"}
             className="rounded-full border border-gold-dim px-6 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
           >
-            {journalState === "saving" ? "Saving…" : journalState === "members_only" ? "Members only — see plans" : "Save to Journal"}
+            {journalState === "saving" ? t.saving : journalState === "members_only" ? t.membersOnlySeePlans : t.saveToJournal}
           </button>
         ) : (
           <Link
-            href="/pricing"
-            title="Saving a free draw unlocks with Premium — readings you buy are always saved"
+            href={L("/pricing")}
+            title={t.saveLockedTitle}
             className="rounded-full border border-ink-line px-6 py-3 text-sm uppercase tracking-[0.2em] text-moon-dim/60 transition-colors hover:border-gold-dim hover:text-moon"
           >
-            Save to Journal 🔒
+            {t.saveToJournalLocked}
           </Link>
         )}
         <button
@@ -662,13 +666,13 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
           onClick={handleDrawAgain}
           className="cta-gold rounded-full px-7 py-3 text-sm font-medium uppercase tracking-[0.2em]"
         >
-          Draw Again
+          {t.drawAgain}
         </button>
       </div>
       {bonusMessage && <p className="mt-4 text-center text-xs uppercase tracking-[0.2em] text-gold">{bonusMessage}</p>}
       <div className="mt-6 text-center">
-        <Link href="/" className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
-          Back to Spreads
+        <Link href={L("/")} className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
+          {t.backToSpreads}
         </Link>
       </div>
 

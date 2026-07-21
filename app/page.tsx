@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import BackgroundFloatingCards from "@/components/BackgroundFloatingCards";
 import { SPREADS, SPREAD_ORDER } from "@/lib/spreads";
+import { hreflangAlternates } from "@/lib/i18n";
+
+// Title/description/OG come from the root layout; here we only add the hreflang pairing to the
+// 繁體 homepage (reciprocal to /tw's alternates).
+export const metadata: Metadata = {
+  alternates: { canonical: "/", ...hreflangAlternates("/") },
+};
 
 const STEPS = [
   {

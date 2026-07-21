@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useAuth } from "./AuthProvider";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "./WhopCheckoutModal";
 import { TIP_PRICE_USD } from "@/lib/pricing";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 /**
  * A small "leave a tip" block on the reading result page, right where the reader has just
@@ -12,6 +14,8 @@ import { TIP_PRICE_USD } from "@/lib/pricing";
  */
 export default function TipBlock({ spreadSlug }: { spreadSlug: string }) {
   const { user } = useAuth();
+  const locale = useLocale();
+  const t = getAppDict(locale).tip;
   const [target, setTarget] = useState<WhopCheckoutTarget | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "thanked" | "error">("idle");
 
@@ -20,7 +24,7 @@ export default function TipBlock({ spreadSlug }: { spreadSlug: string }) {
   if (state === "thanked") {
     return (
       <div className="mt-10 rounded-2xl border border-gold-dim/50 bg-ink-raised/30 p-5 text-center">
-        <p className="text-sm text-gold-bright">Thank you — truly. 💛</p>
+        <p className="text-sm text-gold-bright">{t.thanks}</p>
       </div>
     );
   }
@@ -33,7 +37,7 @@ export default function TipBlock({ spreadSlug }: { spreadSlug: string }) {
       const res = await fetch("/api/orders/special", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "tip", redirectPath: `/reading/${spreadSlug}` }),
+        body: JSON.stringify({ kind: "tip", redirectPath: `${locale === "zh-TW" ? "/tw" : ""}/reading/${spreadSlug}` }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -46,18 +50,16 @@ export default function TipBlock({ spreadSlug }: { spreadSlug: string }) {
 
   return (
     <div className="mt-10 rounded-2xl border border-ink-line bg-ink-raised/30 p-5 text-center">
-      <p className="text-sm text-moon-dim">
-        Did this reading land? Wyndralore is built and kept alive by one person.
-      </p>
+      <p className="text-sm text-moon-dim">{t.line}</p>
       <button
         type="button"
         onClick={handleTip}
         disabled={state === "loading"}
         className="mt-3 rounded-full border border-gold-dim px-6 py-2.5 text-xs uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
       >
-        {state === "loading" ? "One moment…" : `Leave a $${TIP_PRICE_USD} tip 💛`}
+        {state === "loading" ? t.loading : t.button(TIP_PRICE_USD)}
       </button>
-      {state === "error" && <p className="mt-2 text-xs text-red-400">Couldn&apos;t start checkout — try again.</p>}
+      {state === "error" && <p className="mt-2 text-xs text-red-400">{t.error}</p>}
       <WhopCheckoutModal
         target={target}
         email={user.email}
