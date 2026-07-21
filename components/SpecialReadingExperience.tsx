@@ -13,6 +13,8 @@ import { storedTrafficSource } from "@/components/TrafficSourceCapture";
 import { readSseStream } from "@/lib/sse";
 import DeckQuickSwitch from "./DeckQuickSwitch";
 import { YEAR_READING_PRICE_USD, LOVE_READING_PRICE_USD } from "@/lib/pricing";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 type Kind = "year_reading" | "love_reading";
 
@@ -31,55 +33,28 @@ function shuffleArray<T>(arr: T[]): T[] {
   return out;
 }
 
-function nextTwelveMonths(): string[] {
+function nextTwelveMonths(monthsLocale: string): string[] {
   const now = new Date();
   return Array.from({ length: 12 }, (_, i) =>
-    new Date(now.getFullYear(), now.getMonth() + 1 + i, 1).toLocaleString("en-US", { month: "long", year: "numeric" })
+    new Date(now.getFullYear(), now.getMonth() + 1 + i, 1).toLocaleString(monthsLocale, { month: "long", year: "numeric" })
   );
 }
 
-const CONFIG: Record<
-  Kind,
-  {
-    label: string;
-    title: string;
-    priceUsd: number;
-    creditField: "yearReadingCredits" | "loveReadingCredits";
-    pitch: string;
-    bullets: string[];
-  }
-> = {
-  year_reading: {
-    label: "Year Ahead",
-    title: "Your Year Ahead",
-    priceUsd: YEAR_READING_PRICE_USD,
-    creditField: "yearReadingCredits",
-    pitch:
-      "Thirteen cards: one theme for the whole year, then one card for each of the next twelve months — read as a single unfolding story, written for you and saved forever.",
-    bullets: [
-      "A theme card + 12 months, drawn by your own hand",
-      "A long written reading that walks your year month by month",
-      "Saved to your account permanently — return to it as the year unfolds",
-    ],
-  },
-  love_reading: {
-    label: "Love Compatibility",
-    title: "Love Compatibility",
-    priceUsd: LOVE_READING_PRICE_USD,
-    creditField: "loveReadingCredits",
-    pitch:
-      "Five cards for two people: your energy, theirs, the connection between you, its challenge, and where it's heading — read as one bond, not two fortunes.",
-    bullets: [
-      "Both of you in the cards, by name",
-      "An honest written reading of the connection itself",
-      "Saved to your account permanently",
-    ],
-  },
+const CONFIG: Record<Kind, { priceUsd: number; creditField: "yearReadingCredits" | "loveReadingCredits" }> = {
+  year_reading: { priceUsd: YEAR_READING_PRICE_USD, creditField: "yearReadingCredits" },
+  love_reading: { priceUsd: LOVE_READING_PRICE_USD, creditField: "loveReadingCredits" },
 };
 
 export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; deck: DeckCard[] }) {
   const { user, loading, refresh } = useAuth();
   const cfg = CONFIG[kind];
+  const locale = useLocale();
+  const t = getAppDict(locale).special;
+  const tw = locale === "zh-TW";
+  const L = (p: string) => (tw ? `/tw${p}` : p);
+  // A localized view of the config's copy, keyed by kind.
+  const label = t.labels[kind];
+  const title = t.titles[kind];
 
   const [phase, setPhase] = useState<"entry" | "setup" | "shuffle" | "select" | "reveal">("entry");
   const [nameA, setNameA] = useState("");
@@ -96,12 +71,15 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
   const [polling, setPolling] = useState(false);
   const generationStarted = useRef(false);
 
+  const dfltA = tw ? "你" : "You";
+  const dfltB = tw ? "對方" : "Them";
   const positions = useMemo(() => {
-    if (kind === "year_reading") return ["Theme of the Year", ...nextTwelveMonths()];
-    const a = nameA.trim() || "You";
-    const b = nameB.trim() || "Them";
-    return [`You (${a})`, `Them (${b})`, "The Connection", "The Challenge", "Where It's Heading"];
-  }, [kind, nameA, nameB]);
+    if (kind === "year_reading") return [t.themeOfYear, ...nextTwelveMonths(t.monthsLocale)];
+    const a = nameA.trim() || dfltA;
+    const b = nameB.trim() || dfltB;
+    return [t.youName(a), t.themName(b), t.connection, t.challenge, t.heading];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind, nameA, nameB, locale]);
 
   const credits = user ? user[cfg.creditField] : 0;
 
@@ -113,7 +91,7 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           kind,
-          redirectPath: kind === "year_reading" ? "/reading/year-ahead" : "/reading/love-compatibility",
+          redirectPath: L(kind === "year_reading" ? "/reading/year-ahead" : "/reading/love-compatibility"),
           whopAffiliate: storedWhopAffiliate(), source: storedTrafficSource(),
         }),
       });
@@ -172,17 +150,17 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
     if (generationStarted.current) return;
     generationStarted.current = true;
     setGenState("streaming");
-    const title =
+    const genTitle =
       kind === "year_reading"
-        ? `Your Year Ahead · ${positions[1]} – ${positions[12]}`
-        : `${nameA.trim() || "You"} & ${nameB.trim() || "Them"} · Love Compatibility`;
+        ? t.genTitleYear(positions[1], positions[12])
+        : t.genTitleLove(nameA.trim() || dfltA, nameB.trim() || dfltB);
     try {
       const res = await fetch("/api/special-reading/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           kind,
-          title,
+          title: genTitle,
           cards: cards.map((s) => ({ position: s.position, name: s.card.name, orientation: s.orientation })),
           input: { nameA: nameA.trim() || undefined, nameB: nameB.trim() || undefined, question: question.trim() || undefined },
         }),
@@ -219,11 +197,11 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
             void pollForCredit();
           }}
         />
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{cfg.label}</p>
-        <h1 className="font-display mt-4 text-3xl text-moon sm:text-4xl">{cfg.title}</h1>
-        <p className="mt-5 max-w-xl text-sm leading-relaxed text-moon-dim">{cfg.pitch}</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{label}</p>
+        <h1 className="font-display mt-4 text-3xl text-moon sm:text-4xl">{title}</h1>
+        <p className="mt-5 max-w-xl text-sm leading-relaxed text-moon-dim">{t.pitches[kind]}</p>
         <ul className="mt-6 space-y-2 text-sm text-moon-dim">
-          {cfg.bullets.map((b) => (
+          {t.bullets[kind].map((b) => (
             <li key={b} className="flex items-start gap-2 text-left">
               <span className="mt-0.5 text-gold">✦</span>
               {b}
@@ -233,24 +211,24 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
 
         {!user ? (
           <Link
-            href="/account"
+            href={L("/account")}
             className="mt-10 rounded-full bg-gold px-8 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform hover:scale-[1.02] hover:bg-gold-bright"
           >
-            Sign in to begin
+            {t.signInToBegin}
           </Link>
         ) : credits > 0 ? (
           <>
-            <p className="mt-8 text-xs uppercase tracking-[0.2em] text-gold-bright">A reading is waiting for you</p>
+            <p className="mt-8 text-xs uppercase tracking-[0.2em] text-gold-bright">{t.readingWaiting}</p>
             <button
               type="button"
               onClick={beginRitual}
               className="mt-4 rounded-full bg-gold px-8 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform hover:scale-[1.02] hover:bg-gold-bright"
             >
-              Begin the ritual
+              {t.beginRitual}
             </button>
           </>
         ) : polling ? (
-          <p className="mt-10 text-sm text-moon-dim">Confirming your payment…</p>
+          <p className="mt-10 text-sm text-moon-dim">{t.confirmingPayment}</p>
         ) : (
           <>
             <button
@@ -259,9 +237,9 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
               disabled={buying}
               className="mt-10 rounded-full bg-gold px-8 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
             >
-              {buying ? "One moment…" : `Unlock — $${cfg.priceUsd}`}
+              {buying ? t.oneMoment : t.unlock(cfg.priceUsd)}
             </button>
-            <p className="mt-3 text-xs text-moon-dim/70">One-time purchase · yours forever · no subscription</p>
+            <p className="mt-3 text-xs text-moon-dim/70">{t.oneTimeNote}</p>
           </>
         )}
       </section>
@@ -272,25 +250,25 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
   if (phase === "setup") {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-6 py-16 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{cfg.label}</p>
-        <h1 className="font-display mt-3 text-3xl text-moon">Who are we reading?</h1>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{label}</p>
+        <h1 className="font-display mt-3 text-3xl text-moon">{t.whoReading}</h1>
         <div className="mt-8 flex w-full flex-col gap-3">
           <input
             value={nameA}
             onChange={(e) => setNameA(e.target.value.slice(0, 40))}
-            placeholder="Your name"
+            placeholder={t.yourName}
             className="rounded-full border border-ink-line bg-ink px-5 py-3 text-sm text-moon placeholder:text-moon-dim/50 focus:border-gold focus:outline-none"
           />
           <input
             value={nameB}
             onChange={(e) => setNameB(e.target.value.slice(0, 40))}
-            placeholder="Their name"
+            placeholder={t.theirName}
             className="rounded-full border border-ink-line bg-ink px-5 py-3 text-sm text-moon placeholder:text-moon-dim/50 focus:border-gold focus:outline-none"
           />
           <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value.slice(0, 300))}
-            placeholder="Anything specific on your mind about this connection? (optional)"
+            placeholder={t.connectionQuestion}
             rows={2}
             className="rounded-xl border border-ink-line bg-ink px-5 py-3 text-sm text-moon placeholder:text-moon-dim/50 focus:border-gold focus:outline-none"
           />
@@ -301,7 +279,7 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
           disabled={!nameA.trim() || !nameB.trim()}
           className="mt-8 rounded-full bg-gold px-8 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-50"
         >
-          Continue
+          {t.cont}
         </button>
       </section>
     );
@@ -311,11 +289,9 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
   if (phase === "shuffle") {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-6 py-16 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{cfg.label}</p>
-        <h1 className="font-display mt-3 text-3xl text-moon">Shuffle the deck</h1>
-        <p className="mt-3 max-w-sm text-sm text-moon-dim">
-          Shuffle as many times as feels right, then continue when you&apos;re ready to draw {positions.length} cards.
-        </p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{label}</p>
+        <h1 className="font-display mt-3 text-3xl text-moon">{t.shuffleTitle}</h1>
+        <p className="mt-3 max-w-sm text-sm text-moon-dim">{t.shuffleBody(positions.length)}</p>
         <div className="mt-10">
           <DeckStack isShuffling={isShuffling} />
         </div>
@@ -326,7 +302,7 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
             disabled={isShuffling}
             className="rounded-full border border-gold-dim px-7 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
           >
-            Shuffle
+            {t.shuffleBtn}
           </button>
           <button
             type="button"
@@ -334,7 +310,7 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
             disabled={isShuffling}
             className="rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
           >
-            Continue to Select
+            {t.continueSelect}
           </button>
         </div>
         <DeckQuickSwitch kind="back" className="mt-8" />
@@ -346,12 +322,12 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
   if (phase === "select") {
     return (
       <section className="mx-auto max-w-4xl px-6 py-16 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{cfg.label}</p>
-        <h1 className="font-display mt-3 text-3xl text-moon">Choose your cards</h1>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{label}</p>
+        <h1 className="font-display mt-3 text-3xl text-moon">{t.chooseCards}</h1>
         <p className="mt-2 text-sm text-moon-dim">
           {selected.length < positions.length
-            ? `${positions[selected.length]} — select ${positions.length - selected.length} more card${positions.length - selected.length > 1 ? "s" : ""}.`
-            : "All drawn."}
+            ? t.selectMore(positions[selected.length], positions.length - selected.length)
+            : t.allDrawn}
         </p>
 
         <div className="mx-auto mt-8 grid max-w-3xl grid-cols-4 gap-3 sm:grid-cols-5 md:grid-cols-7">
@@ -374,9 +350,9 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
   return (
     <section className="mx-auto max-w-3xl px-6 py-16">
       <div className="mb-10 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{cfg.label}</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{label}</p>
         <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">
-          {kind === "year_reading" ? "Your Year Ahead" : `${nameA.trim() || "You"} & ${nameB.trim() || "Them"}`}
+          {kind === "year_reading" ? t.yearTitle : t.loveTitle(nameA.trim() || dfltA, nameB.trim() || dfltB)}
         </h1>
         <div className="mt-5">
           <DeckQuickSwitch kind="face" />
@@ -395,24 +371,24 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
       </div>
 
       <div className="mt-10 rounded-2xl border border-gold-dim/40 bg-ink-raised/40 p-6">
-        {genState === "streaming" && !aiText && <p className="text-center text-sm text-moon-dim">Reading the arc of your cards…</p>}
+        {genState === "streaming" && !aiText && <p className="text-center text-sm text-moon-dim">{t.readingArc}</p>}
         {aiText && <p className="whitespace-pre-wrap text-sm leading-relaxed text-moon">{aiText}</p>}
         {genState === "error" && (
           <p className="text-center text-sm text-moon-dim">
-            Something went wrong generating your reading — your credit was NOT spent.{" "}
+            {t.genError}{" "}
             <button type="button" className="text-gold underline underline-offset-4" onClick={() => { generationStarted.current = false; setGenState("idle"); void generate(selected); }}>
-              Try again
+              {t.tryAgain}
             </button>
           </p>
         )}
         {genState === "done" && (
           <p className="mt-6 border-t border-ink-line/60 pt-4 text-center text-xs text-gold-dim">
-            Saved to your account permanently
+            {t.savedPermanent}
             {savedId && (
               <>
                 {" · "}
-                <Link href={`/readings/${savedId}`} className="text-gold underline underline-offset-4">
-                  open your reading&apos;s own page
+                <Link href={L(`/readings/${savedId}`)} className="text-gold underline underline-offset-4">
+                  {t.openOwnPage}
                 </Link>
               </>
             )}

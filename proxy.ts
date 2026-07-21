@@ -18,10 +18,19 @@ const TW_PREFIX = "/tw";
 const BOT_UA =
   /bot|crawl|slurp|spider|mediapartners|facebookexternalhit|embedly|quora link preview|bitlybot|whatsapp|telegrambot|applebot|bingpreview|duckduckbot|yandex|baidu|petalbot/i;
 
-// Reading spreads that have a /tw/reading/[slug] twin. The one-off special readings
-// (year-ahead, love-compatibility) are NOT localized yet and are deliberately excluded, so a TW
-// visitor on those English URLs is left there rather than bounced to a 繁體 "spread not found".
-const TW_READING_SLUGS = new Set(["daily", "yes-no", "pick-a-card", "three-card", "love", "career", "celtic-cross"]);
+// Reading paths that have a /tw twin — the spreads plus the two one-off special readings
+// (year-ahead / love-compatibility, which are their own static routes under /tw/reading/).
+const TW_READING_SLUGS = new Set([
+  "daily",
+  "yes-no",
+  "pick-a-card",
+  "three-card",
+  "love",
+  "career",
+  "celtic-cross",
+  "year-ahead",
+  "love-compatibility",
+]);
 // Standalone English paths that have an exact /tw twin.
 const TW_EXACT_PATHS = new Set([
   "/pricing",
@@ -39,6 +48,8 @@ function isTwRedirectable(pathname: string): boolean {
   if (TW_EXACT_PATHS.has(pathname)) return true;
   const m = pathname.match(/^\/reading\/([^/]+)$/);
   if (m && TW_READING_SLUGS.has(m[1])) return true;
+  // Permanent saved special-reading pages have a /tw twin too.
+  if (/^\/readings\/[^/]+$/.test(pathname)) return true;
   return false;
 }
 

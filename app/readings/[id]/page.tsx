@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import CardFace from "@/components/CardFace";
 import { useAuth } from "@/components/AuthProvider";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 interface SavedCard {
   position: string;
@@ -26,6 +28,9 @@ interface SavedReading {
 export default function SavedReadingPage() {
   const { id } = useParams<{ id: string }>();
   const { user, loading } = useAuth();
+  const locale = useLocale();
+  const t = getAppDict(locale).special;
+  const tw = locale === "zh-TW";
   const [reading, setReading] = useState<SavedReading | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
 
@@ -53,10 +58,10 @@ export default function SavedReadingPage() {
   if (state === "missing" || !reading) {
     return (
       <section className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-6 text-center">
-        <h1 className="font-display text-2xl text-moon">Reading not found</h1>
-        <p className="mt-3 text-sm text-moon-dim">Sign in with the account that owns it, or head back to your account page.</p>
-        <Link href="/account" className="mt-6 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4">
-          Your account
+        <h1 className="font-display text-2xl text-moon">{t.notFound}</h1>
+        <p className="mt-3 text-sm text-moon-dim">{t.notFoundBody}</p>
+        <Link href={tw ? "/tw/account" : "/account"} className="mt-6 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4">
+          {t.yourAccount}
         </Link>
       </section>
     );
@@ -66,7 +71,7 @@ export default function SavedReadingPage() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-16">
       <div className="mb-10 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{isYear ? "Year Ahead" : "Love Compatibility"}</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{isYear ? t.labels.year_reading : t.labels.love_reading}</p>
         <h1 className="font-display mt-3 text-3xl text-moon sm:text-4xl">{reading.title}</h1>
         <p className="mt-2 text-xs text-moon-dim/70">{new Date(reading.createdAt).toLocaleDateString()}</p>
       </div>

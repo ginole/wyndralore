@@ -26,9 +26,10 @@ const FREE_TOOLS = [
   { href: "/tw/cards", title: "塔羅牌義大全", subtitle: "整副牌每一張的正逆位含義，慢慢讀，慢慢懂。" },
 ];
 
-// The one-off "special readings" (year-ahead / love-compatibility) are not offered on /tw yet —
-// their 424-line experience isn't localized. Deliberately omitted here so no /tw link leads to a
-// non-繁體 page; the membership funnel (draw → register → subscribe) is fully localized.
+const SPECIALS = [
+  { href: "/tw/reading/year-ahead", title: "你的未來一年", subtitle: "一張主題牌，加上未來十二個月各一張，讀成一則徐徐展開的故事。", meta: "13 張牌" },
+  { href: "/tw/reading/love-compatibility", title: "愛情契合度", subtitle: "兩個人，五張牌：你的能量、對方的能量，以及你們之間那份坦誠的連結。", meta: "5 張牌" },
+];
 
 export default function TwHome() {
   return (
@@ -140,6 +141,31 @@ export default function TwHome() {
           ))}
         </div>
 
+        <div className="mt-16 text-center">
+          <h3 className="font-display text-2xl text-moon">{t.home.specialTitle}</h3>
+          <p className="mt-2 text-sm text-moon-dim">{t.home.specialSubtitle}</p>
+        </div>
+        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
+          {SPECIALS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group relative flex h-full flex-col justify-between rounded-2xl border border-gold-dim/50 bg-ink-raised/60 p-6 shadow-[inset_0_1px_0_rgba(228,200,148,0.1)] transition-[border-color,transform,box-shadow] duration-200 hover:border-gold hover:shadow-[inset_0_1px_0_rgba(228,200,148,0.16),0_18px_40px_-24px_rgba(201,169,110,0.45)] active:scale-[0.985]"
+            >
+              <span className="font-accent absolute right-4 top-4 rounded-full border border-gold-dim bg-gold/10 px-2.5 py-1 text-[10px] uppercase tracking-widest text-gold">
+                {t.home.oneTimeBadge}
+              </span>
+              <div>
+                <h3 className="font-display text-xl text-moon">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-moon-dim">{item.subtitle}</p>
+              </div>
+              <p className="font-accent mt-6 text-xs uppercase tracking-[0.2em] text-gold-dim">
+                {item.meta}
+                <span className="ml-2 inline-block text-gold opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-1 group-hover:opacity-100">→</span>
+              </p>
+            </Link>
+          ))}
+        </div>
       </section>
     </>
   );

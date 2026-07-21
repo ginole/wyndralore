@@ -161,6 +161,50 @@ export interface AppDict {
     addNote: string;
     delete: string;
   };
+  special: {
+    labels: Record<string, string>;
+    titles: Record<string, string>;
+    pitches: Record<string, string>;
+    bullets: Record<string, string[]>;
+    themeOfYear: string;
+    youName: (n: string) => string;
+    themName: (n: string) => string;
+    connection: string;
+    challenge: string;
+    heading: string;
+    monthsLocale: string;
+    signInToBegin: string;
+    readingWaiting: string;
+    beginRitual: string;
+    confirmingPayment: string;
+    oneMoment: string;
+    unlock: (price: number) => string;
+    oneTimeNote: string;
+    whoReading: string;
+    yourName: string;
+    theirName: string;
+    connectionQuestion: string;
+    cont: string;
+    shuffleTitle: string;
+    shuffleBody: (n: number) => string;
+    shuffleBtn: string;
+    continueSelect: string;
+    chooseCards: string;
+    selectMore: (pos: string, n: number) => string;
+    allDrawn: string;
+    yearTitle: string;
+    loveTitle: (a: string, b: string) => string;
+    readingArc: string;
+    genError: string;
+    tryAgain: string;
+    savedPermanent: string;
+    openOwnPage: string;
+    genTitleYear: (m1: string, m12: string) => string;
+    genTitleLove: (a: string, b: string) => string;
+    notFound: string;
+    notFoundBody: string;
+    yourAccount: string;
+  };
   pricing: {
     eyebrow: string;
     title: string;
@@ -349,6 +393,66 @@ const en: AppDict = {
     edit: "Edit",
     addNote: "Add note",
     delete: "Delete",
+  },
+  special: {
+    labels: { year_reading: "Year Ahead", love_reading: "Love Compatibility" },
+    titles: { year_reading: "Your Year Ahead", love_reading: "Love Compatibility" },
+    pitches: {
+      year_reading:
+        "Thirteen cards: one theme for the whole year, then one card for each of the next twelve months — read as a single unfolding story, written for you and saved forever.",
+      love_reading:
+        "Five cards for two people: your energy, theirs, the connection between you, its challenge, and where it's heading — read as one bond, not two fortunes.",
+    },
+    bullets: {
+      year_reading: [
+        "A theme card + 12 months, drawn by your own hand",
+        "A long written reading that walks your year month by month",
+        "Saved to your account permanently — return to it as the year unfolds",
+      ],
+      love_reading: [
+        "Both of you in the cards, by name",
+        "An honest written reading of the connection itself",
+        "Saved to your account permanently",
+      ],
+    },
+    themeOfYear: "Theme of the Year",
+    youName: (n) => `You (${n})`,
+    themName: (n) => `Them (${n})`,
+    connection: "The Connection",
+    challenge: "The Challenge",
+    heading: "Where It's Heading",
+    monthsLocale: "en-US",
+    signInToBegin: "Sign in to begin",
+    readingWaiting: "A reading is waiting for you",
+    beginRitual: "Begin the ritual",
+    confirmingPayment: "Confirming your payment…",
+    oneMoment: "One moment…",
+    unlock: (p) => `Unlock — $${p}`,
+    oneTimeNote: "One-time purchase · yours forever · no subscription",
+    whoReading: "Who are we reading?",
+    yourName: "Your name",
+    theirName: "Their name",
+    connectionQuestion: "Anything specific on your mind about this connection? (optional)",
+    cont: "Continue",
+    shuffleTitle: "Shuffle the deck",
+    shuffleBody: (n) => `Shuffle as many times as feels right, then continue when you're ready to draw ${n} cards.`,
+    shuffleBtn: "Shuffle",
+    continueSelect: "Continue to Select",
+    chooseCards: "Choose your cards",
+    selectMore: (pos, n) => `${pos} — select ${n} more card${n > 1 ? "s" : ""}.`,
+    allDrawn: "All drawn.",
+    yearTitle: "Your Year Ahead",
+    loveTitle: (a, b) => `${a} & ${b}`,
+    readingArc: "Reading the arc of your cards…",
+    genError: "Something went wrong generating your reading — your credit was NOT spent.",
+    tryAgain: "Try again",
+    savedPermanent: "Saved to your account permanently",
+    openOwnPage: "open your reading’s own page",
+    genTitleYear: (m1, m12) => `Your Year Ahead · ${m1} – ${m12}`,
+    genTitleLove: (a, b) => `${a} & ${b} · Love Compatibility`,
+    notFound: "Reading not found",
+    notFoundBody: "Sign in with the account that owns it, or head back to your account page.",
+    yourAccount: "Your account",
   },
   pricing: {
     eyebrow: "Wyndralore Premium",
@@ -565,6 +669,66 @@ const zhTW: AppDict = {
     edit: "編輯",
     addNote: "新增筆記",
     delete: "刪除",
+  },
+  special: {
+    labels: { year_reading: "未來一年", love_reading: "愛情契合度" },
+    titles: { year_reading: "你的未來一年", love_reading: "愛情契合度" },
+    pitches: {
+      year_reading:
+        "十三張牌：一張貫穿整年的主題牌，再為接下來的十二個月各抽一張——讀成一則徐徐展開的故事，為你而寫，永久保存。",
+      love_reading:
+        "為兩個人抽的五張牌：你的能量、對方的能量、你們之間的連結、它的挑戰，以及它的走向——當成「一段羈絆」來讀，而不是兩份各自的命運。",
+    },
+    bullets: {
+      year_reading: [
+        "一張主題牌 + 12 個月，由你親手抽出",
+        "一段長篇文字解讀，帶你一個月一個月走過這一年",
+        "永久存進你的帳號——隨著這一年展開，隨時回來重讀",
+      ],
+      love_reading: [
+        "你們兩人都在牌裡，以名字入陣",
+        "一段對這份連結本身的誠實文字解讀",
+        "永久存進你的帳號",
+      ],
+    },
+    themeOfYear: "年度主題",
+    youName: (n) => `你（${n}）`,
+    themName: (n) => `對方（${n}）`,
+    connection: "你們的連結",
+    challenge: "挑戰",
+    heading: "未來走向",
+    monthsLocale: "zh-TW",
+    signInToBegin: "登入以開始",
+    readingWaiting: "有一份解讀正等著你",
+    beginRitual: "開始儀式",
+    confirmingPayment: "正在確認你的付款…",
+    oneMoment: "稍候…",
+    unlock: (p) => `解鎖 — $${p}`,
+    oneTimeNote: "一次購買 · 永久擁有 · 無需訂閱",
+    whoReading: "我們要為誰解讀？",
+    yourName: "你的名字",
+    theirName: "對方的名字",
+    connectionQuestion: "關於這段連結，有什麼特別想問的嗎？（可選填）",
+    cont: "繼續",
+    shuffleTitle: "洗牌",
+    shuffleBody: (n) => `想洗幾次就洗幾次，準備好抽 ${n} 張牌了再繼續。`,
+    shuffleBtn: "洗牌",
+    continueSelect: "繼續選牌",
+    chooseCards: "抽出你的牌",
+    selectMore: (pos, n) => `${pos} — 再選 ${n} 張牌。`,
+    allDrawn: "全部抽完。",
+    yearTitle: "你的未來一年",
+    loveTitle: (a, b) => `${a} & ${b}`,
+    readingArc: "正在讀取你牌卡之間的脈絡…",
+    genError: "產生你的解讀時出了點問題——你的額度並未被扣除。",
+    tryAgain: "再試一次",
+    savedPermanent: "已永久儲存到你的帳號",
+    openOwnPage: "開啟這份解讀的專屬頁面",
+    genTitleYear: (m1, m12) => `你的未來一年 · ${m1} – ${m12}`,
+    genTitleLove: (a, b) => `${a} & ${b} · 愛情契合度`,
+    notFound: "找不到這份解讀",
+    notFoundBody: "請以擁有它的帳號登入，或回到你的帳號頁面。",
+    yourAccount: "你的帳號",
   },
   pricing: {
     eyebrow: "Wyndralore 進階會員",
