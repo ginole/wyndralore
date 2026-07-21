@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeckPrefs, deckImageSrc, cardBackSrc, DeckStyle, CardBackStyle } from "./DeckPrefs";
+import { useAppT } from "@/lib/useLocale";
 
 /**
  * The deck-appearance picker on /account: which card art the reader sees (our minimal gold
@@ -9,24 +10,23 @@ import { useDeckPrefs, deckImageSrc, cardBackSrc, DeckStyle, CardBackStyle } fro
  */
 export default function DeckStylePanel() {
   const { deckStyle, cardBackStyle, setDeckStyle, setCardBackStyle } = useDeckPrefs();
+  const t = useAppT();
 
   const faceOptions: { value: DeckStyle; label: string; sample: string }[] = [
-    { value: "classic", label: "Classic 1909", sample: deckImageSrc("/cards/major-17-star.svg", "classic") },
-    { value: "minimal", label: "Wyndralore", sample: deckImageSrc("/cards/major-17-star.svg", "minimal") },
+    { value: "classic", label: t.deck.classic, sample: deckImageSrc("/cards/major-17-star.svg", "classic") },
+    { value: "minimal", label: t.deck.wyndralore, sample: deckImageSrc("/cards/major-17-star.svg", "minimal") },
   ];
   const backOptions: { value: CardBackStyle; label: string }[] = [
-    { value: "lunar", label: "Lunar Mandala" },
-    { value: "damask", label: "Star Damask" },
+    { value: "lunar", label: t.deck.lunarFull },
+    { value: "damask", label: t.deck.damaskFull },
   ];
 
   return (
     <div className="mt-6 w-full rounded-2xl border border-ink-line bg-ink-raised/50 p-6 text-left">
-      <h2 className="font-display text-lg text-gold-bright">Deck appearance</h2>
-      <p className="mt-1 text-xs leading-relaxed text-moon-dim">
-        Choose the art your readings are dealt with. The classic deck is the original 1909 illustrations.
-      </p>
+      <h2 className="font-display text-lg text-gold-bright">{t.deck.appearanceTitle}</h2>
+      <p className="mt-1 text-xs leading-relaxed text-moon-dim">{t.deck.appearanceBody}</p>
 
-      <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-gold-dim">Card faces</p>
+      <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-gold-dim">{t.deck.facesLabel}</p>
       <div className="mt-2 flex gap-3">
         {faceOptions.map((opt) => (
           <button
@@ -44,7 +44,7 @@ export default function DeckStylePanel() {
         ))}
       </div>
 
-      <p className="mt-5 text-[11px] uppercase tracking-[0.2em] text-gold-dim">Card back</p>
+      <p className="mt-5 text-[11px] uppercase tracking-[0.2em] text-gold-dim">{t.deck.backLabel}</p>
       <div className="mt-2 flex gap-3">
         {backOptions.map((opt) => (
           <button

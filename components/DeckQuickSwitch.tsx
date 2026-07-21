@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeckPrefs } from "./DeckPrefs";
+import { useAppT } from "@/lib/useLocale";
 
 /**
  * A one-line, in-context deck switcher: the card-back variant sits where backs are on screen
@@ -10,22 +11,23 @@ import { useDeckPrefs } from "./DeckPrefs";
  */
 export default function DeckQuickSwitch({ kind, className = "" }: { kind: "face" | "back"; className?: string }) {
   const { deckStyle, cardBackStyle, setDeckStyle, setCardBackStyle } = useDeckPrefs();
+  const t = useAppT();
 
   const options =
     kind === "face"
       ? ([
-          { value: "classic", label: "Classic 1909" },
-          { value: "minimal", label: "Wyndralore" },
+          { value: "classic", label: t.deck.classic },
+          { value: "minimal", label: t.deck.wyndralore },
         ] as const)
       : ([
-          { value: "lunar", label: "Lunar" },
-          { value: "damask", label: "Damask" },
+          { value: "lunar", label: t.deck.lunar },
+          { value: "damask", label: t.deck.damask },
         ] as const);
   const active = kind === "face" ? deckStyle : cardBackStyle;
 
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
-      <span className="text-[10px] uppercase tracking-[0.2em] text-moon-dim/60">{kind === "face" ? "Deck" : "Card back"}</span>
+      <span className="text-[10px] uppercase tracking-[0.2em] text-moon-dim/60">{kind === "face" ? t.deck.faceLabel : t.deck.backLabel}</span>
       <div className="inline-flex overflow-hidden rounded-full border border-ink-line">
         {options.map((opt) => (
           <button

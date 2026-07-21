@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { TarotCard } from "@/lib/types";
 import { renderShareCard, canvasToBlob } from "@/lib/shareCard";
 import { useDeckPrefs, deckImageSrc } from "./DeckPrefs";
+import { useLocale, useAppT } from "@/lib/useLocale";
 
 interface ShareCardModalProps {
   cardId: number;
@@ -16,6 +17,8 @@ interface ShareCardModalProps {
 export default function ShareCardModal({ cardId, onShareGranted, onClose }: ShareCardModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { deckStyle } = useDeckPrefs();
+  const locale = useLocale();
+  const t = useAppT();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState<string | null>(null);
@@ -26,7 +29,9 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
 
     (async () => {
       try {
-        const fetched: TarotCard = await (await fetch(`/api/cards/${cardId}`)).json();
+        const fetched: TarotCard = await (
+          await fetch(`/api/cards/${cardId}${locale === "zh-TW" ? "?locale=zh-TW" : ""}`)
+        ).json();
         // The share image should show the same deck art the reader was just looking at.
         const card = { ...fetched, image: deckImageSrc(fetched.image, deckStyle) };
         const orientation = Math.random() < 0.5 ? "upright" : "reversed";
@@ -34,7 +39,7 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
         if (!canvas) return;
         // The reading already fixed an orientation, but the share image is a keepsake — we
         // render the card upright for a cleaner shareable by default.
-        await renderShareCard(canvas, card, "upright");
+        await renderShareCard(canvas, card, "upright", { upright: t.reading.upright, reversed: t.reading.reversed });
         void orientation;
         if (cancelled) return;
         const blob = await canvasToBlob(canvas);
@@ -50,7 +55,7 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [cardId, deckStyle]);
+  }, [cardId, deckStyle, locale, t]);
 
   async function handleShare() {
     const canvas = canvasRef.current;
@@ -62,8 +67,8 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
       if (nav.share && nav.canShare && nav.canShare({ files: [file] })) {
         await nav.share({
           files: [file],
-          title: "My Wyndralore Reading",
-          text: "A card I drew on Wyndralore. Try a free reading of your own.",
+          title: t.shareModal.shareTitle,
+          text: t.shareModal.shareText,
         });
       } else {
         // Fallback: trigger a download.
@@ -71,7 +76,7 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
         a.href = previewUrl ?? "";
         a.download = "wyndralore-reading.png";
         a.click();
-        setMessage("Image saved — share it anywhere!");
+        setMessage(t.shareModal.savedShare);
       }
       onShareGranted();
     } catch {
@@ -86,26 +91,26 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
     a.href = previewUrl;
     a.download = "wyndralore-reading.png";
     a.click();
-    setMessage("Image saved!");
+    setMessage(t.shareModal.saved);
     onShareGranted();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/90 px-6 py-10" role="dialog" aria-modal>
       <div className="flex max-h-full w-full max-w-sm flex-col overflow-y-auto rounded-2xl border border-ink-line bg-ink-raised p-6 text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Share your card</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{t.shareModal.eyebrow}</p>
 
         <div className="mx-auto mt-4 w-full max-w-[240px]">
           {/* Hidden full-res canvas; the preview img shows a scaled version. */}
           <canvas ref={canvasRef} className="hidden" />
           {status === "loading" && (
             <div className="flex aspect-[9/16] w-full items-center justify-center rounded-xl border border-ink-line text-sm text-moon-dim">
-              Creating your image…
+              {t.shareModal.creating}
             </div>
           )}
           {status === "error" && (
             <div className="flex aspect-[9/16] w-full items-center justify-center rounded-xl border border-ink-line text-sm text-red-400">
-              Couldn&apos;t generate the image.
+              {t.shareModal.error}
             </div>
           )}
           {status === "ready" && previewUrl && (
@@ -123,7 +128,7 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
             disabled={status !== "ready"}
             className="rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
           >
-            Share
+            {t.shareModal.share}
           </button>
           <button
             type="button"
@@ -131,10 +136,10 @@ export default function ShareCardModal({ cardId, onShareGranted, onClose }: Shar
             disabled={status !== "ready"}
             className="rounded-full border border-gold-dim px-7 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
           >
-            Download Image
+            {t.shareModal.download}
           </button>
           <button type="button" onClick={onClose} className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
-            Close
+            {t.shareModal.close}
           </button>
         </div>
       </div>

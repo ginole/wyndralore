@@ -10,6 +10,11 @@ const GOLD = "#c9a96e";
 const GOLD_BRIGHT = "#e4c894";
 const MOON = "#f4f1ea";
 
+// Georgia carries the Latin brand look; the CJK fallbacks let 繁體 card names / keywords / labels
+// render on the /tw share image instead of tofu. Latin text still uses Georgia (present first), so
+// the English share image is unchanged.
+const SERIF = "Georgia, 'Microsoft JhengHei', 'PingFang TC', 'Noto Serif CJK TC', 'Songti TC', serif";
+
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -45,6 +50,7 @@ export async function renderShareCard(
   canvas: HTMLCanvasElement,
   card: TarotCard,
   orientation: "upright" | "reversed",
+  labels?: { upright?: string; reversed?: string },
 ): Promise<void> {
   canvas.width = W;
   canvas.height = H;
@@ -96,17 +102,19 @@ export async function renderShareCard(
   // Card name.
   const nameY = cardY + cardH + 130;
   ctx.fillStyle = GOLD_BRIGHT;
-  ctx.font = "600 68px Georgia, serif";
+  ctx.font = `600 68px ${SERIF}`;
   ctx.fillText(card.name, W / 2, nameY);
 
-  // Orientation label.
+  // Orientation label. Localized word if given; .toUpperCase() keeps the English "UPRIGHT" look and
+  // is a harmless no-op on 正位 / 逆位.
   ctx.fillStyle = GOLD;
-  ctx.font = "400 30px Georgia, serif";
-  ctx.fillText(orientation === "upright" ? "UPRIGHT" : "REVERSED", W / 2, nameY + 56);
+  ctx.font = `400 30px ${SERIF}`;
+  const orientLabel = (orientation === "upright" ? labels?.upright ?? "Upright" : labels?.reversed ?? "Reversed").toUpperCase();
+  ctx.fillText(orientLabel, W / 2, nameY + 56);
 
   // Affirmation.
   ctx.fillStyle = MOON;
-  ctx.font = "italic 400 46px Georgia, serif";
+  ctx.font = `italic 400 46px ${SERIF}`;
   const affLines = wrapText(ctx, `“${card.affirmation}”`, W - 240);
   let affY = nameY + 160;
   for (const line of affLines) {
@@ -139,6 +147,10 @@ export interface FortuneCardOptions {
   qrDataUrl: string;
   /** Human-readable link printed under the QR. */
   urlLabel: string;
+  /** Localized orientation words + QR caption. Default to English so existing callers are unchanged. */
+  uprightLabel?: string;
+  reversedLabel?: string;
+  scanLabel?: string;
 }
 
 interface PillChip {
@@ -168,7 +180,7 @@ function layoutPillRows(ctx: CanvasRenderingContext2D, words: string[], maxWidth
 
 /** Draws centered, bordered keyword pill chips (mirrors the site's keyword-chip UI). Returns the y just below the block. */
 function drawKeywordPills(ctx: CanvasRenderingContext2D, words: string[], centerX: number, startY: number, maxWidth: number): number {
-  const font = "400 28px Georgia, serif";
+  const font = `400 28px ${SERIF}`;
   const padX = 26;
   const gapX = 16;
   const gapY = 18;
@@ -240,7 +252,7 @@ export async function renderFortuneCard(canvas: HTMLCanvasElement, opts: Fortune
   ctx.fillStyle = GOLD;
   ctx.font = "500 40px Georgia, serif";
   ctx.fillText("W Y N D R A L O R E", W / 2, 156);
-  ctx.font = "400 30px Georgia, serif";
+  ctx.font = `400 30px ${SERIF}`;
   ctx.globalAlpha = 0.85;
   ctx.fillText(opts.spreadTitle.toUpperCase(), W / 2, 214);
   ctx.globalAlpha = 1;
@@ -287,14 +299,15 @@ export async function renderFortuneCard(canvas: HTMLCanvasElement, opts: Fortune
   // the QR used to sit), so the card's own "meaning" reads before the invite/QR does.
   let cursorY = gridTop + gridH + 92;
   ctx.fillStyle = GOLD_BRIGHT;
-  ctx.font = "600 58px Georgia, serif";
+  ctx.font = `600 58px ${SERIF}`;
   ctx.fillText(opts.cardName, W / 2, cursorY);
 
   cursorY += 46;
   ctx.fillStyle = GOLD;
   ctx.globalAlpha = 0.85;
-  ctx.font = "400 26px Georgia, serif";
-  ctx.fillText(opts.orientation === "upright" ? "UPRIGHT" : "REVERSED", W / 2, cursorY);
+  ctx.font = `400 26px ${SERIF}`;
+  const fortuneOrient = (opts.orientation === "upright" ? opts.uprightLabel ?? "Upright" : opts.reversedLabel ?? "Reversed").toUpperCase();
+  ctx.fillText(fortuneOrient, W / 2, cursorY);
   ctx.globalAlpha = 1;
 
   cursorY += 56;
@@ -316,8 +329,8 @@ export async function renderFortuneCard(canvas: HTMLCanvasElement, opts: Fortune
   }
 
   ctx.fillStyle = MOON;
-  ctx.font = "italic 400 30px Georgia, serif";
-  ctx.fillText("Scan for your own reading", W / 2, qrY + qrSize + 64);
+  ctx.font = `italic 400 30px ${SERIF}`;
+  ctx.fillText(opts.scanLabel ?? "Scan for your own reading", W / 2, qrY + qrSize + 64);
   ctx.fillStyle = GOLD;
   ctx.font = "400 30px Georgia, serif";
   ctx.fillText(opts.urlLabel, W / 2, qrY + qrSize + 110);

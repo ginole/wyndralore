@@ -5,6 +5,7 @@ import { TarotCard, Orientation } from "@/lib/types";
 import { track } from "@/lib/track";
 import { renderFortuneCard, canvasToBlob, FortuneCardCard } from "@/lib/shareCard";
 import { useDeckPrefs, deckImageSrc } from "./DeckPrefs";
+import { useLocale, useAppT } from "@/lib/useLocale";
 
 const SITE_URL = "https://wyndralore.com";
 
@@ -27,6 +28,8 @@ interface FortuneShareCardProps {
 export default function FortuneShareCard({ spreadTitle, cards, firstCardId, referralCode, whopUsername }: FortuneShareCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { deckStyle } = useDeckPrefs();
+  const locale = useLocale();
+  const t = useAppT();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [saved, setSaved] = useState(false);
@@ -51,7 +54,7 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
         // the main reading bundle), and fetch the hero card's keywords for the headline line.
         const [{ default: QRCode }, card] = await Promise.all([
           import("qrcode"),
-          fetch(`/api/cards/${firstCardId}`).then((r) => r.json() as Promise<TarotCard>),
+          fetch(`/api/cards/${firstCardId}${locale === "zh-TW" ? "?locale=zh-TW" : ""}`).then((r) => r.json() as Promise<TarotCard>),
         ]);
         const orientation: Orientation = cards[0]?.orientation ?? "upright";
         const keywords = (orientation === "upright" ? card.keywords_upright : card.keywords_reversed).slice(0, 4);
@@ -73,6 +76,9 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
           cards: cards.map((c) => ({ ...c, image: deckImageSrc(c.image, deckStyle) })),
           qrDataUrl,
           urlLabel: "wyndralore.com",
+          uprightLabel: t.reading.upright,
+          reversedLabel: t.reading.reversed,
+          scanLabel: t.fortune.scanLabel,
         });
         if (cancelled) return;
         const blob = await canvasToBlob(canvas);
@@ -88,8 +94,8 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-    // Rebuild if the reading, the user's link, or the deck style changes.
-  }, [spreadTitle, firstCardId, referralCode, whopUsername, shareUrl, cards, deckStyle]);
+    // Rebuild if the reading, the user's link, the deck style, or the locale changes.
+  }, [spreadTitle, firstCardId, referralCode, whopUsername, shareUrl, cards, deckStyle, locale, t]);
 
   async function handleShare() {
     const canvas = canvasRef.current;
@@ -102,8 +108,8 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
       if (nav.share && nav.canShare && nav.canShare({ files: [file] })) {
         await nav.share({
           files: [file],
-          title: "My Wyndralore Reading",
-          text: "My reading on Wyndralore. Draw your own — free.",
+          title: t.fortune.shareTitle,
+          text: t.fortune.shareText,
         });
       } else {
         handleDownload();
@@ -124,22 +130,20 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
 
   return (
     <div className="mt-12 rounded-2xl border border-gold-dim bg-ink-raised/40 p-6 text-center sm:p-8">
-      <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">Share your fortune</p>
-      <h3 className="font-display mt-2 text-2xl text-moon">A keepsake worth sharing</h3>
-      <p className="mx-auto mt-2 max-w-sm text-sm text-moon-dim">
-        Save this and share it to your story — the QR brings friends straight to their own free reading.
-      </p>
+      <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{t.fortune.eyebrow}</p>
+      <h3 className="font-display mt-2 text-2xl text-moon">{t.fortune.title}</h3>
+      <p className="mx-auto mt-2 max-w-sm text-sm text-moon-dim">{t.fortune.body}</p>
 
       <div className="mx-auto mt-6 w-full max-w-[260px]">
         <canvas ref={canvasRef} className="hidden" />
         {status === "loading" && (
           <div className="flex aspect-[9/16] w-full items-center justify-center rounded-xl border border-ink-line text-sm text-moon-dim">
-            Creating your card…
+            {t.fortune.creating}
           </div>
         )}
         {status === "error" && (
           <div className="flex aspect-[9/16] w-full items-center justify-center rounded-xl border border-ink-line text-sm text-red-400">
-            Couldn&apos;t build the card.
+            {t.fortune.buildError}
           </div>
         )}
         {status === "ready" && previewUrl && (
@@ -155,7 +159,7 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
           disabled={status !== "ready"}
           className="rounded-full bg-gold px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
         >
-          Share
+          {t.fortune.share}
         </button>
         <button
           type="button"
@@ -163,7 +167,7 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
           disabled={status !== "ready"}
           className="rounded-full border border-gold-dim px-8 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
         >
-          {saved ? "Saved ✓" : "Save Image"}
+          {saved ? t.fortune.saved : t.fortune.saveImage}
         </button>
       </div>
     </div>

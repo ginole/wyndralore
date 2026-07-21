@@ -228,6 +228,47 @@ export interface AppDict {
     planLabels: Record<string, string>;
     planPerks: Record<string, string[]>;
   };
+  // In-context deck / card-back switcher (DeckQuickSwitch) + the full picker on /account (DeckStylePanel).
+  deck: {
+    faceLabel: string;
+    backLabel: string;
+    classic: string;
+    wyndralore: string;
+    lunar: string;
+    damask: string;
+    appearanceTitle: string;
+    appearanceBody: string;
+    facesLabel: string;
+    lunarFull: string;
+    damaskFull: string;
+  };
+  // Result-page "flaunt" share card (FortuneShareCard + its canvas).
+  fortune: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    creating: string;
+    buildError: string;
+    share: string;
+    saveImage: string;
+    saved: string;
+    scanLabel: string;
+    shareTitle: string;
+    shareText: string;
+  };
+  // Bonus-draw share modal (ShareCardModal + its canvas).
+  shareModal: {
+    eyebrow: string;
+    creating: string;
+    error: string;
+    share: string;
+    download: string;
+    close: string;
+    savedShare: string;
+    saved: string;
+    shareTitle: string;
+    shareText: string;
+  };
 }
 
 const en: AppDict = {
@@ -480,6 +521,44 @@ const en: AppDict = {
       yearly: ["Everything in Monthly", "Best value", "3 free AI deep readings / month"],
       lifetime: ["Pay once, own it forever", "Everything in Yearly", "No renewals, ever", "4 free AI deep readings / month"],
     },
+  },
+  deck: {
+    faceLabel: "Deck",
+    backLabel: "Card back",
+    classic: "Classic 1909",
+    wyndralore: "Wyndralore",
+    lunar: "Lunar",
+    damask: "Damask",
+    appearanceTitle: "Deck appearance",
+    appearanceBody: "Choose the art your readings are dealt with. The classic deck is the original 1909 illustrations.",
+    facesLabel: "Card faces",
+    lunarFull: "Lunar Mandala",
+    damaskFull: "Star Damask",
+  },
+  fortune: {
+    eyebrow: "Share your fortune",
+    title: "A keepsake worth sharing",
+    body: "Save this and share it to your story — the QR brings friends straight to their own free reading.",
+    creating: "Creating your card…",
+    buildError: "Couldn't build the card.",
+    share: "Share",
+    saveImage: "Save Image",
+    saved: "Saved ✓",
+    scanLabel: "Scan for your own reading",
+    shareTitle: "My Wyndralore Reading",
+    shareText: "My reading on Wyndralore. Draw your own — free.",
+  },
+  shareModal: {
+    eyebrow: "Share your card",
+    creating: "Creating your image…",
+    error: "Couldn't generate the image.",
+    share: "Share",
+    download: "Download Image",
+    close: "Close",
+    savedShare: "Image saved — share it anywhere!",
+    saved: "Image saved!",
+    shareTitle: "My Wyndralore Reading",
+    shareText: "A card I drew on Wyndralore. Try a free reading of your own.",
   },
 };
 
@@ -762,6 +841,44 @@ const zhTW: AppDict = {
       yearly: ["月方案的一切", "最超值", "每月 3 次免費 AI 深度解讀"],
       lifetime: ["一次買斷，永久擁有", "年方案的一切", "永不續訂", "每月 4 次免費 AI 深度解讀"],
     },
+  },
+  deck: {
+    faceLabel: "牌面",
+    backLabel: "牌背",
+    classic: "經典 1909",
+    wyndralore: "Wyndralore",
+    lunar: "月相",
+    damask: "錦緞",
+    appearanceTitle: "牌組外觀",
+    appearanceBody: "選擇你占卜時使用的牌面藝術。經典牌組是 1909 年的原版插圖。",
+    facesLabel: "牌面",
+    lunarFull: "月相曼陀羅",
+    damaskFull: "星紋錦緞",
+  },
+  fortune: {
+    eyebrow: "分享你的占卜",
+    title: "值得收藏，也值得分享",
+    body: "把它存下來、分享到限時動態——QR 碼會把朋友直接帶到他們自己的免費占卜。",
+    creating: "正在生成你的卡片…",
+    buildError: "卡片生成失敗。",
+    share: "分享",
+    saveImage: "儲存圖片",
+    saved: "已儲存 ✓",
+    scanLabel: "掃描，抽你自己的牌",
+    shareTitle: "我的 Wyndralore 占卜",
+    shareText: "我在 Wyndralore 的占卜。也來免費抽一張吧。",
+  },
+  shareModal: {
+    eyebrow: "分享你的牌",
+    creating: "正在生成你的圖片…",
+    error: "圖片生成失敗。",
+    share: "分享",
+    download: "下載圖片",
+    close: "關閉",
+    savedShare: "圖片已儲存——隨處分享吧！",
+    saved: "圖片已儲存！",
+    shareTitle: "我的 Wyndralore 占卜",
+    shareText: "我在 Wyndralore 抽的一張牌。也來免費抽一張吧。",
   },
 };
 
