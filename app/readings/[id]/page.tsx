@@ -60,7 +60,7 @@ export default function SavedReadingPage() {
       <section className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-6 text-center">
         <h1 className="font-display text-2xl text-moon">{t.notFound}</h1>
         <p className="mt-3 text-sm text-moon-dim">{t.notFoundBody}</p>
-        <Link href={tw ? "/tw/account" : "/account"} className="mt-6 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4">
+        <Link href={tw ? "/tc/account" : "/account"} className="mt-6 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4">
           {t.yourAccount}
         </Link>
       </section>

@@ -7,7 +7,7 @@ const BASE = "https://wyndralore.com";
 // and pairs the two language versions. x-default points at the English URL.
 function bilingual(englishPath: string) {
   const en = `${BASE}${englishPath === "/" ? "" : englishPath}`;
-  const tw = `${BASE}/tw${englishPath === "/" ? "" : englishPath}`;
+  const tw = `${BASE}/tc${englishPath === "/" ? "" : englishPath}`;
   return { en, "zh-Hant-TW": tw, "x-default": en };
 }
 
@@ -29,7 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     const languages = bilingual(path);
     return [
       { url: `${BASE}${path === "/" ? "" : path}`, changeFrequency: "monthly" as const, priority, alternates: { languages } },
-      { url: `${BASE}/tw${path === "/" ? "" : path}`, changeFrequency: "monthly" as const, priority, alternates: { languages } },
+      { url: `${BASE}/tc${path === "/" ? "" : path}`, changeFrequency: "monthly" as const, priority, alternates: { languages } },
     ];
   });
 
@@ -39,7 +39,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     const languages = bilingual(`/cards/${slug}`);
     return [
       { url: `${BASE}/cards/${slug}`, changeFrequency: "monthly" as const, priority: 0.6, alternates: { languages } },
-      { url: `${BASE}/tw/cards/${slug}`, changeFrequency: "monthly" as const, priority: 0.6, alternates: { languages } },
+      { url: `${BASE}/tc/cards/${slug}`, changeFrequency: "monthly" as const, priority: 0.6, alternates: { languages } },
     ];
   });
 

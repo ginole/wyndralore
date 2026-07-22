@@ -22,13 +22,13 @@ export const metadata: Metadata = {
 };
 
 const FREE_TOOLS = [
-  { href: "/tw/yes-or-no-tarot", title: "是非塔羅", subtitle: "一張牌，一個乾脆的答案。提問、抽牌、了然——不必註冊。" },
-  { href: "/tw/cards", title: "塔羅牌義大全", subtitle: "整副牌每一張的正逆位含義，慢慢讀，慢慢懂。" },
+  { href: "/tc/yes-or-no-tarot", title: "是非塔羅", subtitle: "一張牌，一個乾脆的答案。提問、抽牌、了然——不必註冊。" },
+  { href: "/tc/cards", title: "塔羅牌義大全", subtitle: "整副牌每一張的正逆位含義，慢慢讀，慢慢懂。" },
 ];
 
 const SPECIALS = [
-  { href: "/tw/reading/year-ahead", title: "你的未來一年", subtitle: "一張主題牌，加上未來十二個月各一張，讀成一則徐徐展開的故事。", meta: "13 張牌" },
-  { href: "/tw/reading/love-compatibility", title: "愛情契合度", subtitle: "兩個人，五張牌：你的能量、對方的能量，以及你們之間那份坦誠的連結。", meta: "5 張牌" },
+  { href: "/tc/reading/year-ahead", title: "你的未來一年", subtitle: "一張主題牌，加上未來十二個月各一張，讀成一則徐徐展開的故事。", meta: "13 張牌" },
+  { href: "/tc/reading/love-compatibility", title: "愛情契合度", subtitle: "兩個人，五張牌：你的能量、對方的能量，以及你們之間那份坦誠的連結。", meta: "5 張牌" },
 ];
 
 export default function TwHome() {
@@ -54,7 +54,7 @@ export default function TwHome() {
         </p>
         <div className="relative z-10 mt-10 flex w-full flex-col items-center gap-5 sm:w-auto sm:flex-row">
           <Link
-            href="/tw/reading/daily"
+            href="/tc/reading/daily"
             className="cta-gold w-full max-w-xs rounded-full px-9 py-4 text-center text-sm font-medium uppercase tracking-[0.2em] sm:w-auto"
           >
             {t.home.drawCta}
@@ -97,7 +97,7 @@ export default function TwHome() {
             return (
               <Link
                 key={slug}
-                href={`/tw/reading/${slug}`}
+                href={`/tc/reading/${slug}`}
                 className="group relative flex h-full flex-col justify-between rounded-2xl border border-ink-line bg-ink-raised/60 p-6 shadow-[inset_0_1px_0_rgba(228,200,148,0.06)] transition-[border-color,transform,box-shadow] duration-200 hover:border-gold-dim hover:shadow-[inset_0_1px_0_rgba(228,200,148,0.12),0_18px_40px_-24px_rgba(201,169,110,0.35)] active:scale-[0.985]"
               >
                 {!isFree && (

@@ -9,7 +9,7 @@ import ReadingExperience from "@/components/ReadingExperience";
 import { getDict } from "@/lib/i18n";
 
 // 繁體 mirror of app/reading/[spread]/page.tsx. Same access/quota logic; ReadingExperience localizes
-// itself from the /tw path, and we hand it the 繁體 deck manifest so card names in the fan are 繁體.
+// itself from the /tc path, and we hand it the 繁體 deck manifest so card names in the fan are 繁體.
 // The route segment is [slug] (not [spread]) to avoid a param-name clash with the English tree.
 export const dynamic = "force-dynamic";
 
@@ -37,15 +37,15 @@ function PremiumUpsell({ spread }: { spread: SpreadConfig }) {
         這個 {spread.count} 張牌的牌陣，需以 Wyndralore 進階會員解鎖——無限次占卜、每一個進階牌陣，以及你自己的占卜筆記。
       </p>
       <Link
-        href="/tw/pricing"
+        href="/tc/pricing"
         className="mt-8 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright"
       >
         升級進階會員
       </Link>
-      <Link href="/tw/account" className="mt-6 text-xs uppercase tracking-[0.2em] text-gold-dim underline underline-offset-4 hover:text-gold">
+      <Link href="/tc/account" className="mt-6 text-xs uppercase tracking-[0.2em] text-gold-dim underline underline-offset-4 hover:text-gold">
         或邀請朋友，賺取免費解鎖
       </Link>
-      <Link href="/tw/reading/daily" className="mt-4 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
+      <Link href="/tc/reading/daily" className="mt-4 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
         或抽一張你的免費每日牌
       </Link>
     </section>
@@ -60,7 +60,7 @@ export default async function TwReadingPage({ params }: { params: Promise<{ slug
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-6 text-center">
         <h1 className="font-display text-3xl text-moon">找不到這個牌陣</h1>
-        <Link href="/tw" className="mt-6 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4">
+        <Link href="/tc" className="mt-6 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4">
           返回 Wyndralore
         </Link>
       </section>
@@ -87,7 +87,7 @@ export default async function TwReadingPage({ params }: { params: Promise<{ slug
       {spread.slug === "yes-no" && (
         <p className="mx-auto max-w-lg px-6 pb-16 text-center text-sm text-moon-dim">
           只想要一個乾脆的答案，不用洗牌？{" "}
-          <Link href="/tw/yes-or-no-tarot" className="text-gold-dim underline underline-offset-4 hover:text-gold">
+          <Link href="/tc/yes-or-no-tarot" className="text-gold-dim underline underline-offset-4 hover:text-gold">
             試試即時的是非塔羅
           </Link>
           。

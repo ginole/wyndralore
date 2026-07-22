@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MASTERS_MARKETPLACE_ENABLED } from "@/lib/featureFlags";
 import { localeFromPathname, getDict, TW_PREFIX } from "@/lib/i18n";
+import LanguageSwitch from "./LanguageSwitch";
 
 export default function SiteFooter() {
   const pathname = usePathname() ?? "/";
@@ -41,6 +42,7 @@ export default function SiteFooter() {
         <a href="mailto:hello@wyndralore.com" className="transition-colors hover:text-gold">
           {t.contact}
         </a>
+        <LanguageSwitch />
       </nav>
       <p className="mx-auto max-w-xl text-xs leading-relaxed text-moon-dim">{t.disclaimer}</p>
       <p className="mt-3 text-xs text-moon-dim/70">© {new Date().getFullYear()} Wyndralore</p>

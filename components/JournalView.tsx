@@ -32,7 +32,7 @@ export default function JournalView() {
   const locale = useLocale();
   const t = getAppDict(locale).journal;
   const tw = locale === "zh-TW";
-  const L = (p: string) => (tw ? `/tw${p}` : p);
+  const L = (p: string) => (tw ? `/tc${p}` : p);
   const [entries, setEntries] = useState<JournalEntry[] | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");

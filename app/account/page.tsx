@@ -18,7 +18,7 @@ export default function AccountPage() {
   const t = getAppDict(locale).account;
   const planLabels = getAppDict(locale).pricing.planLabels;
   const tw = locale === "zh-TW";
-  const L = (p: string) => (tw ? `/tw${p}` : p);
+  const L = (p: string) => (tw ? `/tc${p}` : p);
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
 
   // Open straight on the register tab when linked with ?mode=register — the "limited" wall sends

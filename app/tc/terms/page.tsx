@@ -4,7 +4,7 @@ import { hreflangAlternates } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: "服務條款 — Wyndralore",
   description: "規範你使用 Wyndralore 的條款。",
-  alternates: { canonical: "/tw/terms", ...hreflangAlternates("/terms") },
+  alternates: { canonical: "/tc/terms", ...hreflangAlternates("/terms") },
 };
 
 export default function TwTermsPage() {

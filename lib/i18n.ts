@@ -1,12 +1,12 @@
 // Internationalization layer for the Traditional-Chinese (Taiwan) edition.
 //
 // Design (see the 07-20 build notes): the English site stays 100% at the root, untouched. The
-// 繁體 edition lives under /tw as a purely additive subtree, and geo detection (proxy.ts) sends
+// 繁體 edition lives under /tc as a purely additive subtree, and geo detection (proxy.ts) sends
 // Taiwan visitors there automatically. There is NO language switcher anywhere — a Western visitor
 // never sees a Chinese entry point (a trust concern in this category), and a Taiwan visitor never
 // sees an English one. The two worlds only ever meet through hreflang, which is for crawlers.
 //
-// Card SLUGS stay English-derived on both trees (/cards/the-fool ↔ /tw/cards/the-fool) so the two
+// Card SLUGS stay English-derived on both trees (/cards/the-fool ↔ /tc/cards/the-fool) so the two
 // language versions pair cleanly for hreflang; only the displayed text differs.
 
 export type Locale = "en" | "zh-TW";
@@ -14,21 +14,21 @@ export type Locale = "en" | "zh-TW";
 export const LOCALES: Locale[] = ["en", "zh-TW"];
 export const DEFAULT_LOCALE: Locale = "en";
 
-/** The /tw path prefix that marks the 繁體 subtree. */
-export const TW_PREFIX = "/tw";
+/** The /tc path prefix that marks the 繁體 subtree. */
+export const TW_PREFIX = "/tc";
 
 export function localeFromPathname(pathname: string): Locale {
   return pathname === TW_PREFIX || pathname.startsWith(`${TW_PREFIX}/`) ? "zh-TW" : "en";
 }
 
-/** Strip the /tw prefix to get the matching English path (used for hreflang pairing). */
+/** Strip the /tc prefix to get the matching English path (used for hreflang pairing). */
 export function toEnglishPath(pathname: string): string {
   if (pathname === TW_PREFIX) return "/";
   if (pathname.startsWith(`${TW_PREFIX}/`)) return pathname.slice(TW_PREFIX.length) || "/";
   return pathname;
 }
 
-/** Add the /tw prefix to an English path. */
+/** Add the /tc prefix to an English path. */
 export function toTwPath(pathname: string): string {
   if (pathname === "/") return TW_PREFIX;
   return `${TW_PREFIX}${pathname}`;
@@ -50,7 +50,7 @@ export const SITE_URL = "https://wyndralore.com";
 
 /**
  * Build the `alternates` metadata block for a page that exists in both languages, given the
- * English path (e.g. "/cards/the-fool"). Google discovers the /tw pages through these plus the
+ * English path (e.g. "/cards/the-fool"). Google discovers the /tc pages through these plus the
  * sitemap; x-default points at the English version.
  */
 export function hreflangAlternates(englishPath: string) {

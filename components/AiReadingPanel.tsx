@@ -114,7 +114,7 @@ export default function AiReadingPanel({
   const locale = useLocale();
   const a = getAppDict(locale).ai;
   const tw = locale === "zh-TW";
-  const readingPath = tw ? `/tw/reading/${spreadSlug}` : `/reading/${spreadSlug}`;
+  const readingPath = tw ? `/tc/reading/${spreadSlug}` : `/reading/${spreadSlug}`;
 
   useEffect(() => {
     if (started.current) return;
@@ -455,7 +455,7 @@ export default function AiReadingPanel({
         {deepState === "paywall" && (
           <div className="mt-4">
             {!isAuthenticated ? (
-              <Link href={tw ? "/tw/account" : "/account"} className="text-sm text-gold underline underline-offset-4">
+              <Link href={tw ? "/tc/account" : "/account"} className="text-sm text-gold underline underline-offset-4">
                 {a.signIn}
               </Link>
             ) : (

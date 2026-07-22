@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "是非塔羅 — 免費即時單張牌答案 | Wyndralore",
   description:
     "問一個是非題，抽一張牌，得到清楚而誠實的答案。免費即時的是非塔羅占卜，有真正的洗牌抽牌儀式——無需註冊。",
-  alternates: { canonical: "https://wyndralore.com/tw/yes-or-no-tarot", ...hreflangAlternates("/yes-or-no-tarot") },
+  alternates: { canonical: "https://wyndralore.com/tc/yes-or-no-tarot", ...hreflangAlternates("/yes-or-no-tarot") },
 };
 
 const FAQ = [
@@ -38,7 +38,7 @@ export default function TwYesOrNoPage() {
           有些問題不需要十張牌的牌陣——它們只需要一個乾脆的答案。握著你的問題，親手洗牌，抽一張牌，得到清楚的是非傾向，以及背後的原因。
         </p>
         <Link
-          href="/tw/reading/yes-no"
+          href="/tc/reading/yes-no"
           className="mt-8 inline-block rounded-full bg-gold px-9 py-3.5 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform hover:scale-[1.02] hover:bg-gold-bright"
         >
           現在就問你的問題
@@ -55,7 +55,7 @@ export default function TwYesOrNoPage() {
         ))}
         <p className="text-sm leading-relaxed text-moon-dim">
           想要的不只是一個是或否？一個{" "}
-          <Link href="/tw/reading/three-card" className="text-gold underline underline-offset-4 hover:text-gold-bright">
+          <Link href="/tc/reading/three-card" className="text-gold underline underline-offset-4 hover:text-gold-bright">
             過去–現在–未來牌陣
           </Link>{" "}
           會展開你問題周圍的故事，而每一次占卜，都能用一段為你確切的牌卡量身撰寫的 AI 解讀更深入。

@@ -51,7 +51,7 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
   const locale = useLocale();
   const t = getAppDict(locale).special;
   const tw = locale === "zh-TW";
-  const L = (p: string) => (tw ? `/tw${p}` : p);
+  const L = (p: string) => (tw ? `/tc${p}` : p);
   // A localized view of the config's copy, keyed by kind.
   const label = t.labels[kind];
   const title = t.titles[kind];

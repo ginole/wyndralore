@@ -133,7 +133,7 @@ export default async function TwCardDetailPage({ params }: { params: Promise<{ s
       <div className="mt-14 border-t border-ink-line/60 pt-10 text-center">
         <p className="text-sm text-moon-dim">{t.card.drawPrompt}</p>
         <Link
-          href="/tw/reading/daily"
+          href="/tc/reading/daily"
           className="mt-4 inline-block rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright"
         >
           {t.card.drawCta}

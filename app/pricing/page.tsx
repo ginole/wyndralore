@@ -17,7 +17,7 @@ export default function PricingPage() {
   const locale = useLocale();
   const t = getAppDict(locale).pricing;
   const tw = locale === "zh-TW";
-  const accountHref = tw ? "/tw/account" : "/account";
+  const accountHref = tw ? "/tc/account" : "/account";
   const [mode, setMode] = useState<BillingMode>("sub");
   const [pending, setPending] = useState<PlanId | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -147,7 +147,7 @@ export default function PricingPage() {
 
       <p className="mx-auto mt-8 max-w-lg text-[11px] leading-relaxed text-moon-dim/60">
         {t.finePrint}{" "}
-        <a href={tw ? "/tw/terms" : "/terms"} className="underline decoration-gold-dim underline-offset-2 hover:text-moon-dim">
+        <a href={tw ? "/tc/terms" : "/terms"} className="underline decoration-gold-dim underline-offset-2 hover:text-moon-dim">
           {t.terms}
         </a>
         {tw ? "。" : "."}

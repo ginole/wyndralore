@@ -4,7 +4,7 @@ import { hreflangAlternates } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: "隱私權政策 — Wyndralore",
   description: "Wyndralore 如何處理你的資料。",
-  alternates: { canonical: "/tw/privacy", ...hreflangAlternates("/privacy") },
+  alternates: { canonical: "/tc/privacy", ...hreflangAlternates("/privacy") },
 };
 
 export default function TwPrivacyPage() {

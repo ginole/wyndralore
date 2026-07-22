@@ -37,7 +37,7 @@ export default function TipBlock({ spreadSlug }: { spreadSlug: string }) {
       const res = await fetch("/api/orders/special", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "tip", redirectPath: `${locale === "zh-TW" ? "/tw" : ""}/reading/${spreadSlug}` }),
+        body: JSON.stringify({ kind: "tip", redirectPath: `${locale === "zh-TW" ? "/tc" : ""}/reading/${spreadSlug}` }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();

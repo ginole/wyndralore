@@ -74,8 +74,8 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   const t = getAppDict(locale).reading;
   const themeT = getAppDict(locale).theme;
   const tw = locale === "zh-TW";
-  // Locale-aware href: on /tw, keep internal links inside the 繁體 subtree.
-  const L = (p: string) => (tw ? (p === "/" ? "/tw" : `/tw${p}`) : p);
+  // Locale-aware href: on /tc, keep internal links inside the 繁體 subtree.
+  const L = (p: string) => (tw ? (p === "/" ? "/tc" : `/tc${p}`) : p);
   const pos = (p: string) => getAppDict(locale).positions[p] ?? p;
   const sp = getDict(locale).spreads[spread.slug];
   const spreadTitle = sp?.title ?? spread.title;
@@ -289,7 +289,7 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
     const shareData = {
       title: t.shareTitle,
       text: t.shareText,
-      url: tw ? "https://wyndralore.com/tw" : "https://wyndralore.com",
+      url: tw ? "https://wyndralore.com/tc" : "https://wyndralore.com",
     };
     try {
       if (typeof navigator !== "undefined" && navigator.share) {

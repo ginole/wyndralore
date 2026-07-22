@@ -4,7 +4,7 @@ import { hreflangAlternates } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: "退款與取消政策 — Wyndralore",
   description: "Wyndralore 會員與單次購買的退款與取消如何運作。",
-  alternates: { canonical: "/tw/refunds", ...hreflangAlternates("/refunds") },
+  alternates: { canonical: "/tc/refunds", ...hreflangAlternates("/refunds") },
 };
 
 export default function TwRefundsPage() {
@@ -16,7 +16,7 @@ export default function TwRefundsPage() {
       <div className="mt-8 flex flex-col gap-6 text-sm leading-relaxed text-moon-dim">
         <p>
           本政策說明我們所有販售項目的退款與取消如何運作：進階會員，以及單次購買（例如一次 AI 深度解讀）。它與我們的{" "}
-          <a href="/tw/terms" className="underline decoration-gold-dim underline-offset-2 hover:text-moon">
+          <a href="/tc/terms" className="underline decoration-gold-dim underline-offset-2 hover:text-moon">
             服務條款
           </a>
           並行適用。
@@ -44,7 +44,7 @@ export default function TwRefundsPage() {
           <h2 className="font-display text-xl text-moon">3. 取消自動續訂的會員</h2>
           <p className="mt-2">
             若你選擇了自動續訂的訂閱，你可隨時於你的{" "}
-            <a href="/tw/account" className="underline decoration-gold-dim underline-offset-2 hover:text-moon">
+            <a href="/tc/account" className="underline decoration-gold-dim underline-offset-2 hover:text-moon">
               帳號頁面
             </a>
             取消——不必寄信、不必打電話、沒有挽留關卡。取消會立即停止所有未來的扣款。你已付費的當期，仍保有完整的進階權限直到期末，之後就不再續訂。對於一個已經進行中的週期，我們不退還剩餘的部分。
