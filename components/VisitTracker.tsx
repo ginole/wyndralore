@@ -28,7 +28,10 @@ export default function VisitTracker() {
       path: pathname,
       ...(src?.utmSource ? { utmSource: src.utmSource, utmCampaign: src.utmCampaign } : {}),
     });
-    if (pathname === "/pricing") track("pricing_view");
+    // Both trees — the 繁體 pricing page is the same funnel step. (Found 2026-07-23: the first
+    // TW registrant viewed /tc/pricing twice and the funnel query showed "0 pricing" — this
+    // hardcoded English path was silently dropping every 繁體 pricing view.)
+    if (pathname === "/pricing" || pathname === "/tc/pricing") track("pricing_view");
   }, [pathname]);
 
   return null;
