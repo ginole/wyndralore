@@ -366,14 +366,19 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
           </div>
         ) : (
           <div className="mt-8 flex flex-col items-center gap-4">
+            {/* `next` sends them straight back to THIS reading after they register — they came to
+                the wall wanting another card, and the first TW registrant (2026-07-23) proved what
+                happens without it: she registered, landed on the account dashboard, followed its
+                Premium button to pricing, and left without ever using the fresh draw she signed
+                up for. Registering resets the (server-side) daily count, so the return visit can draw. */}
             <Link
-              href={L("/account?mode=register")}
+              href={`${L("/account")}?mode=register&next=${encodeURIComponent(L(`/reading/${spread.slug}`))}`}
               className="cta-gold rounded-full px-9 py-4 text-sm font-medium uppercase tracking-[0.2em]"
             >
               {t.createFreeAccount}
             </Link>
             <Link
-              href={L("/account")}
+              href={`${L("/account")}?next=${encodeURIComponent(L(`/reading/${spread.slug}`))}`}
               className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
             >
               {t.alreadyHaveSignIn}

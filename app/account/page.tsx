@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import CreatorLinkPanel from "@/components/CreatorLinkPanel";
 import DeckStylePanel from "@/components/DeckStylePanel";
@@ -13,6 +14,7 @@ import { useLocale } from "@/lib/useLocale";
 import { getAppDict } from "@/lib/i18nApp";
 
 export default function AccountPage() {
+  const router = useRouter();
   const { user, quota, loading, refresh, logout } = useAuth();
   const locale = useLocale();
   const t = getAppDict(locale).account;
@@ -127,6 +129,15 @@ export default function AccountPage() {
         }
       }
       await refresh();
+      // The register wall links here with ?next=<the reading they were on>. Send them straight
+      // back to it — they authenticated in order to KEEP DRAWING, and parking them on the account
+      // dashboard instead loses them (the first TW registrant, 2026-07-23, drifted from the
+      // dashboard to pricing and left without using the draw she signed up for). Internal paths
+      // only: "/" prefix but not "//" (protocol-relative), so the param can't redirect off-site.
+      const next = new URLSearchParams(window.location.search).get("next");
+      if (next && next.startsWith("/") && !next.startsWith("//")) {
+        router.push(next);
+      }
     } finally {
       setSubmitting(false);
     }
