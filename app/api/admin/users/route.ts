@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     where: q ? { email: { contains: q } } : undefined,
     orderBy: { createdAt: "desc" },
     take: 100,
-    select: { id: true, email: true, plan: true, planExpiresAt: true, createdAt: true },
+    select: { id: true, email: true, plan: true, planExpiresAt: true, createdAt: true, lastSeenAt: true },
   });
 
   return NextResponse.json({ users });

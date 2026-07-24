@@ -9,6 +9,15 @@ interface AdminUser {
   plan: string;
   planExpiresAt: string | null;
   createdAt: string;
+  lastSeenAt: string | null;
+}
+
+/** Whether the account was seen on a later calendar day than it registered — i.e. actually came
+ *  back, rather than registering and vanishing. This is the retention signal the whole column
+ *  exists for, so it gets called out in colour rather than left for the eye to diff two dates. */
+function cameBack(u: AdminUser): boolean {
+  if (!u.lastSeenAt) return false;
+  return u.lastSeenAt.slice(0, 10) > u.createdAt.slice(0, 10);
 }
 
 export default function UsersPanel() {
@@ -67,11 +76,12 @@ export default function UsersPanel() {
               <th>Plan</th>
               <th>Expires</th>
               <th>Joined</th>
+              <th>Last seen</th>
             </tr>
           </thead>
           <tbody>
-            {loading && <EmptyRow colSpan={4} label="Loading…" />}
-            {!loading && users.length === 0 && <EmptyRow colSpan={4} label="No users found." />}
+            {loading && <EmptyRow colSpan={5} label="Loading…" />}
+            {!loading && users.length === 0 && <EmptyRow colSpan={5} label="No users found." />}
             {!loading &&
               users.map((u) => (
                 <tr key={u.id} className="border-t border-ink-line/60">
@@ -86,6 +96,10 @@ export default function UsersPanel() {
                   </td>
                   <td className="text-moon-dim">{fmtDate(u.planExpiresAt)}</td>
                   <td className="text-moon-dim">{fmtDate(u.createdAt)}</td>
+                  <td className={cameBack(u) ? "text-gold-bright" : "text-moon-dim"}>
+                    {u.lastSeenAt ? fmtDate(u.lastSeenAt) : "—"}
+                    {cameBack(u) && <span className="ml-1" title="Returned after signup">↩</span>}
+                  </td>
                 </tr>
               ))}
           </tbody>

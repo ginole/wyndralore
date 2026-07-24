@@ -112,6 +112,12 @@ model User {
   // Premium-only opt-in: a morning email if today's card hasn't been drawn yet.
   dailyReminderOptIn Boolean @default(false)
 
+  // Last time this account was seen with a valid session (updated at most once a day by the
+  // /api/auth/me call, so it's a cheap "did they come back" signal for the admin — NOT a login
+  // event, which a 30-day cookie means a returning user never fires). Null for pre-feature accounts
+  // until their next visit.
+  lastSeenAt DateTime?
+
   createdAt       DateTime         @default(now())
   orders          Order[]
   journalEntries  JournalEntry[]
