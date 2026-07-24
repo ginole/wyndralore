@@ -75,6 +75,7 @@ export const SUIT_LABEL: Record<Locale, Record<string, string>> = {
 // Traditional Chinese uses Taiwan word choices throughout (方案/免費/註冊/登入/影片/牌陣…).
 export interface Dict {
   nav: {
+    home: string;
     cards: string;
     pricing: string;
     journal: string;
@@ -145,7 +146,7 @@ export interface Dict {
 }
 
 const en: Dict = {
-  nav: { cards: "Cards", pricing: "Pricing", journal: "Journal", account: "Account", signIn: "Sign In" },
+  nav: { home: "Home", cards: "Cards", pricing: "Pricing", journal: "Journal", account: "Account", signIn: "Sign In" },
   footer: {
     cardMeanings: "Card Meanings",
     pricing: "Pricing",
@@ -223,7 +224,7 @@ const en: Dict = {
 };
 
 const zhTW: Dict = {
-  nav: { cards: "牌義", pricing: "方案", journal: "占卜筆記", account: "帳號", signIn: "登入" },
+  nav: { home: "首頁", cards: "牌義", pricing: "方案", journal: "占卜筆記", account: "帳號", signIn: "登入" },
   footer: {
     cardMeanings: "塔羅牌義",
     pricing: "訂閱方案",

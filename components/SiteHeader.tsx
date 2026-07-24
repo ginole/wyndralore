@@ -35,6 +35,12 @@ export default function SiteHeader() {
         )}
       </div>
       <nav className="font-accent flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs uppercase tracking-[0.15em] text-moon-dim sm:justify-end sm:tracking-[0.2em]">
+        {/* Explicit Home link: the clickable wordmark returns here, but not every visitor knows that
+            convention (the founder flagged it) — an inner-page reader looking to start over needs an
+            obvious way back. Shown on every page for a stable nav; on "/" it's the current page. */}
+        <Link href={home} className="transition-colors hover:text-gold">
+          {t.home}
+        </Link>
         {MASTERS_MARKETPLACE_ENABLED && !tw && (
           <Link href="/masters" className="transition-colors hover:text-gold">
             Masters
