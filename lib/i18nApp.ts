@@ -95,6 +95,12 @@ export interface AppDict {
     error: string;
   };
   account: {
+    continueWithGoogle: string;
+    continueWithLine: string;
+    orUseEmail: string;
+    authErrorCanceled: string;
+    authErrorNoEmail: string;
+    authErrorGeneric: string;
     signIn: string;
     register: string;
     welcomeBack: string;
@@ -365,6 +371,12 @@ const en: AppDict = {
     error: "Couldn’t start checkout — try again.",
   },
   account: {
+    continueWithGoogle: "Continue with Google",
+    continueWithLine: "Continue with LINE",
+    orUseEmail: "or use your email",
+    authErrorCanceled: "Sign-in was canceled — no harm done.",
+    authErrorNoEmail: "LINE didn't share an email address. Please use Google or your email below.",
+    authErrorGeneric: "That sign-in didn't go through. Please try again.",
     signIn: "Sign In",
     register: "Register",
     welcomeBack: "Welcome back",
@@ -680,6 +692,12 @@ const zhTW: AppDict = {
     error: "無法開始結帳，請再試一次。",
   },
   account: {
+    continueWithGoogle: "使用 Google 繼續",
+    continueWithLine: "使用 LINE 繼續",
+    orUseEmail: "或使用電子郵件",
+    authErrorCanceled: "已取消登入，沒有任何影響。",
+    authErrorNoEmail: "LINE 沒有提供電子郵件，請改用 Google 或下方的電子郵件註冊。",
+    authErrorGeneric: "這次登入沒有成功，請再試一次。",
     signIn: "登入",
     register: "註冊",
     welcomeBack: "歡迎回來",

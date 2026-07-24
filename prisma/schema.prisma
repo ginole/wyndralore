@@ -35,6 +35,13 @@ model User {
   resetTokenHash      String?
   resetTokenExpiresAt DateTime?
 
+  // Social sign-in. The provider's stable subject id (`sub`), NOT the email — an address can
+  // change hands, `sub` can't, so this is what a returning social login is matched on. Accounts
+  // created this way still get a random passwordHash (same trick as a Whop orphan purchase), so
+  // `passwordHash` stays non-null and "forgot password" is how they'd add a password later.
+  googleSub String? @unique
+  lineSub   String? @unique
+
   // True for accounts auto-created by the admin creator-outreach flow that the creator
   // hasn't claimed yet (they were given premium but have no password of their own). Lets
   // a re-invite re-issue a fresh claim link, and is cleared once they set a password.

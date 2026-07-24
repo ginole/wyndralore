@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import CreatorLinkPanel from "@/components/CreatorLinkPanel";
+import SocialSignIn from "@/components/SocialSignIn";
 import DeckStylePanel from "@/components/DeckStylePanel";
 import SpecialReadingsPanel from "@/components/SpecialReadingsPanel";
 import { pixelTrack } from "@/lib/pixel";
@@ -27,9 +28,24 @@ export default function AccountPage() {
   // signed-out visitors here to make an account, and landing them on the login form first is the
   // exact extra step that conversion is trying to remove. Read from the URL rather than
   // useSearchParams, which would force a Suspense boundary this page isn't wrapped in.
+  const [nextPath, setNextPath] = useState("/account");
+  const [authError, setAuthError] = useState<string | null>(null);
   useEffect(() => {
-    const m = new URLSearchParams(window.location.search).get("mode");
+    const sp = new URLSearchParams(window.location.search);
+    const m = sp.get("mode");
     if (m === "register" || m === "forgot") setMode(m);
+    const n = sp.get("next");
+    if (n && n.startsWith("/") && !n.startsWith("//")) setNextPath(n);
+    // A social sign-in that bounced comes back with ?authError= — surface it instead of dropping
+    // them on a silent login screen wondering what happened.
+    const e = sp.get("authError");
+    if (e) {
+      setAuthError(
+        e === "canceled" ? t.authErrorCanceled : e === "noEmail" ? t.authErrorNoEmail : t.authErrorGeneric,
+      );
+    }
+    // Deliberately once-on-mount: these come from the entry URL. `t` is a stable dictionary object.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -213,6 +229,12 @@ export default function AccountPage() {
         <h1 className="font-display mb-6 text-center text-3xl text-moon">
           {mode === "login" ? t.welcomeBack : t.createAccount}
         </h1>
+        {authError && (
+          <p className="mb-5 rounded-xl border border-gold-dim/40 bg-ink-raised/60 p-3 text-center text-xs leading-relaxed text-moon-dim">
+            {authError}
+          </p>
+        )}
+        <SocialSignIn next={nextPath} />
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-2">
             <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.email}</span>
