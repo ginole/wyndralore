@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { PLANS, PURCHASABLE_PLANS, PlanId, BillingMode, planOption } from "@/lib/pricing";
+import { PLANS, PURCHASABLE_PLANS, PlanId, BillingMode, planOption, YEAR_READING_PRICE_USD, LOVE_READING_PRICE_USD } from "@/lib/pricing";
+import { AI_SINGLE_PRICE_USD } from "@/lib/aiQuota";
+import Link from "next/link";
 import { pixelTrack } from "@/lib/pixel";
 import WhopCheckoutModal, { WhopCheckoutTarget } from "@/components/WhopCheckoutModal";
 import { storedWhopAffiliate } from "@/components/WhopAffiliateCapture";
@@ -145,7 +147,42 @@ export default function PricingPage() {
         })}
       </div>
 
-      <p className="mx-auto mt-8 max-w-lg text-[11px] leading-relaxed text-moon-dim/60">
+      {/* À la carte — surfaced because the funnel showed a high-intent free user viewing this page
+          twice, seeing only the $6.90/mo card, and leaving: she never learned a single reading is
+          $2.99. These aren't bought here (the single deep read attaches to a specific draw); each
+          links to where you get it, so the cheap entry point is at least VISIBLE to a price-shopper. */}
+      <div className="mx-auto mt-20 max-w-2xl border-t border-ink-line/60 pt-14">
+        <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">{t.alaCarteEyebrow}</p>
+        <h2 className="font-display mt-3 text-3xl text-moon">{t.alaCarteTitle}</h2>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-moon-dim">{t.alaCarteIntro}</p>
+
+        <div className="mt-8 flex flex-col gap-3 text-left">
+          {[
+            { label: t.alaCarteSingle, desc: t.alaCarteSingleDesc, price: AI_SINGLE_PRICE_USD, href: tw ? "/tc/reading/daily" : "/reading/daily" },
+            { label: t.alaCarteLove, desc: t.alaCarteLoveDesc, price: LOVE_READING_PRICE_USD, href: tw ? "/tc/reading/love-compatibility" : "/reading/love-compatibility" },
+            { label: t.alaCarteYear, desc: t.alaCarteYearDesc, price: YEAR_READING_PRICE_USD, href: tw ? "/tc/reading/year-ahead" : "/reading/year-ahead" },
+          ].map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="group flex items-center justify-between gap-4 rounded-2xl border border-ink-line bg-ink-raised/40 p-5 transition-colors hover:border-gold-dim"
+            >
+              <span className="min-w-0">
+                <span className="block text-sm text-moon">
+                  {item.label}
+                  <span className="ml-2 text-gold-bright">${item.price.toFixed(2)}</span>
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-moon-dim">{item.desc}</span>
+              </span>
+              <span className="font-accent shrink-0 rounded-full border border-gold-dim px-5 py-2 text-xs uppercase tracking-[0.2em] text-moon transition-colors group-hover:border-gold group-hover:text-gold">
+                {t.alaCarteCta}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <p className="mx-auto mt-14 max-w-lg text-[11px] leading-relaxed text-moon-dim/60">
         {t.finePrint}{" "}
         <a href={tw ? "/tc/terms" : "/terms"} className="underline decoration-gold-dim underline-offset-2 hover:text-moon-dim">
           {t.terms}

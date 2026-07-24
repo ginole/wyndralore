@@ -344,54 +344,74 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         </p>
 
         {user ? (
-          <div className="mt-8 flex flex-col items-center gap-3">
-            {quota?.shareBonusAvailable && (
-              <button
-                type="button"
-                onClick={handleTextShare}
-                className="rounded-full border border-gold-dim px-7 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
-              >
-                {t.shareForOne}
-              </button>
-            )}
-            {quota?.adBonusAvailable && (
-              <button
-                type="button"
-                onClick={() => setShowAdModal(true)}
-                className="rounded-full border border-gold-dim px-7 py-3 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
-              >
-                {t.watchAdForOne}
-              </button>
-            )}
-          </div>
+          // A returning registered user who wants a 2nd card (freebirdie, 2026-07-24) bounced this
+          // wall in 3 seconds — the free "+1 draw" options were faint outline buttons while the gold
+          // (prominent) button pushed Premium. Flip it: when a free bonus draw is available, IT is
+          // the gold, breathing, low-friction next step, and Premium drops to a quiet text link.
+          (() => {
+            const hasBonus = quota?.shareBonusAvailable || quota?.adBonusAvailable;
+            return (
+              <>
+                {hasBonus && <p className="mt-8 text-sm text-moon-dim">{t.memberBonusHint}</p>}
+                <div className={`flex flex-col items-center gap-3 ${hasBonus ? "mt-4" : "mt-8"}`}>
+                  {quota?.shareBonusAvailable && (
+                    <button
+                      type="button"
+                      onClick={handleTextShare}
+                      className="cta-gold btn-breathe rounded-full px-8 py-3.5 text-sm font-medium uppercase tracking-[0.2em]"
+                    >
+                      {t.shareForOne}
+                    </button>
+                  )}
+                  {quota?.adBonusAvailable && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAdModal(true)}
+                      className="rounded-full border border-gold-dim px-8 py-3.5 text-sm uppercase tracking-[0.2em] text-moon transition-colors hover:border-gold hover:text-gold"
+                    >
+                      {t.watchAdForOne}
+                    </button>
+                  )}
+                </div>
+                {hasBonus ? (
+                  <Link href={L("/pricing")} className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
+                    {t.orGoPremium}
+                  </Link>
+                ) : (
+                  <Link href={L("/pricing")} className="cta-gold mt-8 rounded-full px-7 py-3 text-sm font-medium uppercase tracking-[0.2em]">
+                    {t.goPremiumUnlimited}
+                  </Link>
+                )}
+              </>
+            );
+          })()
         ) : (
-          <div className="mt-8 flex flex-col items-center gap-4">
-            {/* `next` sends them straight back to THIS reading after they register — they came to
-                the wall wanting another card, and the first TW registrant (2026-07-23) proved what
-                happens without it: she registered, landed on the account dashboard, followed its
-                Premium button to pricing, and left without ever using the fresh draw she signed
-                up for. Registering resets the (server-side) daily count, so the return visit can draw. */}
-            <Link
-              href={`${L("/account")}?mode=register&next=${encodeURIComponent(L(`/reading/${spread.slug}`))}`}
-              className="cta-gold rounded-full px-9 py-4 text-sm font-medium uppercase tracking-[0.2em]"
-            >
-              {t.createFreeAccount}
+          <>
+            <div className="mt-8 flex flex-col items-center gap-4">
+              {/* `next` sends them straight back to THIS reading after they register — they came to
+                  the wall wanting another card, and the first TW registrant (2026-07-23) proved what
+                  happens without it: she registered, landed on the account dashboard, followed its
+                  Premium button to pricing, and left without ever using the fresh draw she signed
+                  up for. Registering resets the (server-side) daily count, so the return visit can draw. */}
+              <Link
+                href={`${L("/account")}?mode=register&next=${encodeURIComponent(L(`/reading/${spread.slug}`))}`}
+                className="cta-gold rounded-full px-9 py-4 text-sm font-medium uppercase tracking-[0.2em]"
+              >
+                {t.createFreeAccount}
+              </Link>
+              <Link
+                href={`${L("/account")}?next=${encodeURIComponent(L(`/reading/${spread.slug}`))}`}
+                className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
+              >
+                {t.alreadyHaveSignIn}
+              </Link>
+            </div>
+            <Link href={L("/pricing")} className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
+              {t.orGoPremium}
             </Link>
-            <Link
-              href={`${L("/account")}?next=${encodeURIComponent(L(`/reading/${spread.slug}`))}`}
-              className="text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon"
-            >
-              {t.alreadyHaveSignIn}
-            </Link>
-          </div>
+          </>
         )}
 
-        <Link
-          href={L("/pricing")}
-          className="cta-gold mt-6 rounded-full px-7 py-3 text-sm font-medium uppercase tracking-[0.2em]"
-        >
-          {t.goPremiumUnlimited}
-        </Link>
         <Link href={L("/")} className="mt-6 text-xs uppercase tracking-[0.2em] text-moon-dim underline underline-offset-4 hover:text-moon">
           {t.backToWyndralore}
         </Link>

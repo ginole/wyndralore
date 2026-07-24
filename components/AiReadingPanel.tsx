@@ -8,6 +8,7 @@ import { storedWhopAffiliate } from "@/components/WhopAffiliateCapture";
 import { storedTrafficSource } from "@/components/TrafficSourceCapture";
 import { useLocale } from "@/lib/useLocale";
 import { getAppDict } from "@/lib/i18nApp";
+import { AI_SINGLE_PRICE_USD, AI_OVERAGE_PRICE_USD } from "@/lib/aiQuota";
 
 interface ReadingCard {
   position: string;
@@ -357,27 +358,55 @@ export default function AiReadingPanel({
       <div className="mt-8 rounded-2xl border border-gold-dim/40 bg-ink-raised/40 p-6 text-center">
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{a.brand}</p>
 
-        {deepState === "idle" && (
-          <>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-moon-dim">{a.tagline}</p>
-            <p className="mt-3 text-xs text-moon-dim/70">
-              {!isAuthenticated
-                ? a.signInHint
-                : quota?.isPremium
-                  ? quota.deepReadsRemaining + quota.extraReadsAvailable > 0
-                    ? a.quotaLine(quota.deepReadsRemaining + quota.extraReadsAvailable, quota.deepReadsLimit)
-                    : a.priceHintMember
-                  : a.priceHintGuest}
-            </p>
-            <button
-              type="button"
-              onClick={handleReveal}
-              className="mt-5 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.03] hover:bg-gold-bright"
-            >
-              {a.reveal}
-            </button>
-          </>
-        )}
+        {deepState === "idle" && (() => {
+          // A member with free deep reads left just reveals (it's free). Everyone else PAYS, and the
+          // funnel proved the old two-step mystery ("Reveal" → click → discover the price) lost a
+          // high-intent user: she never clicked through to learn it was only $2.99. So for a paying
+          // user, the price goes ON the button as one clear act, the glow draws the eye, and the
+          // click skips straight to checkout instead of bouncing through a paywall screen.
+          const memberHasFreeRead =
+            quota?.isPremium && quota.deepReadsRemaining + quota.extraReadsAvailable > 0;
+          const payKind: "ai_single" | "ai_overage" = quota?.isPremium ? "ai_overage" : "ai_single";
+          return (
+            <>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-moon-dim">{a.tagline}</p>
+              {memberHasFreeRead ? (
+                <>
+                  <p className="mt-3 text-xs text-moon-dim/70">
+                    {a.quotaLine(quota.deepReadsRemaining + quota.extraReadsAvailable, quota.deepReadsLimit)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleReveal}
+                    className="cta-gold btn-breathe mt-5 rounded-full px-8 py-3.5 text-sm font-medium uppercase tracking-[0.2em]"
+                  >
+                    {a.reveal}
+                  </button>
+                </>
+              ) : !isAuthenticated ? (
+                <>
+                  <p className="mt-3 text-xs text-moon-dim/70">{a.signInHint}</p>
+                  <button
+                    type="button"
+                    onClick={handleReveal}
+                    className="cta-gold btn-breathe mt-5 rounded-full px-8 py-3.5 text-sm font-medium uppercase tracking-[0.2em]"
+                  >
+                    {a.revealPriced(AI_SINGLE_PRICE_USD)}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handlePurchase(payKind)}
+                  disabled={purchasing}
+                  className="cta-gold btn-breathe mt-5 rounded-full px-8 py-3.5 text-sm font-medium uppercase tracking-[0.2em] disabled:opacity-60"
+                >
+                  {purchasing ? a.redirecting : a.revealPriced(quota?.isPremium ? AI_OVERAGE_PRICE_USD : AI_SINGLE_PRICE_USD)}
+                </button>
+              )}
+            </>
+          );
+        })()}
 
         {deepState === "loading" && <p className="mt-4 text-sm text-moon-dim">{a.generating}</p>}
 

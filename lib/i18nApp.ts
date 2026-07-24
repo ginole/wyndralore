@@ -15,6 +15,8 @@ export interface AppDict {
     limitedMemberTitle: string;
     limitedGuestBody: string;
     limitedMemberBody: string;
+    memberBonusHint: string;
+    orGoPremium: string;
     shareForOne: string;
     watchAdForOne: string;
     createFreeAccount: string;
@@ -64,6 +66,7 @@ export interface AppDict {
     brand: string;
     tagline: string;
     reveal: string;
+    revealPriced: (price: number) => string;
     generating: string;
     notSavedHint: string;
     quotaLine: (remaining: number, limit: number) => string;
@@ -233,6 +236,18 @@ export interface AppDict {
     // plan labels + perks keyed by plan id
     planLabels: Record<string, string>;
     planPerks: Record<string, string[]>;
+    // À la carte one-off products, surfaced so a price-shopper who isn't ready for a membership
+    // sees the low $2.99 entry point instead of only the $6.90/mo card. Prices come from lib/pricing.
+    alaCarteEyebrow: string;
+    alaCarteTitle: string;
+    alaCarteIntro: string;
+    alaCarteSingle: string;
+    alaCarteSingleDesc: string;
+    alaCarteLove: string;
+    alaCarteLoveDesc: string;
+    alaCarteYear: string;
+    alaCarteYearDesc: string;
+    alaCarteCta: string;
   };
   // In-context deck / card-back switcher (DeckQuickSwitch) + the full picker on /account (DeckStylePanel).
   deck: {
@@ -288,6 +303,8 @@ const en: AppDict = {
     limitedGuestBody:
       "It’s free — no card needed. Members get more readings every day, save every one to their journal, and can unlock extra draws by sharing or watching a short clip.",
     limitedMemberBody: "Your free draw resets tomorrow. Premium members read without limits.",
+    memberBonusHint: "Want another card right now? Get one free:",
+    orGoPremium: "Or go Premium for unlimited readings",
     shareForOne: "Share for +1 Reading",
     watchAdForOne: "Watch an Ad for +1 Reading",
     createFreeAccount: "Create My Free Account",
@@ -339,6 +356,7 @@ const en: AppDict = {
     tagline:
       "Not a generic chatbot guessing at your spread. This engine is tuned to tarot alone — steeped in the centuries-old meaning of the very cards you drew, and reading them in the exact positions before you, against your own question. No stranger's bias, no judgment: just the quiet pattern your cards are tracing, finally put into words.",
     reveal: "Reveal My Deep Reading",
+    revealPriced: (price) => `Unlock the full reading · $${price.toFixed(2)}`,
     generating: "Reading the energy between your cards…",
     notSavedHint:
       "Members can save every reading to their Journal — this one won't be saved anywhere. Copy or screenshot it now to keep it.",
@@ -533,6 +551,16 @@ const en: AppDict = {
       yearly: ["Everything in Monthly", "Best value", "3 free AI deep readings / month"],
       lifetime: ["Pay once, own it forever", "Everything in Yearly", "No renewals, ever", "4 free AI deep readings / month"],
     },
+    alaCarteEyebrow: "No membership needed",
+    alaCarteTitle: "Just want one reading?",
+    alaCarteIntro: "Pay once for exactly what you want — no subscription, no auto-renewal.",
+    alaCarteSingle: "Full deep reading",
+    alaCarteSingleDesc: "Draw a card and unlock its complete, personal reading — yours to keep.",
+    alaCarteLove: "Love compatibility",
+    alaCarteLoveDesc: "A two-person reading on where a relationship really stands.",
+    alaCarteYear: "Year ahead",
+    alaCarteYearDesc: "A 12-card reading mapping the year in front of you.",
+    alaCarteCta: "Start",
   },
   deck: {
     faceLabel: "Deck",
@@ -611,6 +639,8 @@ const zhTW: AppDict = {
     limitedGuestBody:
       "完全免費，無需信用卡。會員每天有更多次占卜、能把每一次都存進占卜筆記，還能透過分享或看一小段影片解鎖額外抽牌。",
     limitedMemberBody: "免費抽牌明天重置。進階會員可無限次占卜。",
+    memberBonusHint: "現在就想再抽一張？馬上免費多一次：",
+    orGoPremium: "或升級進階，無限暢抽",
     shareForOne: "分享換 +1 次占卜",
     watchAdForOne: "看廣告換 +1 次占卜",
     createFreeAccount: "註冊我的免費帳號",
@@ -661,6 +691,7 @@ const zhTW: AppDict = {
     tagline:
       "這不是一個對著你的牌陣瞎猜的通用聊天機器人。這個引擎只為塔羅而調校——浸潤在你所抽那幾張牌數百年來的象徵意義裡，在你眼前這個確切的牌位上解讀它們，並扣回你自己的問題。沒有陌生人的偏見，也沒有評判：只是你的牌正在描繪的那道安靜的脈絡，終於被化為文字。",
     reveal: "揭曉我的深度解讀",
+    revealPriced: (price) => `解鎖完整解讀 · $${price.toFixed(2)}`,
     generating: "正在讀取牌與牌之間的能量…",
     notSavedHint: "會員能把每次占卜存進筆記——這一次不會被保存到任何地方。現在就複製或截圖留存吧。",
     quotaLine: (r, l) => `本週期還剩 ${r} / ${l} 次免費深度解讀`,
@@ -859,6 +890,16 @@ const zhTW: AppDict = {
       yearly: ["月方案的一切", "最超值", "每月 3 次免費 AI 深度解讀"],
       lifetime: ["一次買斷，永久擁有", "年方案的一切", "永不續訂", "每月 4 次免費 AI 深度解讀"],
     },
+    alaCarteEyebrow: "不用綁定會員",
+    alaCarteTitle: "只想看一次？",
+    alaCarteIntro: "單次購買，用完就好——不訂閱、不自動續費。",
+    alaCarteSingle: "單次深度解讀",
+    alaCarteSingleDesc: "抽一張牌，解鎖它完整的個人解讀——永久保存。",
+    alaCarteLove: "愛情合盤",
+    alaCarteLoveDesc: "兩個人的關係，到底走到哪一步。",
+    alaCarteYear: "流年運勢",
+    alaCarteYearDesc: "12 張牌，攤開你眼前的一整年。",
+    alaCarteCta: "開始",
   },
   deck: {
     faceLabel: "牌面",
