@@ -68,14 +68,21 @@ export function proxy(req: NextRequest) {
 
   // 1) Language routing for pages that have a 繁體 twin. An explicit choice (the footer switch sets
   //    the `wl_lang` cookie) ALWAYS wins over geo — that's what lets a Taiwan visitor pick English
-  //    and stay (no bounce-back loop), and a Malaysia/Singapore visitor pick 中文 and stick. With no
-  //    explicit choice, only Taiwan / Hong Kong / Macau auto-redirect to 繁體; everyone else (incl.
-  //    bilingual MY/SG, and all Western visitors) stays on English. Crawlers are never redirected.
+  //    and stay (no bounce-back loop), and a Malaysia/Singapore visitor pick English and stick. With
+  //    no explicit choice, Taiwan / Hong Kong / Macau / Malaysia / Singapore auto-redirect to 繁體;
+  //    everyone else (all Western visitors) stays on English. Crawlers are never redirected.
+  //
+  //    MY/SG were originally excluded on the reasoning that they are bilingual and officially use
+  //    Simplified. Added 2026-07-25 (founder's call) because the 繁體 short-video channel is now the
+  //    top of the funnel: a 華人 viewer who watches a 繁體 Short and clicks through should land in
+  //    the language they were just reading, wherever they are. The footer switch is the escape hatch
+  //    for the English-preferring MY/SG visitor, and their choice sticks.
   if (isTwRedirectable(pathname) && !pathname.startsWith(TW_PREFIX)) {
     const lang = req.cookies.get("wl_lang")?.value;
     const country = req.headers.get("x-vercel-ip-country") ?? "";
     const ua = req.headers.get("user-agent") ?? "";
-    const wantsTc = lang === "zh" || (lang !== "en" && ["TW", "HK", "MO"].includes(country));
+    const wantsTc =
+      lang === "zh" || (lang !== "en" && ["TW", "HK", "MO", "MY", "SG"].includes(country));
     if (wantsTc && !BOT_UA.test(ua)) {
       const url = req.nextUrl.clone();
       url.pathname = pathname === "/" ? TW_PREFIX : `${TW_PREFIX}${pathname}`;
