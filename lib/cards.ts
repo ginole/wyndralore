@@ -57,6 +57,35 @@ export function getCardBySlug(slug: string, locale: Locale = "en"): TarotCard | 
   return card ? localize(card, locale) : undefined;
 }
 
+/**
+ * Sibling cards to link to from a card page — the previous and next card in deck order plus a few
+ * more from the same suit / arcana.
+ *
+ * This exists for SEO, not decoration. Before 2026-07-26 every card page linked only to /cards and
+ * the draw page, so all 78 detail pages sat at the same crawl depth with no path between them —
+ * one of the classic shapes behind Search Console's "Discovered – currently not indexed". Giving
+ * each page ~6 links to its neighbours turns the library into a connected graph instead of a
+ * flat list hanging off one hub.
+ *
+ * Deterministic (no randomness) so the generated HTML is stable between builds.
+ */
+export function getRelatedCards(card: TarotCard, locale: Locale = "en", count = 6): TarotCard[] {
+  const family = CARDS.filter((c) =>
+    card.arcana === "major" ? c.arcana === "major" : c.suit === card.suit,
+  );
+  const idx = family.findIndex((c) => c.id === card.id);
+  const picks: TarotCard[] = [];
+  // Walk outwards from the card's position: …, -2, -1, +1, +2, … wrapping inside the family.
+  for (let step = 1; picks.length < count && step <= family.length; step += 1) {
+    for (const offset of [step, -step]) {
+      if (picks.length >= count) break;
+      const next = family[(idx + offset + family.length * 2) % family.length];
+      if (next && next.id !== card.id && !picks.some((p) => p.id === next.id)) picks.push(next);
+    }
+  }
+  return picks.map((c) => (locale === "en" ? c : localize(c, locale)));
+}
+
 /** Strips the long-form text fields — this is the only shape safe to hand to client components. */
 export function getDeckManifest(locale: Locale = "en"): DeckCard[] {
   return getAllCards(locale).map(({ id, name, image, arcana, suit }) => ({ id, name, image, arcana, suit }));

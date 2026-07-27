@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "塔羅牌義大全 — 完整 78 張牌卡典藏 | Wyndralore",
   description:
     "探索全部 78 張塔羅牌的含義——大阿爾克那與小阿爾克那。正位與逆位關鍵字，以及愛情、事業、健康的解讀，為賦予力量而寫，而非預測。",
-  alternates: hreflangAlternates("/cards"),
+  alternates: { canonical: `${TW_PREFIX}/cards`, ...hreflangAlternates("/cards") },
   openGraph: {
     title: "塔羅牌義大全 — 完整 78 張牌卡典藏 | Wyndralore",
     description: "探索全部 78 張塔羅牌的含義——大阿爾克那與小阿爾克那，正位與逆位。",

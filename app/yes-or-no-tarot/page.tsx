@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { hreflangAlternates } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Yes or No Tarot — Free Instant One-Card Answer | Wyndralore",
   description:
     "Ask a yes-or-no question and draw one card for a clear, honest answer. A free instant yes/no tarot reading with a real shuffle-and-draw ritual — no sign-up needed.",
-  alternates: { canonical: "https://wyndralore.com/yes-or-no-tarot" },
+  alternates: { canonical: "/yes-or-no-tarot", ...hreflangAlternates("/yes-or-no-tarot") },
 };
 
 const FAQ = [

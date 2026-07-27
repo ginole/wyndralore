@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { premiumSpreadAccess, PremiumSpreadAccess } from "@/lib/premiumSpread";
 import { SpreadConfig } from "@/lib/types";
 import ReadingExperience from "@/components/ReadingExperience";
+import { hreflangAlternates } from "@/lib/i18n";
 
 // Premium spreads check the signed-in user's plan via cookies() (a dynamic API), which
 // conflicts with static generation for this route — force per-request rendering so that
@@ -23,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ spread: s
   return {
     title: `${spread.title} — Wyndralore Tarot Reading`,
     description: spread.subtitle,
+    alternates: { canonical: `/reading/${slug}`, ...hreflangAlternates(`/reading/${slug}`) },
   };
 }
 

@@ -28,9 +28,36 @@ const STEPS = [
   },
 ];
 
+// Organization + WebSite on the homepage: this is what lets Google attach the brand name, logo and
+// the two language editions to one entity instead of treating wyndralore.com/ and /tc as unrelated
+// documents. Neither homepage carried any structured data before 2026-07-26.
+const homeJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://wyndralore.com/#organization",
+      name: "Wyndralore",
+      url: "https://wyndralore.com",
+      logo: "https://wyndralore.com/wyndralore-wordmark.png",
+      description:
+        "Free online tarot readings built for quiet reflection — draw, reveal and read a card a day.",
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://wyndralore.com/#website",
+      url: "https://wyndralore.com",
+      name: "Wyndralore",
+      inLanguage: "en",
+      publisher: { "@id": "https://wyndralore.com/#organization" },
+    },
+  ],
+};
+
 export default function Home() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
       <section className="relative isolate flex min-h-[86vh] flex-col items-center justify-center overflow-hidden px-6 py-20 text-center sm:px-10">
         <BackgroundFloatingCards />
         <div

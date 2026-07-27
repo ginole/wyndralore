@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAllCards, getCardBySlug, getCardSlug } from "@/lib/cards";
+import { getAllCards, getCardBySlug, getCardSlug, getRelatedCards } from "@/lib/cards";
 import CardFace from "@/components/CardFace";
 import PremiumGate from "@/components/PremiumGate";
 import { getDict, hreflangAlternates, OG_LOCALE, SITE_URL, SUIT_LABEL, TW_PREFIX } from "@/lib/i18n";
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: t.card.metaTitle(card.name),
     description: t.card.metaDescription(card.name, keywords),
-    alternates: hreflangAlternates(`/cards/${slug}`),
+    alternates: { canonical: `${TW_PREFIX}/cards/${slug}`, ...hreflangAlternates(`/cards/${slug}`) },
     openGraph: {
       title: `${card.name} — 塔羅牌義`,
       description: t.card.metaDescription(card.name, keywords),
@@ -43,15 +43,40 @@ export default async function TwCardDetailPage({ params }: { params: Promise<{ s
   const card = getCardBySlug(slug, "zh-TW");
   if (!card) notFound();
 
+  const related = getRelatedCards(card, "zh-TW");
+  const url = `${SITE_URL}${TW_PREFIX}/cards/${slug}`;
+
+  // 和英文版同构：麵包屑讓 78 張牌頁有明確層級，isAccessibleForFree/hasPart 則把
+  // PremiumGate 遮住的深度解讀「聲明」出來——內容在 DOM 裡卻看不到，不聲明就是遮蔽。
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Article",
-    inLanguage: "zh-Hant-TW",
-    headline: `${card.name} 塔羅牌義`,
-    about: `${card.name} 塔羅牌`,
-    keywords: [...card.keywords_upright, ...card.keywords_reversed].join("、"),
-    articleBody: `${card.meaning_upright} ${card.meaning_reversed}`,
-    publisher: { "@type": "Organization", name: "Wyndralore" },
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": `${url}#article`,
+        mainEntityOfPage: url,
+        inLanguage: "zh-Hant-TW",
+        headline: `${card.name} 塔羅牌義`,
+        about: `${card.name} 塔羅牌`,
+        keywords: [...card.keywords_upright, ...card.keywords_reversed].join("、"),
+        articleBody: `${card.meaning_upright} ${card.meaning_reversed}`,
+        image: `${SITE_URL}${card.image}`,
+        isAccessibleForFree: false,
+        hasPart: {
+          "@type": "WebPageElement",
+          isAccessibleForFree: false,
+          cssSelector: ".premium-gated",
+        },
+        publisher: { "@type": "Organization", name: "Wyndralore", url: SITE_URL },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "塔羅牌義大全", item: `${SITE_URL}${TW_PREFIX}/cards` },
+          { "@type": "ListItem", position: 2, name: card.name, item: url },
+        ],
+      },
+    ],
   };
 
   return (
@@ -107,7 +132,8 @@ export default async function TwCardDetailPage({ params }: { params: Promise<{ s
       <div className="mt-14">
         <h2 className="font-display text-2xl text-moon">{t.card.themesTitle}</h2>
         <p className="mt-2 text-sm text-moon-dim">{t.card.themesSubtitle(card.name)}</p>
-        <div className="mt-6">
+        {/* .premium-gated 對應上面付費牆 JSON-LD 的 cssSelector，搬動時別把 class 弄丟 */}
+        <div className="premium-gated mt-6">
           <PremiumGate>
             <div className="flex flex-col gap-6">
               {THEMES.map((theme) => (
@@ -129,6 +155,26 @@ export default async function TwCardDetailPage({ params }: { params: Promise<{ s
           </PremiumGate>
         </div>
       </div>
+
+      <section className="mt-14 border-t border-ink-line/60 pt-10">
+        <h2 className="font-display text-2xl text-moon">
+          {card.arcana === "major"
+            ? `更多${t.card.majorArcana}`
+            : `更多${SUIT_LABEL["zh-TW"][card.suit ?? ""] ?? ""}牌組`}
+        </h2>
+        <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {related.map((r) => (
+            <li key={r.id}>
+              <Link
+                href={`${TW_PREFIX}/cards/${getCardSlug(r)}`}
+                className="block rounded-xl border border-ink-line px-4 py-3 text-sm text-moon-dim transition-colors hover:border-gold-dim hover:text-gold"
+              >
+                {r.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <div className="mt-14 border-t border-ink-line/60 pt-10 text-center">
         <p className="text-sm text-moon-dim">{t.card.drawPrompt}</p>

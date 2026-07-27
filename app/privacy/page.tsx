@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { hreflangAlternates } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Wyndralore",
   description: "How Wyndralore handles your data.",
-  alternates: { canonical: "/privacy" },
+  alternates: { canonical: "/privacy", ...hreflangAlternates("/privacy") },
 };
 
 export default function PrivacyPage() {

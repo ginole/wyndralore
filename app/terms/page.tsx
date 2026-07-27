@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { hreflangAlternates } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Wyndralore",
   description: "The terms that govern your use of Wyndralore.",
-  alternates: { canonical: "/terms" },
+  alternates: { canonical: "/terms", ...hreflangAlternates("/terms") },
 };
 
 export default function TermsPage() {

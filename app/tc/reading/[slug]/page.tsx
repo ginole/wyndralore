@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { premiumSpreadAccess, PremiumSpreadAccess } from "@/lib/premiumSpread";
 import { SpreadConfig } from "@/lib/types";
 import ReadingExperience from "@/components/ReadingExperience";
-import { getDict } from "@/lib/i18n";
+import { getDict, hreflangAlternates, TW_PREFIX } from "@/lib/i18n";
 
 // 繁體 mirror of app/reading/[spread]/page.tsx. Same access/quota logic; ReadingExperience localizes
 // itself from the /tc path, and we hand it the 繁體 deck manifest so card names in the fan are 繁體.
@@ -23,7 +23,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const sp = t.spreads[slug];
   if (!sp) return { title: "占卜 — Wyndralore" };
-  return { title: `${sp.title} — Wyndralore 塔羅占卜`, description: sp.subtitle };
+  return {
+    title: `${sp.title} — Wyndralore 塔羅占卜`,
+    description: sp.subtitle,
+    alternates: { canonical: `${TW_PREFIX}/reading/${slug}`, ...hreflangAlternates(`/reading/${slug}`) },
+  };
 }
 
 function PremiumUpsell({ spread }: { spread: SpreadConfig }) {

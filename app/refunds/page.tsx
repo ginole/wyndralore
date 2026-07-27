@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { hreflangAlternates } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Refund & Cancellation Policy — Wyndralore",
   description: "How refunds and cancellations work for Wyndralore memberships and one-off purchases.",
-  alternates: { canonical: "/refunds" },
+  alternates: { canonical: "/refunds", ...hreflangAlternates("/refunds") },
 };
 
 export default function RefundsPage() {

@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   title: "Wyndralore — 免費線上塔羅占卜，帶著儀式感",
   description:
     "親手洗牌、選牌、翻牌——一場為靜心省思而生的塔羅體驗，而不是算命。每日免費占卜，無需註冊。",
-  alternates: hreflangAlternates("/"),
+  // Without an explicit canonical Next emits none at all, which leaves Google to pick a URL for
+  // the 繁體 homepage itself — bad when /tw 308s here and the geo proxy can land people on either.
+  alternates: { canonical: TW_PREFIX, ...hreflangAlternates("/") },
   openGraph: {
     title: "Wyndralore — 免費線上塔羅占卜，帶著儀式感",
     description: "親手洗牌、選牌、翻牌——一場為靜心省思而生的塔羅體驗，而不是算命。",
@@ -31,9 +33,34 @@ const SPECIALS = [
   { href: "/tc/reading/love-compatibility", title: "愛情契合度", subtitle: "兩個人，五張牌：你的能量、對方的能量，以及你們之間那份坦誠的連結。", meta: "5 張牌" },
 ];
 
+// 和英文首頁同一個 Organization 實體（共用 @id），只是這一份宣告 zh-Hant-TW 語系，
+// 讓 Google 把兩個語言版本歸到同一個品牌底下，而不是當成兩個不相干的網站。
+const homeJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "Wyndralore",
+      url: SITE_URL,
+      logo: `${SITE_URL}/wyndralore-wordmark.png`,
+      description: "免費線上塔羅占卜，為靜心省思而生——每天抽一張牌，慢慢讀，慢慢懂。",
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}${TW_PREFIX}#website`,
+      url: `${SITE_URL}${TW_PREFIX}`,
+      name: "Wyndralore",
+      inLanguage: "zh-Hant-TW",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+  ],
+};
+
 export default function TwHome() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd) }} />
       <section className="relative isolate flex min-h-[86vh] flex-col items-center justify-center overflow-hidden px-6 py-20 text-center sm:px-10">
         <BackgroundFloatingCards />
         <div

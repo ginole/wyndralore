@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAllCards, getCardBySlug, getCardSlug } from "@/lib/cards";
+import { getAllCards, getCardBySlug, getCardSlug, getRelatedCards } from "@/lib/cards";
 import CardFace from "@/components/CardFace";
 import PremiumGate from "@/components/PremiumGate";
 import { hreflangAlternates } from "@/lib/i18n";
@@ -38,14 +38,45 @@ export default async function CardDetailPage({ params }: { params: Promise<{ slu
   const card = getCardBySlug(slug);
   if (!card) notFound();
 
+  const related = getRelatedCards(card);
+  const url = `https://wyndralore.com/cards/${slug}`;
+
+  // Two things this markup does that the previous version didn't:
+  //  1. BreadcrumbList — gives the card pages a declared hierarchy under /cards instead of looking
+  //     like 78 orphan URLs, which is part of why they sat "Discovered – currently not indexed".
+  //  2. isAccessibleForFree / hasPart — the love/career/wellness sections are in the DOM but
+  //     visually blurred behind PremiumGate. Serving content a visitor can't read WITHOUT
+  //     declaring it is exactly the pattern Google treats as cloaking; declaring it is the
+  //     supported way to keep the text indexable and stay inside the rules.
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Article",
-    headline: `${card.name} Tarot Card Meaning`,
-    about: `${card.name} tarot card`,
-    keywords: [...card.keywords_upright, ...card.keywords_reversed].join(", "),
-    articleBody: `${card.meaning_upright} ${card.meaning_reversed}`,
-    publisher: { "@type": "Organization", name: "Wyndralore" },
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": `${url}#article`,
+        mainEntityOfPage: url,
+        headline: `${card.name} Tarot Card Meaning`,
+        about: `${card.name} tarot card`,
+        keywords: [...card.keywords_upright, ...card.keywords_reversed].join(", "),
+        articleBody: `${card.meaning_upright} ${card.meaning_reversed}`,
+        image: `https://wyndralore.com${card.image}`,
+        inLanguage: "en",
+        isAccessibleForFree: false,
+        hasPart: {
+          "@type": "WebPageElement",
+          isAccessibleForFree: false,
+          cssSelector: ".premium-gated",
+        },
+        publisher: { "@type": "Organization", name: "Wyndralore", url: "https://wyndralore.com" },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Tarot Card Meanings", item: "https://wyndralore.com/cards" },
+          { "@type": "ListItem", position: 2, name: card.name, item: url },
+        ],
+      },
+    ],
   };
 
   return (
@@ -101,7 +132,8 @@ export default async function CardDetailPage({ params }: { params: Promise<{ slu
       <div className="mt-14">
         <h2 className="font-display text-2xl text-moon">Themes in depth</h2>
         <p className="mt-2 text-sm text-moon-dim">How {card.name} speaks to different areas of life.</p>
-        <div className="mt-6">
+        {/* .premium-gated is referenced by the paywall JSON-LD above — keep the class if you move this. */}
+        <div className="premium-gated mt-6">
           <PremiumGate>
             <div className="flex flex-col gap-6">
               {THEMES.map((theme) => (
@@ -123,6 +155,24 @@ export default async function CardDetailPage({ params }: { params: Promise<{ slu
           </PremiumGate>
         </div>
       </div>
+
+      <section className="mt-14 border-t border-ink-line/60 pt-10">
+        <h2 className="font-display text-2xl text-moon">
+          {card.arcana === "major" ? "More Major Arcana" : `More from the Suit of ${card.suit}`}
+        </h2>
+        <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {related.map((r) => (
+            <li key={r.id}>
+              <Link
+                href={`/cards/${getCardSlug(r)}`}
+                className="block rounded-xl border border-ink-line px-4 py-3 text-sm text-moon-dim transition-colors hover:border-gold-dim hover:text-gold"
+              >
+                {r.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <div className="mt-14 border-t border-ink-line/60 pt-10 text-center">
         <p className="text-sm text-moon-dim">Want to see this card in a reading?</p>
