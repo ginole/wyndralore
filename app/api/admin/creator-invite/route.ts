@@ -15,6 +15,11 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  // Default OFF: a creator who has actually replied gets a hand-written answer in her own
+  // language, in her own thread. The canned email below is English-only and quotes the English
+  // root as the referral link, so firing it at a 華語 creator who just wrote to us in 繁體 is
+  // worse than sending nothing. Opt in explicitly when the generic invite is genuinely wanted.
+  const sendInvite = body?.sendInvite === true;
 
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Invalid creator email" }, { status: 400 });
@@ -40,16 +45,23 @@ export async function POST(req: NextRequest) {
     viaLink = `${req.nextUrl.origin}/?via=${withCode.affiliateCode}`;
   }
 
-  const { subject, html } = creatorInviteEmail(email, viaLink, actionLink);
-  const result = await sendEmail({ to: email, subject, html });
-  if (!result.ok) {
-    console.error(`[creator-invite] invite email failed to send for user ${userId}:`, result.error);
+  let emailSent = false;
+  if (sendInvite) {
+    const { subject, html } = creatorInviteEmail(email, viaLink, actionLink);
+    const result = await sendEmail({ to: email, subject, html });
+    if (!result.ok) {
+      console.error(`[creator-invite] invite email failed to send for user ${userId}:`, result.error);
+    }
+    emailSent = result.ok;
   }
 
   await prisma.creatorInvite.create({
-    data: { email, affiliateLink: viaLink, userId, wasNewAccount, planGranted, emailSent: result.ok },
+    data: { email, affiliateLink: viaLink, userId, wasNewAccount, planGranted, emailSent },
   });
-  await trackEvent("creator_invite_sent", { userId, props: { emailSent: result.ok, wasNewAccount } });
+  await trackEvent("creator_invite_sent", { userId, props: { emailSent, sendInvite, wasNewAccount } });
 
-  return NextResponse.json({ ok: true, emailSent: result.ok, userId, wasNewAccount, planGranted, viaLink });
+  // `actionLink` is what the canned email would have carried: a 7-day claim link when we just
+  // created her account, or the plain login page when she already had one. Hand-written outreach
+  // has to paste it in by hand, so it has to come back out of here.
+  return NextResponse.json({ ok: true, emailSent, sendInvite, userId, wasNewAccount, planGranted, viaLink, actionLink });
 }

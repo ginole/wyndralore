@@ -34,7 +34,7 @@ export default function CreatorsPanel() {
 
   return (
     <div>
-      <PanelHeader title="达人邀请" subtitle="Grant a creator free Premium and email them your affiliate invite in one click." />
+      <PanelHeader title="达人邀请" subtitle="开通一个月免费 Premium 并标记为达人。回信照例手写，罐头邀请信要勾选才发。" />
 
       <CreatorInviteForm onSuccess={load} />
 
