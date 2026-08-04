@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cinzel, Cormorant_Garamond, Inter } from "next/font/google";
+import { Cinzel, Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import SiteHeader from "@/components/SiteHeader";
@@ -23,8 +23,14 @@ const cormorant = Cormorant_Garamond({
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+// Body/UI face. Deliberately NOT Inter — it was the one obviously templated choice in an
+// otherwise specific type system, and it is the face most associated with AI-generated design.
+// Jost is a geometric sans in the Futura lineage, i.e. the 1920s–30s drawing style the deck's
+// own art-deco card borders come from, so the interface and the artwork share an origin. Its
+// even, constructed letterforms also sit better beside CJK (which the 繁體 edition falls back
+// to a system face for) than a calligraphic humanist would.
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
   display: "swap",
 });
@@ -69,7 +75,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${inter.variable} ${cinzel.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${jost.variable} ${cinzel.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col overflow-x-hidden bg-ink text-moon">
         <AuthProvider>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BackgroundFloatingCards from "@/components/BackgroundFloatingCards";
+import SpreadGlyph from "@/components/SpreadGlyph";
 import { SPREAD_ORDER } from "@/lib/spreads";
 import { getDict, hreflangAlternates, OG_LOCALE, SITE_URL, TW_PREFIX } from "@/lib/i18n";
 
@@ -105,10 +106,16 @@ export default function TwHome() {
         ))}
       </section>
 
-      <section className="mx-auto max-w-3xl px-6 py-20 text-center sm:px-10">
-        <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">{t.home.aiEyebrow}</p>
-        <h2 className="font-display mt-4 text-3xl text-moon sm:text-4xl">{t.home.aiTitle}</h2>
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moon-dim">{t.home.aiBody}</p>
+      {/* One tonal break in an otherwise uniform scroll. Every section below the hero sat on the
+          same ink background, so the page read as a single undifferentiated column; giving the
+          thesis paragraph a faintly raised band with hairline rules turns the page into chapters
+          without adding decoration. Kept to one band — the hero is where the boldness is spent. */}
+      <section className="relative border-y border-ink-line/70 bg-ink-raised/30 px-6 py-20 text-center">
+        <div className="mx-auto max-w-3xl sm:px-4">
+          <p className="font-accent text-xs uppercase tracking-[0.3em] text-gold-dim">{t.home.aiEyebrow}</p>
+          <h2 className="font-display mt-4 text-3xl text-moon sm:text-4xl">{t.home.aiTitle}</h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moon-dim">{t.home.aiBody}</p>
+        </div>
       </section>
 
       <section id="spreads" className="mx-auto max-w-5xl scroll-mt-24 px-6 py-20 sm:px-10">
@@ -133,6 +140,16 @@ export default function TwHome() {
                   </span>
                 )}
                 <div>
+                  {/* Fixed-height, bottom-aligned box: the glyphs differ in height (a one-card
+                      spread is short, the Celtic Cross is tall), and letting that push the
+                      headings around made the row look accidental. Widths still vary — that
+                      difference is the information. */}
+                  <div className="mb-5 flex h-[72px] items-end">
+                    <SpreadGlyph
+                      slug={slug}
+                      className="text-gold/55 transition-colors duration-200 group-hover:text-gold-bright group-active:text-gold-bright"
+                    />
+                  </div>
                   <h3 className="font-display text-xl text-moon">{spread.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-moon-dim">{spread.subtitle}</p>
                 </div>

@@ -12,7 +12,7 @@
   --color-moon-dim: rgba(244, 241, 234, 0.62);
 
   --font-display: var(--font-cormorant);
-  --font-body: var(--font-inter);
+  --font-body: var(--font-jost);
   --font-accent: var(--font-cinzel);
 
   /* motion tokens — keep the whole site on one rhythm (PRD §6.3) */
@@ -21,6 +21,8 @@
   --duration-fast: 200ms;
   --duration-medium: 400ms;
   --duration-flip: 600ms;
+  /* Press feedback lives at 100–160ms: slower reads as lag on a control you just touched. */
+  --duration-press: 140ms;
   --duration-shuffle: 1400ms;
   --duration-float: 26s;
   --duration-rise: 3200ms;
@@ -73,6 +75,22 @@ h4,
 :where(a, button, [role="button"]):focus-visible {
   outline: 2px solid rgba(228, 200, 148, 0.75);
   outline-offset: 3px;
+}
+
+/* Press feedback, site-wide.
+   The site had 93 pressable elements and only 9 :active states, so on a phone — where nearly
+   all of our traffic lands, and where :hover never fires — tapping anything produced no
+   acknowledgement at all. That absence, not a shortage of animation, is what read as "flat".
+   :where() keeps this at zero specificity so any component that wants its own press behaviour
+   still wins; add .no-press to opt out entirely (used where a transform would fight an
+   existing one, e.g. the fanned cards). */
+@media (prefers-reduced-motion: no-preference) {
+  :where(button, [role="button"], a.cta-gold):not(.no-press) {
+    transition: transform var(--duration-press) var(--ease-ritual);
+  }
+  :where(button, [role="button"], a.cta-gold):not(.no-press):active {
+    transform: scale(0.97);
+  }
 }
 
 ::selection {

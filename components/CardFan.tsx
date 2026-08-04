@@ -249,7 +249,10 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
                     ? "translate-y-10 scale-90 opacity-0"
                     : disabled
                       ? ""
-                      : "group-hover:-translate-y-2 group-hover:shadow-[0_-4px_28px_-4px_rgba(228,200,148,0.45)] group-hover:ring-gold group-focus-visible:-translate-y-2 group-focus-visible:ring-gold"
+                      : // group-active mirrors group-hover so a TAP gets the same acknowledgement a
+                        // cursor gets. The outer button carries the fan's own inline transform, so
+                        // the lift has to live on this span or it would fight the layout.
+                        "group-hover:-translate-y-2 group-hover:shadow-[0_-4px_28px_-4px_rgba(228,200,148,0.45)] group-hover:ring-gold group-focus-visible:-translate-y-2 group-focus-visible:ring-gold group-active:-translate-y-3 group-active:ring-gold group-active:shadow-[0_-4px_28px_-4px_rgba(228,200,148,0.55)]"
                 }`}
               >
                 <CardBack shine="hover" />

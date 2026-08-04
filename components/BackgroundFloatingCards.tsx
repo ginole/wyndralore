@@ -15,10 +15,16 @@ import { useEffect, useState } from "react";
 
 const ENTRANCE_SESSION_KEY = "wl_hero_entrance_played";
 
+// ⚠️ Mobile used to render exactly ONE of these — cards 2–5 were `hidden sm:block` and up — so
+// the whole floating-spread composition, and most of the rise entrance, was desktop-only. Nearly
+// all real traffic arrives from Reels/TikTok/FB on a phone, i.e. almost nobody was seeing the
+// hero this site is built around. The first three cards now have phone positions of their own:
+// pushed into the corners around the centred headline, and two of them deliberately bleeding off
+// the edge so the spread reads as continuing past the frame instead of being cramped into it.
 const CARDS = [
-  { src: "/cards/major-17-star.svg", className: "left-[3%] top-[10%] w-36 sm:w-44 md:w-52", rotA: "-8deg", rotB: "4deg", x: "18px", y: "-28px", delay: "0s", depth: 3, riseDelay: "0s", floatDelay: "3.2s" },
-  { src: "/cards/major-18-moon.svg", className: "right-[2%] top-[42%] w-32 sm:w-40 md:w-48 hidden sm:block", rotA: "6deg", rotB: "-5deg", x: "-16px", y: "22px", delay: "-8s", depth: 2, riseDelay: "0.3s", floatDelay: "4.8s" },
-  { src: "/cards/major-21-world.svg", className: "left-[20%] bottom-[5%] w-28 sm:w-36 md:w-44 hidden md:block", rotA: "-4deg", rotB: "7deg", x: "12px", y: "-18px", delay: "-15s", depth: 2, riseDelay: "0.6s", floatDelay: "6.4s" },
+  { src: "/cards/major-17-star.svg", className: "-left-[9%] top-[7%] w-32 sm:left-[3%] sm:w-44 md:w-52", rotA: "-8deg", rotB: "4deg", x: "18px", y: "-28px", delay: "0s", depth: 3, riseDelay: "0s", floatDelay: "3.2s" },
+  { src: "/cards/major-18-moon.svg", className: "-right-[8%] top-[34%] w-28 sm:right-[2%] sm:top-[42%] sm:w-40 md:w-48", rotA: "6deg", rotB: "-5deg", x: "-16px", y: "22px", delay: "-8s", depth: 2, riseDelay: "0.3s", floatDelay: "4.8s" },
+  { src: "/cards/major-21-world.svg", className: "left-[10%] bottom-[6%] w-24 sm:left-[20%] sm:bottom-[5%] sm:w-36 md:w-44", rotA: "-4deg", rotB: "7deg", x: "12px", y: "-18px", delay: "-15s", depth: 2, riseDelay: "0.6s", floatDelay: "6.4s" },
   { src: "/cards/major-17-star.svg", className: "right-[24%] top-[6%] w-24 sm:w-28 md:w-32 hidden lg:block", rotA: "5deg", rotB: "-6deg", x: "-12px", y: "20px", delay: "-20s", depth: 1, riseDelay: "0.9s", floatDelay: "8s" },
   { src: "/cards/major-18-moon.svg", className: "left-[8%] top-[52%] w-24 sm:w-28 md:w-32 hidden lg:block", rotA: "-6deg", rotB: "5deg", x: "14px", y: "-16px", delay: "-4s", depth: 1, riseDelay: "1.2s", floatDelay: "9.6s" },
 ];
@@ -75,11 +81,16 @@ export default function BackgroundFloatingCards() {
         <circle cx="200" cy="200" r="176" stroke={GOLD} strokeWidth="0.3" opacity="0.5" />
         {/* 12-point star ring — draw spokes + outer nodes */}
         {Array.from({ length: 12 }).map((_, i) => {
+          // Rounded to 3dp on purpose. Node and the browser disagree on the last ulp of
+          // Math.sin/cos here (server 70.09618943233423 vs client 70.09618943233426), and React
+          // treats that as a hydration mismatch — it logged an error on every homepage load, in
+          // both editions. Three decimals is far finer than a 400-unit viewBox can show.
           const a = (Math.PI / 6) * i - Math.PI / 2;
-          const x = 200 + 150 * Math.cos(a);
-          const y = 200 + 150 * Math.sin(a);
-          const x2 = 200 + 176 * Math.cos(a);
-          const y2 = 200 + 176 * Math.sin(a);
+          const at = (v: number) => Number(v.toFixed(3));
+          const x = at(200 + 150 * Math.cos(a));
+          const y = at(200 + 150 * Math.sin(a));
+          const x2 = at(200 + 176 * Math.cos(a));
+          const y2 = at(200 + 176 * Math.sin(a));
           return (
             <g key={i}>
               <line x1="200" y1="200" x2={x} y2={y} stroke={GOLD} strokeWidth="0.3" opacity="0.35" />
