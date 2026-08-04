@@ -8,6 +8,7 @@ import { useAuth, todayLocal, QuotaStatus } from "./AuthProvider";
 import { track } from "@/lib/track";
 import DeckStack, { SHUFFLE_SETTLE_MS } from "./DeckStack";
 import CardFan from "./CardFan";
+import CardBack from "./CardBack";
 import CardFace from "./CardFace";
 import DrawnCardBlock from "./DrawnCardBlock";
 import AdBonusModal from "./AdBonusModal";
@@ -424,6 +425,23 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
   if (phase === "intro") {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
+        {/* The deck, at rest, before it is touched.
+            The homepage hero is full of cards; pressing its CTA used to land the visitor on a
+            bare form with no card anywhere — the atmosphere dropped out at the exact moment
+            intent is highest. This is the actual deck they are about to shuffle (it follows
+            their chosen card back), not an illustration: three backs squared up in a stack,
+            the top one carrying the same slow ambient sheen it has everywhere else. */}
+        <div aria-hidden className="relative mb-9 h-28 w-[4.5rem] sm:h-32 sm:w-20">
+          <div className="absolute inset-0 -rotate-6 opacity-40 blur-[0.4px]">
+            <CardBack />
+          </div>
+          <div className="absolute inset-0 rotate-3 opacity-70">
+            <CardBack />
+          </div>
+          <div className="absolute inset-0">
+            <CardBack shine="loop" />
+          </div>
+        </div>
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{t.cardsUnit(spread.count)}</p>
         <h1 className="font-display mt-4 text-4xl text-moon sm:text-5xl">{spreadTitle}</h1>
         <p className="mt-4 text-sm leading-relaxed text-moon-dim sm:text-base">{spreadSubtitle}</p>
