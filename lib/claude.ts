@@ -42,7 +42,13 @@ export function isAiReadingConfigured(): boolean {
 function languageRule(locale: Locale): string {
   const noQuestion =
     locale === "zh-TW"
-      ? "If they gave no question at all, write in Traditional Chinese as written in Taiwan."
+      ? // Must be this emphatic. A softer "write in Traditional Chinese as written in Taiwan"
+        // produced SIMPLIFIED characters on production (风暴已过 星光照见…) — the persona above
+        // carries the brand string 智能觉察引擎, which is itself simplified and sits in the model's
+        // context as a hint about which script to favour. On a 繁體 site aimed at Taiwan, simplified
+        // output is worse than English: it reads as mainland-made, which is the exact trust problem
+        // this edition exists to avoid.
+        "If they gave no question at all, write in Traditional Chinese characters (繁體中文) as used in Taiwan. Never use simplified characters."
       : "If they gave no question at all, write in English.";
   return `Write the reading in whatever language the querent wrote their question in, matching them without comment.
 ${noQuestion} Card names, position labels and their meanings are always supplied to you in
