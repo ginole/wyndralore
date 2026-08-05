@@ -30,6 +30,9 @@ export interface AppDict {
     beginShuffling: string;
     oneCard: string;
     threePiles: string;
+    fanHint: string;
+    fanDeckLabel: string;
+    fanCardLabel: string;
     readingsLeft: (remaining: number, limit: number) => string;
     creditUnlock: (remaining: number) => string;
     shuffleTitle: string;
@@ -318,6 +321,9 @@ const en: AppDict = {
     beginShuffling: "Begin Shuffling",
     oneCard: "One card",
     threePiles: "Three piles",
+    fanHint: "Drag to browse · tap to draw",
+    fanDeckLabel: "Face-down deck — drag to browse, tap a card to draw it",
+    fanCardLabel: "Draw a card",
     readingsLeft: (r, l) => `${r} of ${l} readings left today`,
     creditUnlock: (r) => `✦ Unlocking with 1 of your ${r} free premium ${r === 1 ? "unlock" : "unlocks"}`,
     shuffleTitle: "Shuffle the deck",
@@ -654,6 +660,9 @@ const zhTW: AppDict = {
     beginShuffling: "開始洗牌",
     oneCard: "單張牌",
     threePiles: "三疊牌",
+    fanHint: "左右滑動瀏覽 · 點一張抽出",
+    fanDeckLabel: "覆蓋的牌堆——左右滑動瀏覽，點一張把它抽出來",
+    fanCardLabel: "抽出這張牌",
     readingsLeft: (r, l) => `今天還剩 ${r} / ${l} 次占卜`,
     creditUnlock: (r) => `✦ 使用你 ${r} 次免費進階解鎖中的 1 次`,
     shuffleTitle: "洗牌",

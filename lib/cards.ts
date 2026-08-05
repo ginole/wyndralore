@@ -47,6 +47,32 @@ export function getCardByName(name: string): TarotCard | undefined {
   return CARDS.find((c) => c.name === name);
 }
 
+/** Every localized name → its English base card. Built once; ids are unique per card. */
+const CARD_BY_LOCALIZED_NAME = new Map<string, TarotCard>(
+  CARDS.flatMap((c) => {
+    const localized = ZH_TW_BY_ID.get(c.id)?.name;
+    return localized && localized !== c.name ? ([[localized, c]] as [string, TarotCard][]) : [];
+  }),
+);
+
+/**
+ * Resolve a card by its name in ANY shipped locale.
+ *
+ * `getCardByName` above is English-only on purpose — English names are the stored identity for
+ * journal entries and deck matching, and that invariant should stay. But the 繁體 reading page
+ * hands ReadingExperience the zh-TW deck manifest, so the browser posts 繁體 card names to the AI
+ * endpoints, and validating those with the English-only lookup rejected every one of them: the
+ * free summary AND both paid endpoints (deep, follow-up) returned 400 for every 繁體 draw, and
+ * failed silently because the client swallows non-OK responses. Proven against the running API:
+ * "The Star" → 200, 「星星」 → 400.
+ *
+ * Use this ONLY where a name arrives from a localized client. Anything that persists or matches
+ * on card identity should keep using `getCardByName`.
+ */
+export function resolveCardByAnyLocaleName(name: string): TarotCard | undefined {
+  return getCardByName(name) ?? CARD_BY_LOCALIZED_NAME.get(name);
+}
+
 /** The stable English slug for a card. Works for both English and localized cards (keyed by id). */
 export function getCardSlug(card: TarotCard): string {
   return SLUG_BY_ID.get(card.id) ?? slugify(card.name);

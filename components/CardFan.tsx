@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef } from "react";
 import { DeckCard } from "@/lib/types";
 import CardBack from "./CardBack";
+import { useLocale } from "@/lib/useLocale";
+import { getAppDict } from "@/lib/i18nApp";
 
 interface CardFanProps {
   cards: DeckCard[];
@@ -19,6 +21,10 @@ const DRAG_CLICK_THRESHOLD = 8; // px of movement that separates a tap from a dr
 const OVERSCROLL = 1.1; // how many card-widths the edges give before the spring pulls back
 
 export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFanProps) {
+  // This component's three strings were hardcoded English and survived the earlier 繁體 leak
+  // sweep, so a Taiwanese reader hit "DRAG TO BROWSE · TAP TO DRAW" at the single most
+  // important interaction in the product.
+  const t = getAppDict(useLocale()).reading;
   const n = cards.length;
   const trackRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef((n - 1) / 2); // start centered mid-deck
@@ -222,7 +228,7 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
       <div
         ref={trackRef}
         role="listbox"
-        aria-label="Face-down deck — drag to browse, tap a card to draw it"
+        aria-label={t.fanDeckLabel}
         className="relative mx-auto h-60 w-full max-w-3xl cursor-grab touch-pan-y overflow-hidden active:cursor-grabbing sm:h-72"
         style={{ perspective: "1200px" }}
         onPointerDown={handlePointerDown}
@@ -240,7 +246,7 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
               data-card-id={card.id}
               disabled={disabled || taken}
               onClick={() => onSelect(card)}
-              aria-label="Draw a card"
+              aria-label={t.fanCardLabel}
               className="group invisible absolute bottom-8 left-1/2 h-40 w-24 origin-bottom will-change-transform focus:outline-none disabled:cursor-default sm:h-48 sm:w-28"
             >
               <span
@@ -262,7 +268,7 @@ export default function CardFan({ cards, takenIds, onSelect, disabled }: CardFan
         })}
       </div>
       <p className="mt-2 text-center text-[11px] uppercase tracking-[0.25em] text-moon-dim/70">
-        Drag to browse · tap to draw
+        {t.fanHint}
       </p>
     </div>
   );

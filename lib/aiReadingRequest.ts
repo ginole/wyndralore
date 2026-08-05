@@ -1,6 +1,6 @@
 import { Theme } from "./types";
 import { ReadingCardInput } from "./claude";
-import { getCardByName } from "./cards";
+import { resolveCardByAnyLocaleName } from "./cards";
 
 const THEMES: Theme[] = ["general", "love", "career", "wellness"];
 // Longest real spread position label is "Hopes & Fears" (Celtic Cross) — generous cap well
@@ -27,7 +27,14 @@ export function parseReadingRequestBody(body: unknown): ParsedReadingRequest | n
     // name must be a real card from the deck — this also bounds its length implicitly and
     // closes off using this endpoint as an unauthenticated way to inject arbitrary long text
     // into a Claude prompt (name/position previously had no length cap at all).
-    if (typeof name !== "string" || !getCardByName(name)) return null;
+    //
+    // Accepts the name in any shipped locale: the 繁體 reading page runs on the zh-TW deck
+    // manifest, so its cards arrive as 「星星」 rather than "The Star". The English-only lookup
+    // used to reject all 78 of them, which silently killed the free summary and both PAID AI
+    // endpoints for every 繁體 reading. The name is passed through as sent, not normalised to
+    // English, so the generated reading names the card the same way the screen does — mixing
+    // an English card name into 繁體 prose would be worse than the bug it fixed.
+    if (typeof name !== "string" || !resolveCardByAnyLocaleName(name)) return null;
     if (orientation !== "upright" && orientation !== "reversed") return null;
     parsedCards.push({ position, name, orientation });
   }
