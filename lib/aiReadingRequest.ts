@@ -1,6 +1,7 @@
 import { Theme } from "./types";
 import { ReadingCardInput } from "./claude";
 import { resolveCardByAnyLocaleName } from "./cards";
+import type { Locale } from "./i18n";
 
 const THEMES: Theme[] = ["general", "love", "career", "wellness"];
 // Longest real spread position label is "Hopes & Fears" (Celtic Cross) — generous cap well
@@ -11,12 +12,14 @@ export interface ParsedReadingRequest {
   cards: ReadingCardInput[];
   theme: Theme;
   question?: string;
+  /** Which edition the draw came from; only used to pick the language when no question was typed. */
+  locale?: Locale;
 }
 
 /** Validates the shared request shape for both the free-summary and deep-reading endpoints. */
 export function parseReadingRequestBody(body: unknown): ParsedReadingRequest | null {
   if (typeof body !== "object" || body === null) return null;
-  const { cards, theme, question } = body as Record<string, unknown>;
+  const { cards, theme, question, locale } = body as Record<string, unknown>;
 
   if (!Array.isArray(cards) || cards.length === 0 || cards.length > 10) return null;
   const parsedCards: ReadingCardInput[] = [];
@@ -44,6 +47,8 @@ export function parseReadingRequestBody(body: unknown): ParsedReadingRequest | n
   return {
     cards: parsedCards,
     theme: theme as Theme,
+    // Anything unrecognised falls back to English — an unknown value must never widen behaviour.
+    locale: locale === "zh-TW" ? "zh-TW" : "en",
     question: typeof question === "string" && question.trim() ? question.trim().slice(0, 300) : undefined,
   };
 }

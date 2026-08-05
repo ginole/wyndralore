@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUserId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isAiReadingConfigured, streamYearAheadReading, streamLoveReading, ReadingCardInput } from "@/lib/claude";
-import { getCardByName } from "@/lib/cards";
+import { resolveCardByAnyLocaleName } from "@/lib/cards";
+import type { Locale } from "@/lib/i18n";
 import { trackEvent } from "@/lib/analytics";
 
 export const maxDuration = 60;
@@ -18,6 +19,7 @@ interface ParsedBody {
   cards: ReadingCardInput[];
   title: string;
   input: { nameA?: string; nameB?: string; question?: string };
+  locale: Locale;
 }
 
 /** Own validator — parseReadingRequestBody caps at 10 cards, and the year wheel draws 13. */
@@ -32,7 +34,10 @@ function parseBody(body: unknown): ParsedBody | null {
     const position = typeof c?.position === "string" ? c.position.slice(0, 40) : "";
     const name = typeof c?.name === "string" ? c.name : "";
     const orientation = c?.orientation === "reversed" ? "reversed" : "upright";
-    if (!position || !getCardByName(name)) return null;
+    // Any-locale resolve: the 繁體 special-reading pages run on the zh-TW deck, so their card
+    // names arrive as 繁體 and the English-only lookup rejected the whole request — these are the
+    // $9.90 Year Ahead and $4.99 Love Compatibility products, unbuyable in that edition.
+    if (!position || !resolveCardByAnyLocaleName(name)) return null;
     cards.push({ position, name, orientation });
   }
   const str = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
@@ -42,7 +47,8 @@ function parseBody(body: unknown): ParsedBody | null {
     question: str((b.input as Record<string, unknown>)?.question, 300),
   };
   const title = str(b.title, 80) ?? (kind === "year_reading" ? "Your Year Ahead" : "Love Compatibility");
-  return { kind, cards, title, input };
+  // Unknown values fall back to English — an unrecognised locale must never widen behaviour.
+  return { kind, cards, title, input, locale: b.locale === "zh-TW" ? "zh-TW" : "en" };
 }
 
 /**
@@ -72,8 +78,8 @@ export async function POST(req: NextRequest) {
 
   const generator =
     parsed.kind === "year_reading"
-      ? streamYearAheadReading({ cards: parsed.cards, theme: "general", question: parsed.input.question })
-      : streamLoveReading({ cards: parsed.cards, theme: "love", question: parsed.input.question });
+      ? streamYearAheadReading({ cards: parsed.cards, theme: "general", question: parsed.input.question, locale: parsed.locale })
+      : streamLoveReading({ cards: parsed.cards, theme: "love", question: parsed.input.question, locale: parsed.locale });
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -89,7 +95,10 @@ export async function POST(req: NextRequest) {
         // Persist first, then spend — both after a complete stream.
         const cardsWithImages = parsed.cards.map((c) => ({
           ...c,
-          image: getCardByName(c.name)?.image ?? "",
+          // Same any-locale resolve: with the English-only lookup a 繁體 reading was saved with
+          // empty image paths, so the permanent /readings/[id] page the buyer paid for would have
+          // rendered with no card art at all.
+          image: resolveCardByAnyLocaleName(c.name)?.image ?? "",
         }));
         const saved = await prisma.specialReading.create({
           data: {

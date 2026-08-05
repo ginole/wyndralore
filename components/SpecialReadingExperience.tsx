@@ -163,6 +163,8 @@ export default function SpecialReadingExperience({ kind, deck }: { kind: Kind; d
           title: genTitle,
           cards: cards.map((s) => ({ position: s.position, name: s.card.name, orientation: s.orientation })),
           input: { nameA: nameA.trim() || undefined, nameB: nameB.trim() || undefined, question: question.trim() || undefined },
+          // So a 繁體 buyer who types no question still gets a 繁體 reading.
+          locale,
         }),
       });
       if (!res.ok) {

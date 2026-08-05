@@ -124,7 +124,9 @@ export default function AiReadingPanel({
     fetch("/api/ai-reading/summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cards, theme, question }),
+      // locale rides along so a draw with no typed question is written in the language of the
+      // edition it happened on, instead of always falling back to English on /tc.
+      body: JSON.stringify({ cards, theme, question, locale }),
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -157,7 +159,7 @@ export default function AiReadingPanel({
         headers: { "Content-Type": "application/json" },
         // spreadSlug rides along so the server can file a PAID reading in the Journal itself —
         // a JournalEntry needs to know which spread it belongs to.
-        body: JSON.stringify({ cards, theme, question, spreadSlug }),
+        body: JSON.stringify({ cards, theme, question, spreadSlug, locale }),
       });
       if (res.status === 402) {
         const data = await res.json().catch(() => null);
@@ -309,7 +311,7 @@ export default function AiReadingPanel({
       const res = await fetch("/api/ai-reading/followup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cards, theme, question, previousReading: deepText, followupQuestion: q }),
+        body: JSON.stringify({ cards, theme, question, previousReading: deepText, followupQuestion: q, locale }),
       });
       if (res.status === 402) {
         // Credit vanished (spent in another tab) — fall back to the offer.

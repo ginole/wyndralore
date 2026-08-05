@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getCardByName } from "./cards";
+import { resolveCardByAnyLocaleName } from "./cards";
 import { Theme, Orientation } from "./types";
+import type { Locale } from "./i18n";
 
 // The AI-reading PRD named "Claude 3.5 Sonnet" (its cost/quality target was tuned against it),
 // but that model is retired — claude-sonnet-5 is the current-generation equivalent. Re-check
@@ -31,11 +32,24 @@ export function isAiReadingConfigured(): boolean {
 // rather than as a neutral example. Baseline (no rule at all) got English right in both cases, so
 // the well-meant examples were strictly worse than saying nothing. Keep this abstract, and re-run a
 // real generation for each case if you touch the wording — this is not checkable by reading it.
-const LANGUAGE_RULE = `Write the reading in whatever language the querent wrote their question in, matching them without comment.
-If they gave no question at all, write in English. Card names, position labels and their meanings are always supplied to you in
+// ⚠️ The no-question fallback is the ONLY part that varies, and only by which edition the draw
+// came from. Every other word is byte-identical to the long-tuned wording above, and the English
+// prompt is unchanged, so the behaviour measured for it cannot regress.
+//
+// Why it has to vary at all: this rule was written when the site was English-only, so "no question
+// → English" was correct. Since /tc shipped, the commonest 繁體 flow — land on /tc and draw
+// without typing anything — was getting an English reading on a fully 繁體 page.
+function languageRule(locale: Locale): string {
+  const noQuestion =
+    locale === "zh-TW"
+      ? "If they gave no question at all, write in Traditional Chinese as written in Taiwan."
+      : "If they gave no question at all, write in English.";
+  return `Write the reading in whatever language the querent wrote their question in, matching them without comment.
+${noQuestion} Card names, position labels and their meanings are always supplied to you in
 English; when you are writing in another language, render them naturally in that language rather than leaving them in English.`;
+}
 
-const PERSONA = `You are the voice behind Wyndralore's "AI-Powered Personal Insight Engine" (智能觉察引擎) — a tarot reading interpreter.
+const buildPersona = (locale: Locale) => `You are the voice behind Wyndralore's "AI-Powered Personal Insight Engine" (智能觉察引擎) — a tarot reading interpreter.
 
 Your single defining trait, and the reason this reading is worth more than a human reader's guess: you carry zero personal bias
 and pass zero moral judgment. A human reader brings their own mood, projections, and opinions about the querent's situation into
@@ -51,7 +65,7 @@ could apply to any reading — every sentence must be earned by the specific car
 Be economical. Never pad toward a length target with filler, throat-clearing, or restated setup — say only what the cards and the
 question actually support, then stop.
 
-${LANGUAGE_RULE}`;
+${languageRule(locale)}`;
 
 // Only the meanings for the cards actually drawn go in the prompt — not the full 78-card
 // library. Sending all 78 cards every time (the original design) made every call slow to
@@ -61,7 +75,13 @@ ${LANGUAGE_RULE}`;
 // caching had nothing stable to reuse — it was adding write-cost overhead for no benefit.
 function buildDrawnCardsBlock({ cards, theme }: ReadingPromptArgs): string {
   const lines = cards.map((c) => {
-    const card = getCardByName(c.name);
+    // Resolve in any locale. This looked up English names only, so every 繁體 draw fell into the
+    // "(meaning unavailable)" branch below: the model received a bare card name with no meaning,
+    // no keywords and no theme focus, and quietly improvised from general knowledge — including
+    // for PAID deep readings. Nothing on screen revealed it; the reading just came out thinner
+    // than its English twin. What comes back is the English base card, which is exactly what the
+    // language rule already promises the model ("supplied to you in English").
+    const card = resolveCardByAnyLocaleName(c.name);
     if (!card) return `### ${c.position}: ${c.name} (${c.orientation})\n(meaning unavailable)`;
     const meaning = c.orientation === "upright" ? card.meaning_upright : card.meaning_reversed;
     const themeMeaning =
@@ -85,8 +105,8 @@ function buildDrawnCardsBlock({ cards, theme }: ReadingPromptArgs): string {
   return lines.join("\n\n");
 }
 
-function systemBlocks(): Anthropic.Messages.TextBlockParam[] {
-  return [{ type: "text", text: PERSONA }];
+function systemBlocks(locale: Locale = "en"): Anthropic.Messages.TextBlockParam[] {
+  return [{ type: "text", text: buildPersona(locale) }];
 }
 
 export interface ReadingCardInput {
@@ -99,6 +119,8 @@ interface ReadingPromptArgs {
   cards: ReadingCardInput[];
   theme: Theme;
   question?: string;
+  /** Which edition the draw came from. Only decides the language when no question was typed. */
+  locale?: Locale;
 }
 
 function drawSummary(args: ReadingPromptArgs): string {
@@ -129,7 +151,7 @@ async function* streamText(systemMessage: Anthropic.Messages.TextBlockParam[], u
 export function streamFreeSummary(args: ReadingPromptArgs): AsyncGenerator<string> {
   const prompt = `${drawSummary(args)}\n\nWrite ONE line of at most 35 characters — a single distilled insight, no punctuation at the end, no preamble, no quotes around it. This must stand alone with no more context.`;
   // Small max_tokens keeps this call's cost near-zero regardless of the cached library size.
-  return streamText(systemBlocks(), prompt, 20);
+  return streamText(systemBlocks(args.locale), prompt, 20);
 }
 
 /** Year Ahead ($9.90): a theme card plus one card per month for the coming twelve. The month
@@ -138,7 +160,7 @@ export function streamYearAheadReading(args: ReadingPromptArgs): AsyncGenerator<
   const prompt = `${drawSummary(
     args
   )}\n\nThis is a YEAR AHEAD reading: the first card is the theme of the reader's whole year, the rest are one card per month, in order. Write about 2600 characters. Open with 2–3 sentences on the theme card as the year's undercurrent. Then walk the months IN ORDER — give each month 1–3 sentences that read the card in that month's seasonal context, and let months speak to each other (a seed planted in one month blooming or being tested in a later one). Close with 2–3 sentences of practical counsel for the year as one arc. Flowing prose with the month names woven in naturally; no headers, no bullet lists.`;
-  return streamText(systemBlocks(), prompt, 1500);
+  return streamText(systemBlocks(args.locale), prompt, 1500);
 }
 
 /** Love Compatibility ($4.99): two people, five cards. The names arrive in the position labels
@@ -147,7 +169,7 @@ export function streamLoveReading(args: ReadingPromptArgs): AsyncGenerator<strin
   const prompt = `${drawSummary(
     args
   )}\n\nThis is a TWO-PERSON compatibility reading. The five positions are: each person's card, the connection between them, its challenge, and where it's heading. Write about 1400 characters. Read each person's energy as it meets the other's — this is about the BOND, not two separate fortunes. Be honest about the challenge card without being cruel, and end with what this pair can actually do with what the cards show. Use their names naturally. Flowing prose, no headers.`;
-  return streamText(systemBlocks(), prompt, 850);
+  return streamText(systemBlocks(args.locale), prompt, 850);
 }
 
 /** Paid follow-up ($1.99): one more question asked against a deep reading the querent just
@@ -159,7 +181,7 @@ export function streamFollowupAnswer(
   followupQuestion: string
 ): AsyncGenerator<string> {
   const prompt = `${drawSummary(args)}\n\nYou already gave the querent this reading:\n"""\n${previousReading}\n"""\n\nThe querent now asks a follow-up question: "${followupQuestion}"\n\nAnswer it in about 700 characters, staying consistent with the reading above — deepen or clarify it through the same drawn cards, don't contradict it or introduce new cards. Flowing prose, no headers.`;
-  return streamText(systemBlocks(), prompt, 500);
+  return streamText(systemBlocks(args.locale), prompt, 500);
 }
 
 /** Paid tier: a ~1500-character narrative reading tied to the querent's question. */
@@ -167,7 +189,7 @@ export function streamDeepReading(args: ReadingPromptArgs): AsyncGenerator<strin
   const prompt = `${drawSummary(
     args
   )}\n\nWrite a deep narrative reading of about 1500 characters. Trace the subconscious "energy flow" between the drawn cards — how they build on or tension against each other — and close with concrete, actionable advice tied directly to the querent's question. Write in flowing prose, no headers or bullet lists.`;
-  return streamText(systemBlocks(), prompt, 900);
+  return streamText(systemBlocks(args.locale), prompt, 900);
 }
 
 const STYLE_TONE_DESCRIPTIONS: Record<string, string> = {
@@ -212,7 +234,7 @@ Write in her voice and tone — but this is an AI interpretation styled after he
 
 Be economical. Never pad toward a length target with filler — say only what the cards and the question actually support, then stop.
 
-${LANGUAGE_RULE}`;
+${languageRule(args.locale ?? "en")}`;
 
   const prompt = `${drawSummary(args)}\n\nWrite a narrative reading of about 900 characters. Trace how the drawn cards speak to each other and close with concrete advice tied to the querent's question. Flowing prose, no headers or bullet lists.`;
 
