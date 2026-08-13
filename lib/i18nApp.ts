@@ -126,6 +126,15 @@ export interface AppDict {
     sending: string;
     sendResetLink: string;
     backToSignIn: string;
+    // /reset-password — the page a creator or user lands on from a claim / reset email.
+    chooseNewPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+    updatePassword: string;
+    invalidLinkTitle: string;
+    invalidLinkBody: string;
+    passwordUpdatedTitle: string;
+    passwordUpdatedBody: string;
     yourAccount: string;
     plan: string;
     free: string;
@@ -449,6 +458,14 @@ const en: AppDict = {
     sending: "Sending…",
     sendResetLink: "Send Reset Link",
     backToSignIn: "Back to Sign In",
+    chooseNewPassword: "Choose a new password",
+    newPassword: "New Password",
+    confirmNewPassword: "Confirm New Password",
+    updatePassword: "Update Password",
+    invalidLinkTitle: "Invalid link",
+    invalidLinkBody: "This password reset link is missing its token.",
+    passwordUpdatedTitle: "Password updated",
+    passwordUpdatedBody: "You're signed in — taking you to your account…",
     yourAccount: "Your Account",
     plan: "Plan",
     free: "Free",
@@ -816,6 +833,14 @@ const zhTW: AppDict = {
     sending: "寄送中…",
     sendResetLink: "寄出重設連結",
     backToSignIn: "返回登入",
+    chooseNewPassword: "設定新密碼",
+    newPassword: "新密碼",
+    confirmNewPassword: "確認新密碼",
+    updatePassword: "更新密碼",
+    invalidLinkTitle: "連結無效",
+    invalidLinkBody: "這條重設密碼的連結缺少驗證碼。",
+    passwordUpdatedTitle: "密碼已更新",
+    passwordUpdatedBody: "已經幫你登入，正帶你前往帳號頁…",
     yourAccount: "你的帳號",
     plan: "方案",
     free: "免費",

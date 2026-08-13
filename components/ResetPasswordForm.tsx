@@ -4,12 +4,18 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
+import { useAppT, useLocale } from "@/lib/useLocale";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const { refresh } = useAuth();
+  const t = useAppT().account;
+  const locale = useLocale();
+  // Stay in the tree they're already in. A creator claiming her account from a 繁體 letter must not
+  // be dropped onto the English account page at the end of it.
+  const accountHref = locale === "zh-TW" ? "/tc/account" : "/account";
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,7 +27,7 @@ export default function ResetPasswordForm() {
     e.preventDefault();
     setError(null);
     if (password !== confirmPassword) {
-      setError("Passwords don't match. Please retype them.");
+      setError(t.passwordsNoMatchRetype);
       return;
     }
     setSubmitting(true);
@@ -33,12 +39,12 @@ export default function ResetPasswordForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
+        setError(data.error ?? t.somethingWrong);
         return;
       }
       await refresh();
       setDone(true);
-      setTimeout(() => router.push("/account"), 1500);
+      setTimeout(() => router.push(accountHref), 1500);
     } finally {
       setSubmitting(false);
     }
@@ -47,10 +53,10 @@ export default function ResetPasswordForm() {
   if (!token) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-sm flex-col items-center justify-center px-6 text-center">
-        <h1 className="font-display text-3xl text-moon">Invalid link</h1>
-        <p className="mt-3 text-sm text-moon-dim">This password reset link is missing its token.</p>
-        <Link href="/account" className="mt-6 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4">
-          Back to Sign In
+        <h1 className="font-display text-3xl text-moon">{t.invalidLinkTitle}</h1>
+        <p className="mt-3 text-sm text-moon-dim">{t.invalidLinkBody}</p>
+        <Link href={accountHref} className="mt-6 text-sm uppercase tracking-[0.2em] text-gold underline underline-offset-4">
+          {t.backToSignIn}
         </Link>
       </section>
     );
@@ -59,18 +65,18 @@ export default function ResetPasswordForm() {
   if (done) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-sm flex-col items-center justify-center px-6 text-center">
-        <h1 className="font-display text-3xl text-moon">Password updated</h1>
-        <p className="mt-3 text-sm text-moon-dim">You&apos;re signed in — taking you to your account…</p>
+        <h1 className="font-display text-3xl text-moon">{t.passwordUpdatedTitle}</h1>
+        <p className="mt-3 text-sm text-moon-dim">{t.passwordUpdatedBody}</p>
       </section>
     );
   }
 
   return (
     <section className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-6 py-16">
-      <h1 className="font-display mb-6 text-center text-3xl text-moon">Choose a new password</h1>
+      <h1 className="font-display mb-6 text-center text-3xl text-moon">{t.chooseNewPassword}</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">New Password</span>
+          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.newPassword}</span>
           <input
             type="password"
             required
@@ -81,7 +87,7 @@ export default function ResetPasswordForm() {
           />
         </label>
         <label className="flex flex-col gap-2">
-          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">Confirm New Password</span>
+          <span className="text-xs uppercase tracking-[0.2em] text-gold-dim">{t.confirmNewPassword}</span>
           <input
             type="password"
             required
@@ -101,7 +107,7 @@ export default function ResetPasswordForm() {
           disabled={submitting}
           className="mt-2 rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink transition-transform duration-200 hover:scale-[1.02] hover:bg-gold-bright disabled:opacity-60"
         >
-          {submitting ? "Please wait…" : "Update Password"}
+          {submitting ? t.pleaseWait : t.updatePassword}
         </button>
       </form>
     </section>
