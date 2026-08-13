@@ -343,6 +343,14 @@ export default function ReadingExperience({ spread, deck, creditUnlock }: Readin
         <p className="mt-4 text-sm leading-relaxed text-moon-dim">
           {isGuest ? t.limitedGuestBody : t.limitedMemberBody}
         </p>
+        {/* Deliberately quieter than the line above, and deliberately telling them they can walk
+            away. This wall is where the funnel actually dies — 29 people reached it and 1 registered,
+            and one-tap Google login moved that number not at all, so the barrier is trust rather
+            than friction. Urgency is what a scam does; removing it is the one thing a scam won't
+            copy. It very likely costs some signups in exchange, which is the trade being made. */}
+        {isGuest && (
+          <p className="mt-2 text-xs leading-relaxed text-moon-dim/60">{t.limitedGuestAside}</p>
+        )}
 
         {user ? (
           // A returning registered user who wants a 2nd card (freebirdie, 2026-07-24) bounced this

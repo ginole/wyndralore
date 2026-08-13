@@ -14,6 +14,9 @@ export interface AppDict {
     limitedGuestTitle: string;
     limitedMemberTitle: string;
     limitedGuestBody: string;
+    // The "you can just leave" line. Deliberately an aside, not a selling point — see the en/zh
+    // values for why it exists.
+    limitedGuestAside: string;
     limitedMemberBody: string;
     memberBonusHint: string;
     orGoPremium: string;
@@ -351,8 +354,8 @@ const en: AppDict = {
     limitedMemberEyebrow: "Today’s reading is complete",
     limitedGuestTitle: "Create a free account to keep going",
     limitedMemberTitle: "You’ve used today’s free reading",
-    limitedGuestBody:
-      "It’s free — no card needed. Members get more readings every day, save every one to their journal, and can unlock extra draws by sharing or watching a short clip.",
+    limitedGuestBody: "Just an email — no phone number, no ID, no credit card.",
+    limitedGuestAside: "No pressure either way — the free reading resets tomorrow.",
     limitedMemberBody: "Your free draw resets tomorrow. Premium members read without limits.",
     memberBonusHint: "Want another card right now? Get one free:",
     orGoPremium: "Or go Premium for unlimited readings",
@@ -737,8 +740,8 @@ const zhTW: AppDict = {
     limitedMemberEyebrow: "今天的占卜已完成",
     limitedGuestTitle: "註冊免費帳號，繼續抽牌",
     limitedMemberTitle: "今天的免費占卜已用完",
-    limitedGuestBody:
-      "完全免費，無需信用卡。會員每天有更多次占卜、能把每一次都存進占卜筆記，還能透過分享或看一小段影片解鎖額外抽牌。",
+    limitedGuestBody: "一個信箱就好，不用手機號碼、不用實名、不用信用卡。",
+    limitedGuestAside: "不想註冊也沒關係，明天再來，免費占卜會重置。",
     limitedMemberBody: "免費抽牌明天重置。進階會員可無限次占卜。",
     memberBonusHint: "現在就想再抽一張？馬上免費多一次：",
     orGoPremium: "或升級進階，無限暢抽",
