@@ -293,6 +293,34 @@ export interface AppDict {
     shareTitle: string;
     shareText: string;
   };
+  // A creator's own block on /account (CreatorLinkPanel): their link, and what it has produced.
+  creator: {
+    title: string;
+    intro: string;
+    usernamePlaceholder: string;
+    save: string;
+    checking: string;
+    saveFailed: string;
+    shareThis: string;
+    copy: string;
+    copied: string;
+    shareCardNote: string;
+    notWhopLink: string;
+    statsTitle: string;
+    statsIntro: string;
+    clicks: string;
+    clicksHint: string;
+    drew: string;
+    drewHint: string;
+    conversions: string;
+    conversionsHint: string;
+    commission: string;
+    commissionHint: string;
+    lastSale: (date: string) => string;
+    noneYet: string;
+    statsLoading: string;
+    statsFailed: string;
+  };
 }
 
 const en: AppDict = {
@@ -593,6 +621,37 @@ const en: AppDict = {
     scanLabel: "Scan for your own reading",
     shareTitle: "My Wyndralore Reading",
     shareText: "My reading on Wyndralore. Draw your own — free.",
+  },
+  creator: {
+    title: "Your creator link",
+    intro:
+      "Tell us the Whop account your commission should go to. We check it against Whop when you save, so a typo can't quietly cost you months of earnings.",
+    usernamePlaceholder: "your Whop username",
+    save: "Save",
+    checking: "Checking…",
+    saveFailed: "Couldn't save that — try again.",
+    shareThis: "Share this",
+    copy: "Copy",
+    copied: "Copied",
+    shareCardNote:
+      "Your share cards now carry this link too — draw a reading, tap share, and the QR on the image is already yours.",
+    notWhopLink:
+      "Share this rather than a Whop link. A Whop link drops your audience on a product card and asks for money before they've drawn a single card — that traffic bounces and you earn nothing. This one lets them read first. Same 30%, tracked the same.",
+    statsTitle: "What your link has done",
+    statsIntro:
+      "Counted on our side, by unique visitor. Whop shows you the money and pays it; this shows you what happened before the money.",
+    clicks: "Arrived",
+    clicksHint: "people who opened your link",
+    drew: "Drew a card",
+    drewHint: "of them finished a reading",
+    conversions: "Purchases",
+    conversionsHint: "sales your link produced",
+    commission: "Your 30%",
+    commissionHint: "our estimate — Whop calculates and pays the real figure",
+    lastSale: (date) => `Most recent sale ${date}`,
+    noneYet: "Nothing yet — this fills in as people arrive.",
+    statsLoading: "Loading…",
+    statsFailed: "Couldn't load your numbers just now.",
   },
   shareModal: {
     eyebrow: "Share your card",
@@ -935,6 +994,37 @@ const zhTW: AppDict = {
     scanLabel: "掃描，抽你自己的牌",
     shareTitle: "我的 Wyndralore 占卜",
     shareText: "我在 Wyndralore 的占卜。也來免費抽一張吧。",
+  },
+  creator: {
+    title: "你的創作者連結",
+    intro:
+      "填入你要收分潤的 Whop 帳號。儲存時我們會跟 Whop 核對一次，免得打錯字讓你白做好幾個月才發現。",
+    usernamePlaceholder: "你的 Whop 使用者名稱",
+    save: "儲存",
+    checking: "核對中…",
+    saveFailed: "沒有存成功，請再試一次。",
+    shareThis: "分享這一條",
+    copy: "複製",
+    copied: "已複製",
+    shareCardNote:
+      "你的分享圖也會自動帶上這條連結——抽一張牌、按分享，圖上的 QR 就已經是你的了。",
+    notWhopLink:
+      "請分享這一條，不要分享 Whop 的連結。Whop 那條會把你的觀眾丟到一張商品卡上，牌都還沒抽就先要錢，那些流量會直接跳掉，你一毛也拿不到。這一條會讓他們先抽、先看。分潤一樣是 30%，算法也一樣。",
+    statsTitle: "這條連結帶來了什麼",
+    statsIntro:
+      "由我們這邊統計，以不重複訪客計算。錢的部分由 Whop 顯示並發放；這裡看的是錢之前發生的事。",
+    clicks: "進來的人",
+    clicksHint: "點開你連結的人數",
+    drew: "抽了牌",
+    drewHint: "其中完成占卜的人數",
+    conversions: "成交",
+    conversionsHint: "你的連結帶來的付費筆數",
+    commission: "你的 30%",
+    commissionHint: "我們的估算——實際金額由 Whop 計算並發放",
+    lastSale: (date) => `最近一筆成交：${date}`,
+    noneYet: "還沒有資料——有人進來就會開始累積。",
+    statsLoading: "載入中…",
+    statsFailed: "現在讀不到你的數字。",
   },
   shareModal: {
     eyebrow: "分享你的牌",

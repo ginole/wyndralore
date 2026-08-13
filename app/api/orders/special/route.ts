@@ -7,6 +7,7 @@ import { trackEvent, getAnonId } from "@/lib/analytics";
 import { planIdFor, createCheckoutSession, SpecialCheckoutKind } from "@/lib/whop";
 import { TIP_PRICE_USD, YEAR_READING_PRICE_USD, LOVE_READING_PRICE_USD } from "@/lib/pricing";
 import { AI_FOLLOWUP_PRICE_USD } from "@/lib/aiQuota";
+import { resolveWhopAffiliate } from "@/lib/whopAffiliateAttribution";
 
 const ORDER_TTL_MS = 48 * 60 * 60 * 1000;
 const SITE_URL = "https://wyndralore.com";
@@ -39,17 +40,27 @@ export async function POST(req: NextRequest) {
 
   const expiresAt = new Date(Date.now() + ORDER_TTL_MS);
 
+  const whopAffiliate = resolveWhopAffiliate(user.referredByWhopCode, body?.whopAffiliate);
+
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateOrderCode();
     try {
       const order = await prisma.order.create({
-        data: { code, userId: user.id, plan: kind, kind, amountUsd: PRICE_BY_KIND[kind], expiresAt, ...parseTrafficSource(body?.source) },
+        data: {
+          code,
+          userId: user.id,
+          plan: kind,
+          kind,
+          amountUsd: PRICE_BY_KIND[kind],
+          expiresAt,
+          whopAffiliate,
+          ...parseTrafficSource(body?.source),
+        },
       });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { kind } });
 
       const planId = planIdFor(kind);
-      const whopAffiliate = typeof body?.whopAffiliate === "string" ? body.whopAffiliate.trim() : undefined;
-      const sessionId = await createCheckoutSession(planId, order.code, redirectUrl, whopAffiliate || undefined);
+      const sessionId = await createCheckoutSession(planId, order.code, redirectUrl, whopAffiliate);
       return NextResponse.json({ order, planId, sessionId }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";

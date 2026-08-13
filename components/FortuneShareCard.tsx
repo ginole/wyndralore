@@ -38,11 +38,19 @@ export default function FortuneShareCard({ spreadTitle, cards, firstCardId, refe
   // friend-invite link (?ref=, pays spread credits). Without this a creator's most natural promo
   // move — draw a reading, share the card — hands her audience the wrong link, and the only symptom
   // she'd ever see is that she never gets paid.
+  // …and it points at the tree the sharer is actually reading. A 繁體 creator handing out the English
+  // root is the same leak in miniature: TW/HK/MY geo-redirect to /tc so it self-heals there, but the
+  // 華人 diaspora these channels reach lands on an English page and leaves.
+  // `/tc` for 繁體, bare `/` for English — spelled so the English strings stay byte-for-byte what
+  // they were before /tc existed.
+  const shareBase = locale === "zh-TW" ? `${SITE_URL}/tc` : `${SITE_URL}/`;
   const shareUrl = whopUsername
-    ? `${SITE_URL}/?a=${whopUsername}`
+    ? `${shareBase}?a=${whopUsername}`
     : referralCode
-      ? `${SITE_URL}/?ref=${referralCode}`
-      : SITE_URL;
+      ? `${shareBase}?ref=${referralCode}`
+      : locale === "zh-TW"
+        ? shareBase
+        : SITE_URL;
 
   useEffect(() => {
     let cancelled = false;

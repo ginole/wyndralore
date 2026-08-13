@@ -38,6 +38,28 @@ export default function WhopAffiliateCapture() {
     }
   }, [params]);
 
+  // Move the code onto the ACCOUNT as soon as there is one. localStorage is per-browser, so before
+  // this the whole attribution died the moment a viewer switched device — tap the link on a phone,
+  // pay on a laptop, and the creator lost that commission with nothing on any screen to show it.
+  // Fire-and-forget: the endpoint is a no-op unless there's a session AND the column is still empty
+  // (first-touch, write-once), so re-running it on every navigation is harmless.
+  useEffect(() => {
+    let code: string | null = null;
+    try {
+      code = localStorage.getItem(WHOP_AFF_STORAGE_KEY);
+    } catch {
+      return;
+    }
+    if (!code) return;
+    void fetch("/api/whop-affiliate/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    }).catch(() => {
+      // Never surface this — it's bookkeeping, and a failure just leaves us where we were before.
+    });
+  }, [params]);
+
   return null;
 }
 

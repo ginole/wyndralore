@@ -8,6 +8,7 @@ import { planIdFor, createCheckoutSession, AiReadCheckoutKind } from "@/lib/whop
 import { AI_SINGLE_PRICE_USD, AI_OVERAGE_PRICE_USD } from "@/lib/aiQuota";
 import { isPremiumActive } from "@/lib/quota";
 import { getSpread } from "@/lib/spreads";
+import { resolveWhopAffiliate } from "@/lib/whopAffiliateAttribution";
 
 const ORDER_TTL_MS = 48 * 60 * 60 * 1000;
 const SITE_URL = "https://wyndralore.com";
@@ -47,19 +48,29 @@ export async function POST(req: NextRequest) {
 
   const expiresAt = new Date(Date.now() + ORDER_TTL_MS);
 
+  const whopAffiliate = resolveWhopAffiliate(user.referredByWhopCode, body?.whopAffiliate);
+
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateOrderCode();
     try {
       const order = await prisma.order.create({
-        data: { code, userId: user.id, plan: kind, kind, amountUsd: PRICE_BY_KIND[kind], expiresAt, ...parseTrafficSource(body?.source) },
+        data: {
+          code,
+          userId: user.id,
+          plan: kind,
+          kind,
+          amountUsd: PRICE_BY_KIND[kind],
+          expiresAt,
+          whopAffiliate,
+          ...parseTrafficSource(body?.source),
+        },
       });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { kind } });
 
       // The session carries our orderCode through Whop's checkout and back on the webhook, plus the
       // creator's Whop username when the buyer came in on a ?a= link, so Whop can pay her.
       const planId = planIdFor(kind);
-      const whopAffiliate = typeof body?.whopAffiliate === "string" ? body.whopAffiliate.trim() : undefined;
-      const sessionId = await createCheckoutSession(planId, order.code, redirectUrl, whopAffiliate || undefined);
+      const sessionId = await createCheckoutSession(planId, order.code, redirectUrl, whopAffiliate);
       return NextResponse.json({ order, planId, sessionId, redirectUrl }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";

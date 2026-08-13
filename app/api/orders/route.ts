@@ -6,6 +6,7 @@ import { isPlanId, isBillingMode, planOption, PLANS, BillingMode } from "@/lib/p
 import { generateOrderCode } from "@/lib/orderCode";
 import { trackEvent, getAnonId } from "@/lib/analytics";
 import { planIdFor, createCheckoutSession } from "@/lib/whop";
+import { resolveWhopAffiliate } from "@/lib/whopAffiliateAttribution";
 
 const ORDER_TTL_MS = 48 * 60 * 60 * 1000;
 const SITE_URL = "https://wyndralore.com";
@@ -34,11 +35,21 @@ export async function POST(req: NextRequest) {
   const expiresAt = new Date(Date.now() + ORDER_TTL_MS);
 
   // Retry on the astronomically unlikely event of a code collision.
+  const whopAffiliate = resolveWhopAffiliate(user.referredByWhopCode, body?.whopAffiliate);
+
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateOrderCode();
     try {
       const order = await prisma.order.create({
-        data: { code, userId: user.id, plan, amountUsd: option.amountUsd, expiresAt, ...parseTrafficSource(body?.source) },
+        data: {
+          code,
+          userId: user.id,
+          plan,
+          amountUsd: option.amountUsd,
+          expiresAt,
+          whopAffiliate,
+          ...parseTrafficSource(body?.source),
+        },
       });
       await trackEvent("order_created", { anonId: await getAnonId(), userId: user.id, props: { plan, billingMode } });
 
@@ -46,8 +57,7 @@ export async function POST(req: NextRequest) {
       // the buyer arrived on a creator's ?a= link — the creator's Whop username, which is how Whop
       // knows to pay her. A bad code never blocks the sale (see createCheckoutSession).
       const planId = planIdFor(plan, billingMode);
-      const whopAffiliate = typeof body?.whopAffiliate === "string" ? body.whopAffiliate.trim() : undefined;
-      const sessionId = await createCheckoutSession(planId, order.code, `${SITE_URL}/account`, whopAffiliate || undefined);
+      const sessionId = await createCheckoutSession(planId, order.code, `${SITE_URL}/account`, whopAffiliate);
       return NextResponse.json({ order, planId, sessionId }, { status: 201 });
     } catch (err: unknown) {
       const isUniqueViolation = typeof err === "object" && err !== null && "code" in err && err.code === "P2002";

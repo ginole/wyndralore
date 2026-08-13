@@ -67,6 +67,17 @@ model User {
   isCreator    Boolean @default(false)
   whopUsername String?
 
+  // Customer side of the same program: which creator's ?a= code brought THIS account in. Distinct
+  // from `whopUsername` (their own payout account) and from `referredByCode` (friend credits).
+  //
+  // Why it exists: the code arrives on a link and was only ever held in localStorage, which is
+  // per-browser. A viewer who tapped a creator's link on their phone and paid on a laptop lost the
+  // attribution entirely, and the creator silently lost that commission — invisible to everyone.
+  // Moving it onto the account the moment there IS an account makes the account the carrier, so
+  // attribution survives the device switch. First-touch and write-once: never overwritten, so a
+  // later creator's link can't steal an earlier one's referral.
+  referredByWhopCode String?
+
   // Auto-renewing Paddle subscription (the "Subscribe & save" pricing option). At most one active
   // subscription per user. While active, planExpiresAt is kept aligned to the Paddle billing
   // period; cancelling just flips autoRenew off and access lapses naturally at currentPeriodEnd.
@@ -128,6 +139,9 @@ model User {
   // BUY from masters (their storefront orders). Both optional relations.
   masterProfile MasterProfile?
   masterOrders  MasterOrder[]
+
+  // The creator dashboard counts "how many accounts did my link bring in" by this column.
+  @@index([referredByWhopCode])
 }
 
 // A purchased one-time reading (Year Ahead / Love Compatibility). Unlike JournalEntry this is
@@ -196,12 +210,20 @@ model Order {
   utmCampaign String?
   referrer    String?
 
+  // The creator whose ?a= link this sale is attributed to (their Whop username), recorded at the
+  // moment we hand the code to Whop. Whop pays the commission and shows the creator their own
+  // earnings — this copy exists so WE can answer "how many sales did your link produce" without
+  // asking Whop, which is what a creator doing due diligence actually asks for first.
+  whopAffiliate String?
+
   webhookEvents WiseWebhookEvent[]
 
   @@index([userId])
   @@index([status])
   // "Which orders came from the Facebook ad" is the whole point of the columns above.
   @@index([utmSource])
+  // "How many sales did this creator's link produce" — the creator dashboard's conversion count.
+  @@index([whopAffiliate])
   // Refund/dispute webhooks look an order up by this and nothing else. The index existed in the
   // database but had never been declared here, so the next migration to run silently dropped it —
   // which is exactly what happened. Declared now so it stays.
