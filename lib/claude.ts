@@ -48,14 +48,32 @@ function languageRule(locale: Locale): string {
         // context as a hint about which script to favour. On a 繁體 site aimed at Taiwan, simplified
         // output is worse than English: it reads as mainland-made, which is the exact trust problem
         // this edition exists to avoid.
-        "If they gave no question at all, write in Traditional Chinese characters (繁體中文) as used in Taiwan. Never use simplified characters."
+        // The three clauses after the first are UNCONDITIONAL for this edition, not tied to
+        // "no question": a 繁體 reader who types a Chinese question gets Chinese via the
+        // match-their-language line above, and the defects below were all observed in that prose.
+        // Kept inside the zh-TW branch so the English prompt stays byte-identical.
+        //
+        // Observed in real paid output on 2026-08-13, each one making a $4.99–$9.90 reading look
+        // machine-made on a page whose whole job is looking trustworthy:
+        //   · an English word left mid-sentence — 「…換來真正能落地的connection。」
+        //   · ASCII commas mixed with full-width ones — 「風暴之後,有安穩的光」
+        //   · a stray simplified 无 where 無 belongs
+        "If they gave no question at all, write in Traditional Chinese characters (繁體中文) as used in Taiwan. Whenever you write in Chinese, all of the following are absolute: use Traditional characters only and never simplified ones; use full-width Chinese punctuation throughout (，。、；：？！「」) and never ASCII commas, periods or quotation marks; and never leave an English word or abbreviation sitting in the Chinese prose — render every term in Chinese instead."
       : "If they gave no question at all, write in English.";
   return `Write the reading in whatever language the querent wrote their question in, matching them without comment.
 ${noQuestion} Card names, position labels and their meanings are always supplied to you in
 English; when you are writing in another language, render them naturally in that language rather than leaving them in English.`;
 }
 
-const buildPersona = (locale: Locale) => `You are the voice behind Wyndralore's "AI-Powered Personal Insight Engine" (智能觉察引擎) — a tarot reading interpreter.
+// The brand string is the ROOT of the simplified leak, not just a bystander: 智能觉察引擎 is itself
+// simplified, and it sits in the model's context as a standing hint about which script to favour —
+// which is why an earlier, softer language rule produced 风暴已过 星光照见 on production. Rendering it
+// in Traditional for the 繁體 edition removes the contamination at source instead of fighting it with
+// more instructions downstream. The string is internal to this prompt (grep: it appears nowhere in
+// the UI), so the two spellings cost nothing. English keeps the original bytes exactly.
+const personaBrand = (locale: Locale) => (locale === "zh-TW" ? "智能覺察引擎" : "智能觉察引擎");
+
+const buildPersona = (locale: Locale) => `You are the voice behind Wyndralore's "AI-Powered Personal Insight Engine" (${personaBrand(locale)}) — a tarot reading interpreter.
 
 Your single defining trait, and the reason this reading is worth more than a human reader's guess: you carry zero personal bias
 and pass zero moral judgment. A human reader brings their own mood, projections, and opinions about the querent's situation into
@@ -135,7 +153,49 @@ function drawSummary(args: ReadingPromptArgs): string {
   return `Theme focus: ${theme}\n${questionLine}\n\nCards drawn:\n${buildDrawnCardsBlock(args)}`;
 }
 
-async function* streamText(systemMessage: Anthropic.Messages.TextBlockParam[], userMessage: string, maxTokens: number): AsyncGenerator<string> {
+/**
+ * Full-widths ASCII punctuation that the model leaves sitting directly after a Chinese character
+ * (「風暴之後,有安穩的光」). The prompt already asks for full-width punctuation and that cut the rate
+ * roughly in half — but "roughly in half" is not a fix for something a reader sees on every line of
+ * a paid reading, and this particular defect is perfectly mechanical. Instructions are for judgement;
+ * this is not judgement.
+ *
+ * Only converts when the PREVIOUS character is Chinese, which is what keeps prices ($6.90) and any
+ * genuinely Latin fragment intact — there the previous character is a digit or a letter.
+ *
+ * Streams, so it carries the final character of each chunk over to the next one: the punctuation and
+ * the Chinese character before it routinely arrive in separate chunks, and judging a chunk in
+ * isolation would miss exactly those.
+ */
+async function* normalizeCjkPunctuation(source: AsyncGenerator<string>, locale: Locale): AsyncGenerator<string> {
+  if (locale !== "zh-TW") {
+    yield* source;
+    return;
+  }
+  const MAP: Record<string, string> = { ",": "，", ";": "；", ":": "：", "!": "！", "?": "？", ".": "。" };
+  const isCjk = (ch: string) => /[一-鿿]/.test(ch);
+  // Whether a mark converts depends only on the character BEFORE it, which is always already known —
+  // so this needs no lookahead, just the last character carried across the chunk boundary. An earlier
+  // version withheld the final character of each chunk "in case", and the bug that fell out of it was
+  // that the very last character of a reading never got converted — and a reading almost always ends
+  // on punctuation.
+  let prev = "";
+  for await (const chunk of source) {
+    let out = "";
+    for (const ch of chunk) {
+      out += MAP[ch] && isCjk(prev) ? MAP[ch] : ch;
+      prev = ch;
+    }
+    if (out) yield out;
+  }
+}
+
+async function* streamText(
+  systemMessage: Anthropic.Messages.TextBlockParam[],
+  userMessage: string,
+  maxTokens: number,
+  locale: Locale = "en"
+): AsyncGenerator<string> {
   const stream = getClient().messages.stream({
     model: MODEL,
     max_tokens: maxTokens,
@@ -146,18 +206,21 @@ async function* streamText(systemMessage: Anthropic.Messages.TextBlockParam[], u
     system: systemMessage,
     messages: [{ role: "user", content: userMessage }],
   });
-  for await (const event of stream) {
-    if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-      yield event.delta.text;
+  async function* raw(): AsyncGenerator<string> {
+    for await (const event of stream) {
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+        yield event.delta.text;
+      }
     }
   }
+  yield* normalizeCjkPunctuation(raw(), locale);
 }
 
 /** Free tier: one ultra-short line (~30 chars, hard-capped) at the bottom of the report. */
 export function streamFreeSummary(args: ReadingPromptArgs): AsyncGenerator<string> {
   const prompt = `${drawSummary(args)}\n\nWrite ONE line of at most 35 characters — a single distilled insight, no punctuation at the end, no preamble, no quotes around it. This must stand alone with no more context.`;
   // Small max_tokens keeps this call's cost near-zero regardless of the cached library size.
-  return streamText(systemBlocks(args.locale), prompt, 20);
+  return streamText(systemBlocks(args.locale), prompt, 20, args.locale ?? "en");
 }
 
 /** Year Ahead ($9.90): a theme card plus one card per month for the coming twelve. The month
@@ -172,7 +235,7 @@ export function streamYearAheadReading(args: ReadingPromptArgs): AsyncGenerator<
   const prompt = `${drawSummary(
     args
   )}\n\nThis is a YEAR AHEAD reading: the first card is the theme of the reader's whole year, the rest are one card per month, in order. Open with 4–5 sentences on the theme card as the year's undercurrent. Then walk the months IN ORDER — give EVERY month its own passage of 4–6 sentences that reads the card in that month's seasonal context, says what it asks of the reader and what it warns them of, and stays concrete enough to recognise when it arrives. Never merge months together and never leave a month with a single line: twelve months, twelve passages. Let months speak to each other (a seed planted in one month blooming or being tested in a later one). Close with 4–5 sentences of practical counsel for the year as one arc. Flowing prose with the month names woven in naturally; no headers, no bullet lists.`;
-  return streamText(systemBlocks(args.locale), prompt, 6000);
+  return streamText(systemBlocks(args.locale), prompt, 6000, args.locale ?? "en");
 }
 
 /** Love Compatibility ($4.99): two people, five cards. The names arrive in the position labels
@@ -183,7 +246,7 @@ export function streamLoveReading(args: ReadingPromptArgs): AsyncGenerator<strin
   const prompt = `${drawSummary(
     args
   )}\n\nThis is a TWO-PERSON compatibility reading. The five positions are: each person's card, the connection between them, its challenge, and where it's heading. Give EVERY one of the five cards its own passage of 4–5 sentences. Read each person's energy as it MEETS the other's — this is about the BOND, not two separate fortunes; when you read one person's card, say what it does to the other. Be honest and specific about the challenge card without being cruel. On the last card, say where this is heading if nothing changes, and what would change it. Close with 3–4 sentences on what this pair can actually do with what the cards show. Use their names naturally. Flowing prose, no headers.`;
-  return streamText(systemBlocks(args.locale), prompt, 3500);
+  return streamText(systemBlocks(args.locale), prompt, 3500, args.locale ?? "en");
 }
 
 /** Paid follow-up ($1.99): one more question asked against a deep reading the querent just
@@ -195,7 +258,9 @@ export function streamFollowupAnswer(
   followupQuestion: string
 ): AsyncGenerator<string> {
   const prompt = `${drawSummary(args)}\n\nYou already gave the querent this reading:\n"""\n${previousReading}\n"""\n\nThe querent now asks a follow-up question: "${followupQuestion}"\n\nAnswer it in about 700 characters, staying consistent with the reading above — deepen or clarify it through the same drawn cards, don't contradict it or introduce new cards. Flowing prose, no headers.`;
-  return streamText(systemBlocks(args.locale), prompt, 500);
+  // Same CJK ceiling as the special readings: "about 700 characters" cannot fit in 500 tokens
+  // when a character costs about a token, so the 繁體 follow-up was cut short of what it promised.
+  return streamText(systemBlocks(args.locale), prompt, 1200, args.locale ?? "en");
 }
 
 /** Paid tier: a ~1500-character narrative reading tied to the querent's question. */
@@ -203,7 +268,9 @@ export function streamDeepReading(args: ReadingPromptArgs): AsyncGenerator<strin
   const prompt = `${drawSummary(
     args
   )}\n\nWrite a deep narrative reading of about 1500 characters. Trace the subconscious "energy flow" between the drawn cards — how they build on or tension against each other — and close with concrete, actionable advice tied directly to the querent's question. Write in flowing prose, no headers or bullet lists.`;
-  return streamText(systemBlocks(args.locale), prompt, 900);
+  // Same CJK ceiling: "about 1500 characters" against a 900-token cap meant the $2.99 deep reading
+  // was structurally unable to reach its own target in 繁體, while English fit comfortably.
+  return streamText(systemBlocks(args.locale), prompt, 2200, args.locale ?? "en");
 }
 
 const STYLE_TONE_DESCRIPTIONS: Record<string, string> = {
