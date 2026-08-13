@@ -6,7 +6,11 @@ import { resolveCardByAnyLocaleName } from "@/lib/cards";
 import type { Locale } from "@/lib/i18n";
 import { trackEvent } from "@/lib/analytics";
 
-export const maxDuration = 60;
+// The Year Ahead now writes twelve full monthly passages instead of one line each, so the stream
+// runs far longer than the 60s this used to allow — and a timeout here means a buyer watches a
+// $9.90 reading die halfway. Raised deliberately; if the hosting plan caps lower, the effective
+// limit is simply what it was before, so this can't make anything worse.
+export const maxDuration = 300;
 
 const KINDS = {
   year_reading: { creditField: "yearReadingCredits", maxCards: 13 },

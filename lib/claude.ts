@@ -163,19 +163,27 @@ export function streamFreeSummary(args: ReadingPromptArgs): AsyncGenerator<strin
 /** Year Ahead ($9.90): a theme card plus one card per month for the coming twelve. The month
  * names ride in as positions, so the narrative can anchor to real months the reader will live. */
 export function streamYearAheadReading(args: ReadingPromptArgs): AsyncGenerator<string> {
+  // Length is specified as STRUCTURE (sentences per section), never as a character count.
+  // A character target is not portable across languages: "about 2600 characters" is a normal essay
+  // in English and an enormous one in 繁體, and worse, 2600 CJK characters cost roughly 2600 output
+  // tokens — so under the old 1500-token cap the model had to wrap up early. A real $9.90 reading
+  // measured 1,095 characters across 13 cards, ~84 per card, which is under a sentence a month.
+  // Sentence counts scale correctly in both languages and the generous cap below lets them land.
   const prompt = `${drawSummary(
     args
-  )}\n\nThis is a YEAR AHEAD reading: the first card is the theme of the reader's whole year, the rest are one card per month, in order. Write about 2600 characters. Open with 2–3 sentences on the theme card as the year's undercurrent. Then walk the months IN ORDER — give each month 1–3 sentences that read the card in that month's seasonal context, and let months speak to each other (a seed planted in one month blooming or being tested in a later one). Close with 2–3 sentences of practical counsel for the year as one arc. Flowing prose with the month names woven in naturally; no headers, no bullet lists.`;
-  return streamText(systemBlocks(args.locale), prompt, 1500);
+  )}\n\nThis is a YEAR AHEAD reading: the first card is the theme of the reader's whole year, the rest are one card per month, in order. Open with 4–5 sentences on the theme card as the year's undercurrent. Then walk the months IN ORDER — give EVERY month its own passage of 4–6 sentences that reads the card in that month's seasonal context, says what it asks of the reader and what it warns them of, and stays concrete enough to recognise when it arrives. Never merge months together and never leave a month with a single line: twelve months, twelve passages. Let months speak to each other (a seed planted in one month blooming or being tested in a later one). Close with 4–5 sentences of practical counsel for the year as one arc. Flowing prose with the month names woven in naturally; no headers, no bullet lists.`;
+  return streamText(systemBlocks(args.locale), prompt, 6000);
 }
 
 /** Love Compatibility ($4.99): two people, five cards. The names arrive in the position labels
  * (You (Ana) / Them (Sam)); read the bond between them, honestly but never cruelly. */
 export function streamLoveReading(args: ReadingPromptArgs): AsyncGenerator<string> {
+  // Same reasoning as the Year Ahead above: structure, not a character count, and a cap that CJK
+  // can actually reach (1400 characters of 繁體 does not fit in 850 tokens).
   const prompt = `${drawSummary(
     args
-  )}\n\nThis is a TWO-PERSON compatibility reading. The five positions are: each person's card, the connection between them, its challenge, and where it's heading. Write about 1400 characters. Read each person's energy as it meets the other's — this is about the BOND, not two separate fortunes. Be honest about the challenge card without being cruel, and end with what this pair can actually do with what the cards show. Use their names naturally. Flowing prose, no headers.`;
-  return streamText(systemBlocks(args.locale), prompt, 850);
+  )}\n\nThis is a TWO-PERSON compatibility reading. The five positions are: each person's card, the connection between them, its challenge, and where it's heading. Give EVERY one of the five cards its own passage of 4–5 sentences. Read each person's energy as it MEETS the other's — this is about the BOND, not two separate fortunes; when you read one person's card, say what it does to the other. Be honest and specific about the challenge card without being cruel. On the last card, say where this is heading if nothing changes, and what would change it. Close with 3–4 sentences on what this pair can actually do with what the cards show. Use their names naturally. Flowing prose, no headers.`;
+  return streamText(systemBlocks(args.locale), prompt, 3500);
 }
 
 /** Paid follow-up ($1.99): one more question asked against a deep reading the querent just

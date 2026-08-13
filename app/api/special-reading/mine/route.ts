@@ -10,7 +10,9 @@ export async function GET() {
   const readings = await prisma.specialReading.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    select: { id: true, kind: true, title: true, createdAt: true },
+    // `cards` rides along so the journal can show a purchased reading the way it shows every other
+    // one — as cards, not as a bare line of text. /account only ever needed the title.
+    select: { id: true, kind: true, title: true, createdAt: true, cards: true },
   });
   return NextResponse.json({ readings });
 }

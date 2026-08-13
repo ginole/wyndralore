@@ -27,6 +27,32 @@ interface JournalEntry {
   createdAt: string;
 }
 
+interface RawPurchased {
+  id: string;
+  kind: string;
+  title: string;
+  createdAt: string;
+  cards: string;
+}
+
+interface PurchasedReading {
+  id: string;
+  kind: string;
+  title: string;
+  createdAt: string;
+  cards: JournalCard[];
+}
+
+/** `cards` is a JSON string column; a malformed row must never blank the whole journal. */
+function safeCards(raw: string): JournalCard[] {
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function JournalView() {
   const { user, loading: authLoading } = useAuth();
   const locale = useLocale();
@@ -34,13 +60,33 @@ export default function JournalView() {
   const tw = locale === "zh-TW";
   const L = (p: string) => (tw ? `/tc${p}` : p);
   const [entries, setEntries] = useState<JournalEntry[] | null>(null);
+  const [purchased, setPurchased] = useState<PurchasedReading[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/journal", { cache: "no-store" });
-    if (res.ok) setEntries((await res.json()).entries);
-    else setEntries([]);
+    // Two sources, because a purchased Year Ahead / Love Compatibility is stored in its own table
+    // (SpecialReading) rather than as a JournalEntry. That is invisible to a buyer: they paid $9.90,
+    // went to look for it where every other reading of theirs lives, and found nothing. The reading
+    // was never lost — it just had no entrance from here.
+    const [journalRes, specialRes] = await Promise.all([
+      fetch("/api/journal", { cache: "no-store" }),
+      fetch("/api/special-reading/mine", { cache: "no-store" }),
+    ]);
+    setEntries(journalRes.ok ? (await journalRes.json()).entries : []);
+    if (specialRes.ok) {
+      const data = await specialRes.json();
+      const items: PurchasedReading[] = (data?.readings ?? []).map((r: RawPurchased) => ({
+        id: r.id,
+        kind: r.kind,
+        title: r.title,
+        createdAt: r.createdAt,
+        cards: safeCards(r.cards),
+      }));
+      setPurchased(items);
+    } else {
+      setPurchased([]);
+    }
   }, []);
 
   useEffect(() => {
@@ -87,7 +133,9 @@ export default function JournalView() {
   // Never-subscribed users with nothing saved get the upsell pitch. Lapsed former members
   // (has entries, but plan expired) can still view what they already saved — only *new*
   // saves require active Premium (gated separately, on the reading page's Save button).
-  if (!user.isPremium && entries.length === 0) {
+  // A buyer who paid for a special reading but never subscribed must NOT be shown the upsell wall —
+  // that would hide the very thing they bought behind an ad for something else.
+  if (!user.isPremium && entries.length === 0 && purchased.length === 0) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-6 text-center">
         <p className="text-xs uppercase tracking-[0.3em] text-gold-dim">{t.premiumFeature}</p>
@@ -117,7 +165,7 @@ export default function JournalView() {
         </p>
       )}
 
-      {entries.length === 0 ? (
+      {entries.length === 0 && purchased.length === 0 ? (
         <div className="mt-12 text-center">
           <p className="text-sm text-moon-dim">{t.noneYet}</p>
           <Link href={L("/reading/three-card")} className="mt-6 inline-block rounded-full bg-gold px-7 py-3 text-sm font-medium uppercase tracking-[0.2em] text-ink hover:bg-gold-bright">
@@ -126,6 +174,44 @@ export default function JournalView() {
         </div>
       ) : (
         <div className="mt-12 flex flex-col gap-8">
+          {/* Purchased readings sit in the same timeline as saved draws, newest first, so the
+              journal reads as one history instead of two systems the buyer has to know about. */}
+          {purchased.map((item) => (
+            <article key={`sr-${item.id}`} className="rounded-2xl border border-gold-dim/60 bg-ink-raised/50 p-6">
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="font-display text-xl text-moon">{item.title}</h2>
+                <span className="text-xs uppercase tracking-widest text-moon-dim">
+                  {new Date(item.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-gold-dim">{t.purchasedBadge}</p>
+
+              {item.cards.length > 0 && (
+                <div className="mt-5 flex flex-wrap gap-4">
+                  {item.cards.map((card, i) => (
+                    <div key={i} className="w-20 text-center">
+                      <div className="aspect-[5/8] w-full">
+                        <CardFace src={card.image} alt={card.name} orientation={card.orientation} />
+                      </div>
+                      <p className="mt-1 text-[10px] uppercase tracking-widest text-moon-dim">{card.position}</p>
+                      <p className="text-[11px] text-moon">{card.name}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-ink-line/60 pt-4">
+                <p className="text-xs text-moon-dim/70">{t.purchasedKeptNote}</p>
+                <Link
+                  href={L(`/readings/${item.id}`)}
+                  className="text-xs uppercase tracking-[0.15em] text-gold underline underline-offset-4 hover:text-gold-bright"
+                >
+                  {t.openFullReading}
+                </Link>
+              </div>
+            </article>
+          ))}
+
           {entries.map((entry) => (
             <article key={entry.id} className="rounded-2xl border border-ink-line bg-ink-raised/50 p-6">
               <div className="flex items-baseline justify-between">

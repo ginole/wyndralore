@@ -181,6 +181,17 @@ export interface AppDict {
     edit: string;
     addNote: string;
     delete: string;
+    // Purchased Year Ahead / Love Compatibility readings, shown in the journal alongside saved
+    // draws — they live in their own table, so before this they were invisible here.
+    purchasedBadge: string;
+    openFullReading: string;
+    purchasedKeptNote: string;
+    // /account panel listing purchased special readings + unspent credits.
+    specialTitle: string;
+    specialUnused: string;
+    specialBegin: string;
+    specialYearLabel: string;
+    specialLoveLabel: string;
   };
   special: {
     labels: Record<string, string>;
@@ -515,6 +526,14 @@ const en: AppDict = {
     edit: "Edit",
     addNote: "Add note",
     delete: "Delete",
+    purchasedBadge: "Purchased",
+    openFullReading: "Open the full reading",
+    purchasedKeptNote: "Kept permanently — this one doesn't count against anything.",
+    specialTitle: "Special readings",
+    specialUnused: "unused",
+    specialBegin: "Begin",
+    specialYearLabel: "Year Ahead reading",
+    specialLoveLabel: "Love Compatibility reading",
   },
   special: {
     labels: { year_reading: "Year Ahead", love_reading: "Love Compatibility" },
@@ -890,6 +909,14 @@ const zhTW: AppDict = {
     edit: "編輯",
     addNote: "新增筆記",
     delete: "刪除",
+    purchasedBadge: "已購買",
+    openFullReading: "打開完整解讀",
+    purchasedKeptNote: "永久保存——這一則不佔任何額度。",
+    specialTitle: "特別占卜",
+    specialUnused: "尚未使用",
+    specialBegin: "開始",
+    specialYearLabel: "你的未來一年",
+    specialLoveLabel: "愛情契合度",
   },
   special: {
     labels: { year_reading: "未來一年", love_reading: "愛情契合度" },
