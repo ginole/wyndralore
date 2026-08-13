@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllCards, getCardBySlug, getCardSlug, getRelatedCards } from "@/lib/cards";
 import CardFace from "@/components/CardFace";
-import PremiumGate from "@/components/PremiumGate";
 import { getDict, hreflangAlternates, OG_LOCALE, SITE_URL, SUIT_LABEL, TW_PREFIX } from "@/lib/i18n";
 
 const t = getDict("zh-TW");
@@ -46,8 +45,12 @@ export default async function TwCardDetailPage({ params }: { params: Promise<{ s
   const related = getRelatedCards(card, "zh-TW");
   const url = `${SITE_URL}${TW_PREFIX}/cards/${slug}`;
 
-  // 和英文版同构：麵包屑讓 78 張牌頁有明確層級，isAccessibleForFree/hasPart 則把
-  // PremiumGate 遮住的深度解讀「聲明」出來——內容在 DOM 裡卻看不到，不聲明就是遮蔽。
+  // 和英文版同构：麵包屑讓 78 張牌頁有明確層級。
+  // 原本這裡還有 isAccessibleForFree/hasPart，用來聲明被 PremiumGate 遮住的深度解讀是付費內容。
+  // 那個聲明是誠實的，代價卻是：每張牌頁有一半內容讀者看不到，而且等於告訴 Google 全站唯一的
+  // 內容型頁面（78 張）都在付費牆後。AdSense 以「低價值內容」拒絕，這些頁排在第 55 位左右。
+  // 它換回來的是 Search Console 28 天 0 點擊——搜「某張牌的意思」的人不在買會員的心情裡。
+  // 真正該收費的那道牆在占卜本身，那道還在。
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -61,12 +64,6 @@ export default async function TwCardDetailPage({ params }: { params: Promise<{ s
         keywords: [...card.keywords_upright, ...card.keywords_reversed].join("、"),
         articleBody: `${card.meaning_upright} ${card.meaning_reversed}`,
         image: `${SITE_URL}${card.image}`,
-        isAccessibleForFree: false,
-        hasPart: {
-          "@type": "WebPageElement",
-          isAccessibleForFree: false,
-          cssSelector: ".premium-gated",
-        },
         publisher: { "@type": "Organization", name: "Wyndralore", url: SITE_URL },
       },
       {
@@ -132,10 +129,8 @@ export default async function TwCardDetailPage({ params }: { params: Promise<{ s
       <div className="mt-14">
         <h2 className="font-display text-2xl text-moon">{t.card.themesTitle}</h2>
         <p className="mt-2 text-sm text-moon-dim">{t.card.themesSubtitle(card.name)}</p>
-        {/* .premium-gated 對應上面付費牆 JSON-LD 的 cssSelector，搬動時別把 class 弄丟 */}
-        <div className="premium-gated mt-6">
-          <PremiumGate>
-            <div className="flex flex-col gap-6">
+        <div className="mt-6">
+          <div className="flex flex-col gap-6">
               {THEMES.map((theme) => (
                 <div key={theme.key} className="rounded-2xl border border-ink-line bg-ink-raised/50 p-6">
                   <h3 className="font-display text-xl text-gold-bright">{theme.label}</h3>
@@ -152,7 +147,6 @@ export default async function TwCardDetailPage({ params }: { params: Promise<{ s
                 </div>
               ))}
             </div>
-          </PremiumGate>
         </div>
       </div>
 

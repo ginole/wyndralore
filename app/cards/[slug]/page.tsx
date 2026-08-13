@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllCards, getCardBySlug, getCardSlug, getRelatedCards } from "@/lib/cards";
 import CardFace from "@/components/CardFace";
-import PremiumGate from "@/components/PremiumGate";
 import { hreflangAlternates } from "@/lib/i18n";
 
 export function generateStaticParams() {
@@ -41,13 +40,17 @@ export default async function CardDetailPage({ params }: { params: Promise<{ slu
   const related = getRelatedCards(card);
   const url = `https://wyndralore.com/cards/${slug}`;
 
-  // Two things this markup does that the previous version didn't:
-  //  1. BreadcrumbList — gives the card pages a declared hierarchy under /cards instead of looking
-  //     like 78 orphan URLs, which is part of why they sat "Discovered – currently not indexed".
-  //  2. isAccessibleForFree / hasPart — the love/career/wellness sections are in the DOM but
-  //     visually blurred behind PremiumGate. Serving content a visitor can't read WITHOUT
-  //     declaring it is exactly the pattern Google treats as cloaking; declaring it is the
-  //     supported way to keep the text indexable and stay inside the rules.
+  // BreadcrumbList gives the card pages a declared hierarchy under /cards instead of looking like
+  // 78 orphan URLs, which is part of why they sat "Discovered – currently not indexed".
+  //
+  // The paywall declaration that used to sit here (isAccessibleForFree/hasPart) is gone with the
+  // gate it described. The love/career/wellness sections were blurred behind PremiumGate and
+  // honestly declared as paid — honest, and costly: it hid roughly half of every card page from
+  // readers, and told Google that the site's only content type is paywalled across all 78 URLs.
+  // AdSense declined the site for "low-value content" and these pages sit around position 55.
+  // What the gate earned against that: Search Console showed 0 clicks in 28 days, so nothing.
+  // Someone who searched for a card's meaning is not in the mood to buy a membership; the gate
+  // that matters is on the reading itself, which is still there.
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -61,12 +64,6 @@ export default async function CardDetailPage({ params }: { params: Promise<{ slu
         articleBody: `${card.meaning_upright} ${card.meaning_reversed}`,
         image: `https://wyndralore.com${card.image}`,
         inLanguage: "en",
-        isAccessibleForFree: false,
-        hasPart: {
-          "@type": "WebPageElement",
-          isAccessibleForFree: false,
-          cssSelector: ".premium-gated",
-        },
         publisher: { "@type": "Organization", name: "Wyndralore", url: "https://wyndralore.com" },
       },
       {
@@ -132,10 +129,8 @@ export default async function CardDetailPage({ params }: { params: Promise<{ slu
       <div className="mt-14">
         <h2 className="font-display text-2xl text-moon">Themes in depth</h2>
         <p className="mt-2 text-sm text-moon-dim">How {card.name} speaks to different areas of life.</p>
-        {/* .premium-gated is referenced by the paywall JSON-LD above — keep the class if you move this. */}
-        <div className="premium-gated mt-6">
-          <PremiumGate>
-            <div className="flex flex-col gap-6">
+        <div className="mt-6">
+          <div className="flex flex-col gap-6">
               {THEMES.map((theme) => (
                 <div key={theme.key} className="rounded-2xl border border-ink-line bg-ink-raised/50 p-6">
                   <h3 className="font-display text-xl text-gold-bright">{theme.label}</h3>
@@ -152,7 +147,6 @@ export default async function CardDetailPage({ params }: { params: Promise<{ slu
                 </div>
               ))}
             </div>
-          </PremiumGate>
         </div>
       </div>
 
