@@ -12,12 +12,25 @@ interface AdminUser {
   lastSeenAt: string | null;
 }
 
-/** Whether the account was seen on a later calendar day than it registered — i.e. actually came
- *  back, rather than registering and vanishing. This is the retention signal the whole column
- *  exists for, so it gets called out in colour rather than left for the eye to diff two dates. */
+/** Days after which a return visit stops counting as a live signal. */
+const ACTIVE_WINDOW_DAYS = 7;
+
+/** Whether the account came back AND did so recently.
+ *
+ *  Coming back at all is the retention signal this column exists for, so it is called out in colour
+ *  rather than left for the eye to diff two dates. But the highlight used to be permanent: an
+ *  account that returned once and then vanished for a month still glowed, which made the list read
+ *  as though several people were active when only one was. A retention marker that never expires
+ *  stops measuring retention and starts measuring "ever registered properly".
+ *
+ *  So the gold now means "came back, and within the last week". Older returns keep their date in the
+ *  normal colour — the fact is still there to read, it just no longer claims to be news. */
 function cameBack(u: AdminUser): boolean {
   if (!u.lastSeenAt) return false;
-  return u.lastSeenAt.slice(0, 10) > u.createdAt.slice(0, 10);
+  const returned = u.lastSeenAt.slice(0, 10) > u.createdAt.slice(0, 10);
+  if (!returned) return false;
+  const daysSince = (Date.now() - new Date(u.lastSeenAt).getTime()) / 86_400_000;
+  return daysSince <= ACTIVE_WINDOW_DAYS;
 }
 
 export default function UsersPanel() {
