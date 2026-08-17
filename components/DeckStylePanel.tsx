@@ -38,7 +38,7 @@ export default function DeckStylePanel() {
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={opt.sample} alt={opt.label} width={64} height={102} loading="lazy" className="w-16 rounded-md" />
+            <img src={opt.sample} alt={opt.label} width={64} height={102} loading="eager" className="w-16 rounded-md" />
             <span className={`text-xs ${deckStyle === opt.value ? "text-gold-bright" : "text-moon-dim"}`}>{opt.label}</span>
           </button>
         ))}
@@ -56,7 +56,7 @@ export default function DeckStylePanel() {
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cardBackSrc(opt.value)} alt={opt.label} width={64} height={102} loading="lazy" className="w-16 rounded-md" />
+            <img src={cardBackSrc(opt.value)} alt={opt.label} width={64} height={102} loading="eager" className="w-16 rounded-md" />
             <span className={`text-xs ${cardBackStyle === opt.value ? "text-gold-bright" : "text-moon-dim"}`}>{opt.label}</span>
           </button>
         ))}
