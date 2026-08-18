@@ -48,8 +48,21 @@ const TW_EXACT_PATHS = new Set([
   "/reset-password",
 ]);
 
+/** A request for a file, not a page. `/cards/` holds BOTH the card-library pages (/cards/the-fool)
+ *  and the card artwork itself (/cards/back-lunar.svg, /cards/classic/major-00-fool.webp), so the
+ *  prefix rule below cannot tell them apart on its own — and redirecting a file is fatal, because
+ *  /tc/cards/back-lunar.svg is not a file and 404s.
+ *
+ *  This is not hypothetical: it was live. Every visitor in Taiwan, Hong Kong, Macau, Malaysia and
+ *  Singapore — the entire audience /tc exists for — got a 307 on every card image and therefore a
+ *  tarot site with no tarot cards on it. It stayed invisible because the founder browses from the
+ *  Philippines, which is not on the redirect list, so the site looked perfect to him. A creator in
+ *  Malaysia reported it. */
+const FILE_REQUEST = /\.[a-z0-9]{2,5}$/i;
+
 /** English content paths that have a 繁體 equivalent under /tc. */
 function isTwRedirectable(pathname: string): boolean {
+  if (FILE_REQUEST.test(pathname)) return false;
   if (pathname === "/" || pathname === "/cards" || pathname.startsWith("/cards/")) return true;
   if (TW_EXACT_PATHS.has(pathname)) return true;
   const m = pathname.match(/^\/reading\/([^/]+)$/);
