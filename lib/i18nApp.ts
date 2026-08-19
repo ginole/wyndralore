@@ -620,7 +620,7 @@ const en: AppDict = {
     cadence: (raw) => raw,
     planLabels: { monthly: "Monthly", yearly: "Yearly", lifetime: "Lifetime" },
     planPerks: {
-      monthly: ["Unlimited readings", "All premium spreads", "Reading journal", "Full card library", "2 free AI deep readings / month"],
+      monthly: ["Unlimited readings, no daily limit", "All premium spreads", "Reading journal saves every draw", "2 free AI deep readings / month"],
       yearly: ["Everything in Monthly", "Best value", "3 free AI deep readings / month"],
       lifetime: ["Pay once, own it forever", "Everything in Yearly", "No renewals, ever", "4 free AI deep readings / month"],
     },
@@ -1009,7 +1009,7 @@ const zhTW: AppDict = {
     },
     planLabels: { monthly: "月方案", yearly: "年方案", lifetime: "終身方案" },
     planPerks: {
-      monthly: ["無限次占卜", "所有進階牌陣", "占卜筆記", "完整牌義典藏", "每月 2 次免費 AI 深度解讀"],
+      monthly: ["無限次占卜，沒有每日上限", "所有進階牌陣", "占卜筆記完整保存每次抽牌", "每月 2 次免費 AI 深度解讀"],
       yearly: ["月方案的一切", "最超值", "每月 3 次免費 AI 深度解讀"],
       lifetime: ["一次買斷，永久擁有", "年方案的一切", "永不續訂", "每月 4 次免費 AI 深度解讀"],
     },

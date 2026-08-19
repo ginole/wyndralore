@@ -29,7 +29,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   monthly: {
     id: "monthly",
     label: "Monthly",
-    perks: ["Unlimited readings", "All premium spreads", "Reading journal", "Full card library", "2 free AI deep readings / month"],
+    perks: ["Unlimited readings, no daily limit", "All premium spreads", "Reading journal saves every draw", "2 free AI deep readings / month"],
     sub: { amountUsd: 6.9, priceLabel: "$6.90", cadence: "/ month" },
     onetime: { amountUsd: 9.9, priceLabel: "$9.90", cadence: "one-time" },
     purchasable: true,
