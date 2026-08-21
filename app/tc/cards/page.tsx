@@ -40,6 +40,13 @@ export default function TwCardsIndexPage() {
         <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moon-dim">
           塔羅全部 78 張牌，每一張都是為了幫你看清當下——而非預言一個注定的未來。點任一張牌，讀它完整的含義。
         </p>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-moon-dim">
+          剛接觸塔羅？先從{" "}
+          <Link href={`${TW_PREFIX}/guides`} className="text-gold underline underline-offset-4 hover:text-gold-bright">
+            新手指南
+          </Link>{" "}
+          開始。
+        </p>
       </div>
 
       {SUIT_SECTIONS.map((section) => {

@@ -143,6 +143,19 @@ export interface Dict {
   };
   // Spread titles/subtitles, keyed by spread slug, for the 繁體 homepage grid.
   spreads: Record<string, { title: string; subtitle: string }>;
+  guides: {
+    eyebrow: string;
+    indexTitle: string;
+    indexIntro: string;
+    indexMetaTitle: string;
+    indexMetaDescription: string;
+    navLabel: string;
+    minRead: (n: number) => string;
+    backToGuides: string;
+    continueReading: string;
+    ctaPrompt: string;
+    ctaButton: string;
+  };
 }
 
 const en: Dict = {
@@ -221,6 +234,21 @@ const en: Dict = {
     career: { title: "Career Path", subtitle: "Clarity on the work that's calling you." },
     "celtic-cross": { title: "Celtic Cross", subtitle: "The full ten-card ritual for a deep, layered question." },
   },
+  guides: {
+    eyebrow: "Learn Tarot",
+    indexTitle: "Tarot Guides",
+    indexIntro:
+      "Plain-English guides to reading tarot — start from zero and build up to a real reading. No jargon, no mysticism you have to buy into.",
+    indexMetaTitle: "Tarot Guides for Beginners — Learn to Read the Cards | Wyndralore",
+    indexMetaDescription:
+      "Free beginner guides to tarot: what the cards are, how to read them, the four suits, upright vs reversed, spreads, and reading for love.",
+    navLabel: "Guides",
+    minRead: (n) => `${n} min read`,
+    backToGuides: "← All guides",
+    continueReading: "Continue reading",
+    ctaPrompt: "Ready to try it yourself?",
+    ctaButton: "Draw Your Card",
+  },
 };
 
 const zhTW: Dict = {
@@ -298,6 +326,21 @@ const zhTW: Dict = {
     love: { title: "愛情牌陣", subtitle: "更靠近一段關係的核心。" },
     career: { title: "事業之路", subtitle: "看清那份正在召喚你的工作。" },
     "celtic-cross": { title: "凱爾特十字", subtitle: "完整的十張牌儀式，面對層次深厚的提問。" },
+  },
+  guides: {
+    eyebrow: "學塔羅",
+    indexTitle: "塔羅指南",
+    indexIntro:
+      "用最直白的方式帶你讀塔羅——從零開始，一路建立到一次真正的占卜。沒有術語，也沒有你非信不可的玄學。",
+    indexMetaTitle: "新手塔羅指南——學會解讀牌卡 | Wyndralore",
+    indexMetaDescription:
+      "免費的塔羅新手指南：牌是什麼、怎麼讀、四大牌組、正位與逆位、牌陣，以及如何為愛情讀牌。",
+    navLabel: "塔羅指南",
+    minRead: (n) => `閱讀約 ${n} 分鐘`,
+    backToGuides: "← 所有指南",
+    continueReading: "繼續閱讀",
+    ctaPrompt: "準備好自己試一次了嗎？",
+    ctaButton: "抽一張牌",
   },
 };
 

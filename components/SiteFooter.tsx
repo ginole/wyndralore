@@ -9,7 +9,8 @@ import LanguageSwitch from "./LanguageSwitch";
 export default function SiteFooter() {
   const pathname = usePathname() ?? "/";
   const locale = localeFromPathname(pathname);
-  const t = getDict(locale).footer;
+  const dict = getDict(locale);
+  const t = dict.footer;
   const tw = locale === "zh-TW";
 
   const cards = tw ? `${TW_PREFIX}/cards` : "/cards";
@@ -21,6 +22,9 @@ export default function SiteFooter() {
       <nav className="font-accent mb-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs uppercase tracking-[0.2em] text-moon-dim">
         <Link href={cards} className="transition-colors hover:text-gold">
           {t.cardMeanings}
+        </Link>
+        <Link href={P("/guides")} className="transition-colors hover:text-gold">
+          {dict.guides.navLabel}
         </Link>
         {MASTERS_MARKETPLACE_ENABLED && !tw && (
           <Link href="/masters" className="transition-colors hover:text-gold">

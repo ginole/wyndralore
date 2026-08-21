@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllCards, getCardSlug } from "@/lib/cards";
+import { getAllGuides } from "@/lib/guides";
 
 const BASE = "https://wyndralore.com";
 const TW = "/tc";
@@ -30,6 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const BILINGUAL: [string, number][] = [
     ["/", 1],
     ["/cards", 0.8],
+    ["/guides", 0.7],
     ["/pricing", 0.7],
     ["/yes-or-no-tarot", 0.7],
     // The four free spreads that are statically generated. Premium-gated spreads (love, career,
@@ -55,5 +57,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // All 78 card pages, English + 繁體, each paired.
   const cardRoutes = getAllCards().flatMap((card) => pair(`/cards/${getCardSlug(card)}`, 0.6));
 
-  return [...BILINGUAL.flatMap(([path, priority]) => pair(path, priority)), ...englishOnly, ...cardRoutes];
+  // Every guide article, English + 繁體, each paired.
+  const guideRoutes = getAllGuides().flatMap((guide) => pair(`/guides/${guide.slug}`, 0.6));
+
+  return [
+    ...BILINGUAL.flatMap(([path, priority]) => pair(path, priority)),
+    ...englishOnly,
+    ...cardRoutes,
+    ...guideRoutes,
+  ];
 }

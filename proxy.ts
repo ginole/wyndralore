@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ANON_COOKIE } from "@/lib/analytics";
+import { getAllGuides } from "@/lib/guides";
 
 // Next 16 renamed `middleware` → `proxy` (the exported function is `proxy`); it now defaults to the
 // Node.js runtime, so we can read Vercel's geo header directly. This file does two things, in order:
@@ -31,6 +32,11 @@ const TW_READING_SLUGS = new Set([
   "year-ahead",
   "love-compatibility",
 ]);
+// Guide article slugs that have a /tc twin. Built from the same source the pages are generated
+// from, so a slug can never redirect to a 繁體 URL that doesn't exist (the /tc/guides tree uses the
+// identical generateStaticParams). The index /guides is handled separately below.
+const TW_GUIDE_SLUGS = new Set(getAllGuides().map((g) => g.slug));
+
 // Standalone English paths that have an exact /tc twin.
 const TW_EXACT_PATHS = new Set([
   "/pricing",
@@ -69,6 +75,13 @@ function isTwRedirectable(pathname: string): boolean {
   if (m && TW_READING_SLUGS.has(m[1])) return true;
   // Permanent saved special-reading pages have a /tc twin too.
   if (/^\/readings\/[^/]+$/.test(pathname)) return true;
+  // The guides index and every guide article have a /tc twin. Without this, a TW/HK/MO/MY/SG
+  // visitor landing on an English /guides URL (e.g. from Google) would be stranded on English —
+  // the "geo redirect silently doesn't fire for these pages" failure, the same class of bug as the
+  // card-image 404 that was invisible from the Philippines for 27 days.
+  if (pathname === "/guides") return true;
+  const g = pathname.match(/^\/guides\/([^/]+)$/);
+  if (g && TW_GUIDE_SLUGS.has(g[1])) return true;
   return false;
 }
 
@@ -115,7 +128,15 @@ export function proxy(req: NextRequest) {
   //    they are statically generated for SEO, and a Set-Cookie would make them non-CDN-cacheable.
   //    (The old matcher excluded /cards/ for exactly this reason; /tc/cards/ is the same case.)
   const res = NextResponse.next();
-  const skipCookie = pathname.startsWith("/cards/") || pathname.startsWith("/tc/cards/");
+  const skipCookie =
+    pathname.startsWith("/cards/") ||
+    pathname.startsWith("/tc/cards/") ||
+    // The guides are statically generated SEO content on both trees; a Set-Cookie would make them
+    // non-CDN-cacheable, exactly the reason card detail pages are skipped.
+    pathname === "/guides" ||
+    pathname.startsWith("/guides/") ||
+    pathname === "/tc/guides" ||
+    pathname.startsWith("/tc/guides/");
   if (!skipCookie) {
     if (!req.cookies.get(ANON_COOKIE)) {
       const anonId = crypto.randomUUID();

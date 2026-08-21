@@ -32,6 +32,13 @@ export default function CardsIndexPage() {
           All 78 cards of the tarot, each written to help you see the present clearly — not to predict a fixed future.
           Tap any card to read its full meaning.
         </p>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-moon-dim">
+          New to tarot?{" "}
+          <Link href="/guides" className="text-gold underline underline-offset-4 hover:text-gold-bright">
+            Start with the beginner guides
+          </Link>
+          .
+        </p>
         <div className="mt-5">
           <DeckQuickSwitch kind="face" />
         </div>
