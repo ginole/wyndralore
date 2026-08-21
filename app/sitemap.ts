@@ -45,6 +45,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/terms", 0.3],
     ["/privacy", 0.3],
     ["/refunds", 0.3],
+    ["/contact", 0.3],
   ];
 
   // Genuinely English-only: the birth-card calculator has no /tc twin (see the todo memo).

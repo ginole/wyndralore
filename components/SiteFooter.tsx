@@ -43,9 +43,9 @@ export default function SiteFooter() {
         <Link href={P("/refunds")} className="transition-colors hover:text-gold">
           {t.refunds}
         </Link>
-        <a href="mailto:hello@wyndralore.com" className="transition-colors hover:text-gold">
+        <Link href={P("/contact")} className="transition-colors hover:text-gold">
           {t.contact}
-        </a>
+        </Link>
         <LanguageSwitch />
       </nav>
       <p className="mx-auto max-w-xl text-xs leading-relaxed text-moon-dim">{t.disclaimer}</p>

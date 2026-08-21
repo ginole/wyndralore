@@ -46,6 +46,7 @@ const TW_EXACT_PATHS = new Set([
   "/terms",
   "/privacy",
   "/refunds",
+  "/contact",
   // Password reset / creator-claim links are always minted on the English path (the invite and the
   // admin both build them from the site root), so this redirect is the only thing that puts a 華語
   // recipient on the 繁體 form. It matters more than its size suggests: for an invited creator this
