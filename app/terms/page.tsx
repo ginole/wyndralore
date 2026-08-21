@@ -59,8 +59,7 @@ export default function TermsPage() {
         <div>
           <h2 className="font-display text-xl text-moon">4. Refunds and immediate delivery</h2>
           <p className="mt-2">
-            Premium access and AI readings are digital content that is unlocked or delivered to you immediately. Because
-            of this, all sales are final and payments are non-refundable. By completing a purchase, you expressly request
+            Premium access and AI readings are digital content that is unlocked or delivered to you immediately. Because of this, payments are generally non-refundable once a reading has been generated. By completing a purchase, you expressly request
             that delivery and access begin right away, and you acknowledge that you thereby lose any statutory right of
             withdrawal or cooling-off period — including, where applicable, the 14-day right of withdrawal under EU/UK
             consumer law — once delivery has begun.

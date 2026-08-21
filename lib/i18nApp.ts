@@ -613,7 +613,7 @@ const en: AppDict = {
     couldNotStart: "Could not start your order.",
     couldNotOpen: "Could not open checkout — please try again.",
     finePrint:
-      "Digital goods, delivered instantly — all sales final. Subscriptions renew automatically until you cancel, which you can do anytime from your account. By purchasing you agree to immediate delivery and waive any right of withdrawal.",
+      "Digital goods, delivered instantly — generally non-refundable once a reading is generated, and the payment platform's own refund rules also apply. Subscriptions renew automatically until you cancel, which you can do anytime from your account. By purchasing you agree to immediate delivery and waive any right of withdrawal.",
     terms: "Terms",
     perMonth: "/mo",
     once: "one-time",
@@ -996,7 +996,7 @@ const zhTW: AppDict = {
     couldNotStart: "無法建立訂單。",
     couldNotOpen: "無法開啟結帳，請再試一次。",
     finePrint:
-      "數位商品，即時交付——所有交易一經完成恕不退款。訂閱會自動續訂，直到你取消為止，你可隨時於帳號中操作。購買即表示你同意即時交付並放棄猶豫期退款權利。",
+      "數位商品，即時交付——解讀一經產生原則上不予退款，收款平台自身的退款規則亦同時適用。訂閱會自動續訂，直到你取消為止，你可隨時於帳號中操作。購買即表示你同意即時交付並放棄猶豫期退款權利。",
     terms: "服務條款",
     perMonth: "/月",
     once: "一次買斷",

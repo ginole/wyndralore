@@ -26,12 +26,15 @@ export default function RefundsPage() {
         <div>
           <h2 className="font-display text-xl text-moon">1. Digital content, delivered immediately</h2>
           <p className="mt-2">
-            Premium access and AI readings are digital content that is unlocked or generated for you the moment your
-            payment completes. Because delivery is immediate and the content is personal to your reading, all sales are
-            final and payments are generally non-refundable. By completing a purchase you expressly request that delivery
-            begin right away and acknowledge that you thereby lose any statutory right of withdrawal or cooling-off period
-            — including, where applicable, the 14-day right of withdrawal under EU/UK consumer law — once delivery has
-            begun.
+            Premium access and AI readings are digital content. Once a reading has been generated it is written for your
+            specific draw and cannot be taken back, so payments are generally non-refundable from that point on. By
+            completing a purchase you expressly request that delivery begin right away and acknowledge that you thereby
+            lose any statutory right of withdrawal or cooling-off period — including, where applicable, the 14-day right
+            of withdrawal under EU/UK consumer law — once delivery has begun. If your situation is exceptional, write to{" "}
+            <a className="text-gold underline underline-offset-4" href="mailto:hello@wyndralore.com">hello@wyndralore.com</a>{" "}
+            and we will look at it individually. Card payments are handled by Whop as Merchant of Record, and Whop&apos;s
+            own refund rules apply alongside this policy — where the two differ, the payment platform&apos;s actual rules
+            govern.
           </p>
         </div>
 
