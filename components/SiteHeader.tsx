@@ -11,13 +11,15 @@ export default function SiteHeader() {
   const { user, loading } = useAuth();
   const pathname = usePathname() ?? "/";
   const locale = localeFromPathname(pathname);
-  const t = getDict(locale).nav;
+  const dict = getDict(locale);
+  const t = dict.nav;
   const tw = locale === "zh-TW";
 
   // Content pages that exist in 繁體 get /tw links; account/journal have no 繁體 version yet, so
   // they stay on the English routes (functional, just English — a known MVP gap).
   const home = tw ? TW_PREFIX : "/";
   const cards = tw ? `${TW_PREFIX}/cards` : "/cards";
+  const guides = tw ? `${TW_PREFIX}/guides` : "/guides";
   const pricing = tw ? `${TW_PREFIX}/pricing` : "/pricing";
   const account = tw ? `${TW_PREFIX}/account` : "/account";
   const journal = tw ? `${TW_PREFIX}/journal` : "/journal";
@@ -48,6 +50,13 @@ export default function SiteHeader() {
         )}
         <Link href={cards} className="transition-colors hover:text-gold">
           {t.cards}
+        </Link>
+        {/* Guides sits in the top nav, not buried under /cards, deliberately: the section exists to
+            give Google (and AdSense) real editorial content, and a site-wide header link is the
+            strongest internal signal we can send it. Placed next to Cards because they're the two
+            content sections — meanings and how-to. */}
+        <Link href={guides} className="transition-colors hover:text-gold">
+          {dict.guides.navLabel}
         </Link>
         {!loading && user?.isPremium && (
           <Link href={journal} className="transition-colors hover:text-gold">
