@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "region-check": "node scripts/region-check.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {
